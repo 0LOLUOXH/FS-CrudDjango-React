@@ -7,42 +7,50 @@ class useradminn(admin.ModelAdmin):
     list_display = ('id', 'username', 'email', 'date_joined')
     list_filter = ('date_joined',)
     
-@admin.register(marca)
-class marcaadmin(admin.ModelAdmin):
+@admin.register(Marca)
+class Marcaadmin(admin.ModelAdmin):
     list_display = ('id','nombre')
     
-@admin.register(modelo)
-class modeloadmin(admin.ModelAdmin):
+@admin.register(Modelo)
+class Modeloadmin(admin.ModelAdmin):
     list_display = ('id','nombre', 'marca')
     
-@admin.register(cliente)
-class clienteadmin(admin.ModelAdmin):
-    list_display = ('id','cedula', 'nombre', 'apellido', 'telefono')
+@admin.register(Cliente)
+class Clienteadmin(admin.ModelAdmin):
+    list_display = ('id','identificacion', 'nombre', 'apellido', 'telefono')
+
+@admin.register(ClienteJuridico)
+class ClienteJuridicoadmin(admin.ModelAdmin):
+    list_display = ('id','cliente', 'razon_social')
     
-@admin.register(empleado)
-class empleadoadmin(admin.ModelAdmin):
+@admin.register(Empleado)
+class Empleadoadmin(admin.ModelAdmin):
     list_display = ('id','nombre', 'apellido', 'telefono', 'cargo')
     
-@admin.register(bodega)
-class bodegaadmin(admin.ModelAdmin):
+@admin.register(Bodega)
+class Bodegaadmin(admin.ModelAdmin):
     list_display = ('id','nombre', 'estado', 'capacidad', 'idempleado')
     
-@admin.register(producto)
-class productoadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'modeloandmarca', 'preciounitario', 'ganancia', 'iva', 'codigobodega', 'descripcion', 'cantidad', 'fechadeactualizacion')
+@admin.register(Producto)
+class Productoadmin(admin.ModelAdmin):
+    list_display = ('id','nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad', 'fechadeactualizacion')
+
+@admin.register(PrecioProveedorProducto)
+class PrecioProveedorProductoadmin(admin.ModelAdmin):
+    list_display = ('id','producto', 'proveedor', 'precio', 'ganancia', 'iva', 'fecha_actualizacion')
     
-@admin.register(venta)
-class ventadmin(admin.ModelAdmin):
+@admin.register(Venta)
+class Ventadmin(admin.ModelAdmin):
     list_display = ('id','fecha', 'cliente', 'empleado', 'totalapagar', 'metododepago', 'instalacion', 'direccion')
     
-@admin.register(detalleventa)
-class detalleventaadmin(admin.ModelAdmin):
+@admin.register(DetalleVenta)
+class DetalleVentaadmin(admin.ModelAdmin):
     list_display = ('id','venta', 'producto', 'cantidadporproducto')
     
-@admin.register(proveedor)
-class proveedoradmin(admin.ModelAdmin):
+@admin.register(Proveedor)
+class Proveedoradmin(admin.ModelAdmin):
     list_display = ('id','cedula', 'nombre', 'apellido', 'telefono')
     
-@admin.register(detalleproveedor)
-class detalleproveedoradmin(admin.ModelAdmin):
+@admin.register(DetalleProveedor)
+class DetalleProveedoradmin(admin.ModelAdmin):
     list_display = ('id','proveedor', 'producto', 'fecha', 'totalapagar', 'tipocomprobante', 'metododepago', 'numerocomprobante', 'cantidad')

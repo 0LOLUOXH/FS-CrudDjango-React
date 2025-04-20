@@ -10,8 +10,8 @@ function producto (){
                     Agregar Producto
                 </h1>
             </Link>
-            <Inventario />
             <Tabla />
+            <Inventario />
         </div>
     )
 }

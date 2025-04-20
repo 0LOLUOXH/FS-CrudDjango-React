@@ -3,50 +3,60 @@ from .models import *
 
 class marcaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = marca
+        model = Marca
         fields = ('id', 'nombre')
 
 class modeloSerializer(serializers.ModelSerializer):
     class Meta:
-        model = modelo
+        model = Modelo
         fields = ('id', 'nombre', 'marca')
         
 class clienteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = cliente
-        fields = ('id', 'cedula', 'nombre', 'apellido', 'telefono')
+        model = Cliente
+        fields = ('id', 'tipo','identificacion', 'nombre', 'apellido', 'telefono')
+        
+class clienteJuridicoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClienteJuridico
+        fields = ('id','cliente', 'razon_social')
         
 class empleadoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = empleado
+        model = Empleado
         fields = ('id', 'nombre', 'apellido', 'telefono', 'cargo')
         
 class bodegaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = bodega
+        model = Bodega
         fields = ('id', 'nombre', 'estado', 'capacidad', 'idempleado')
         
 class productoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = producto
-        fields = ('id', 'nombre', 'modeloandmarca', 'preciounitario', 'ganancia', 'iva', 'codigobodega', 'descripcion', 'cantidad', 'fechadeactualizacion')
+        model = Producto
+        fields = ('id', 'nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad', 'fechadeactualizacion')
+
+class PrecioProveedorProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrecioProveedorProducto
+        fields = ('id', 'producto', 'proveedor', 'precio', 'ganancia', 'iva', 'fecha_actualizacion')
         
 class ventaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = venta
+        model = Venta
         fields = ('id', 'fecha', 'cliente', 'empleado', 'totalapagar', 'metododepago', 'instalacion', 'direccion', 'precioinstalacion')
         
 class detalleventaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = detalleventa
+        model = DetalleVenta
         fields = ('id', 'venta', 'producto', 'cantidadporproducto')
         
 class proveedorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = proveedor
+        model = Proveedor
         fields = ('id', 'cedula', 'nombre', 'apellido', 'telefono')
         
 class detalleproveedorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = detalleproveedor        
+        model = DetalleProveedor        
         fields = ('id', 'proveedor', 'producto', 'tipocomprobante', 'metododepago', 'numerocomprobante', 'fecha', 'totalapagar', 'cantidad')

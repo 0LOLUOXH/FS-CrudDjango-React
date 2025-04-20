@@ -4,41 +4,49 @@ from .serializer import *
 
 # Create your views here.
 class marcaViewSet(viewsets.ModelViewSet):
-    queryset = marca.objects.all()
+    queryset = Marca.objects.all()
     serializer_class = marcaSerializer
 
 class modeloViewSet(viewsets.ModelViewSet):
-    queryset = modelo.objects.all()
+    queryset = Modelo.objects.all()
     serializer_class = modeloSerializer
     
 class clienteViewSet(viewsets.ModelViewSet):
-    queryset = cliente.objects.all()
+    queryset = Cliente.objects.all()
     serializer_class = clienteSerializer
+
+class clientejuridicoViewSet(viewsets.ModelViewSet):
+    queryset = ClienteJuridico.objects.all()
+    serializer_class = clienteJuridicoSerializer
     
 class empleadoViewSet(viewsets.ModelViewSet):
-    queryset = empleado.objects.all()
+    queryset = Empleado.objects.all()
     serializer_class = empleadoSerializer
     
 class bodegaViewSet(viewsets.ModelViewSet):
-    queryset = bodega.objects.all()
+    queryset = Bodega.objects.all()
     serializer_class = bodegaSerializer
     
 class productoViewSet(viewsets.ModelViewSet):
-    queryset = producto.objects.all()
+    queryset = Producto.objects.all()
     serializer_class = productoSerializer
     
+class precioproveedorproductoViewSet(viewsets.ModelViewSet):
+    queryset = PrecioProveedorProducto.objects.all()
+    serializer_class = PrecioProveedorProductoSerializer
+    
 class ventaViewSet(viewsets.ModelViewSet):
-    queryset = venta.objects.all()
+    queryset = Venta.objects.all()
     serializer_class = ventaSerializer
     
 class detalleventaViewSet(viewsets.ModelViewSet):
-    queryset = detalleventa.objects.all()
+    queryset = DetalleVenta.objects.all()
     serializer_class = detalleventaSerializer
     
 class proveedorViewSet(viewsets.ModelViewSet):
-    queryset = proveedor.objects.all()
+    queryset = Proveedor.objects.all()
     serializer_class = proveedorSerializer
     
 class detalleproveedorViewSet(viewsets.ModelViewSet):
-    queryset = detalleproveedor.objects.all()
+    queryset = DetalleProveedor.objects.all()
     serializer_class = detalleproveedorSerializer
