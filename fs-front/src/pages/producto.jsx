@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Inventario } from '../components/inventario'
+import {Tabla} from '../components/tabla'
 
 function producto (){
     return (
@@ -9,7 +9,7 @@ function producto (){
                     Agregar Producto
                 </h1>
             </Link>
-            <Inventario/>
+            <Tabla />
         </div>
     )
 }
