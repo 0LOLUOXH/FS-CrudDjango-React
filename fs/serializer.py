@@ -60,3 +60,8 @@ class detalleproveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetalleProveedor        
         fields = ('id', 'proveedor', 'producto', 'tipocomprobante', 'metododepago', 'numerocomprobante', 'fecha', 'totalapagar', 'cantidad')
+
+class promocionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Promocion
+        fields = ('id', 'nombre', 'descripcion', 'tipo_descuento', 'valor_descuento', 'fecha_inicio', 'fecha_fin', 'productos', 'activo')

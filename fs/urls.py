@@ -11,11 +11,12 @@ router.register(r'clientejuridico', clientejuridicoViewSet)
 router.register(r'empleado', empleadoViewSet)
 router.register(r'bodega', bodegaViewSet)
 router.register(r'producto', productoViewSet)
-router.register(r'precioproveedorproductoViewSet', precioproveedorproductoViewSet)
+router.register(r'precioproveedorproducto', precioproveedorproductoViewSet)
 router.register(r'venta', ventaViewSet)
 router.register(r'detalleventa', detalleventaViewSet)
 router.register(r'proveedor', proveedorViewSet)
 router.register(r'detalleproveedor', detalleproveedorViewSet)   
+router.register(r'promocion', promocionViewSet)
 
 urlpatterns = [
     path('apibd/v1/', include(router.urls)),   

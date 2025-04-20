@@ -50,3 +50,7 @@ class proveedorViewSet(viewsets.ModelViewSet):
 class detalleproveedorViewSet(viewsets.ModelViewSet):
     queryset = DetalleProveedor.objects.all()
     serializer_class = detalleproveedorSerializer
+    
+class promocionViewSet(viewsets.ModelViewSet):
+    queryset = Promocion.objects.all()
+    serializer_class = promocionSerializer  

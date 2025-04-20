@@ -162,3 +162,20 @@ class DetalleProveedor(models.Model):
 
     def __str__(self):
         return self.producto.nombre
+
+class Promocion(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    TIPO_DESCUENTO = [
+        ("porcentaje", "Porcentaje"),
+        ("monto", "Monto"),
+    ]
+    tipo_descuento = models.CharField(max_length=10, choices=TIPO_DESCUENTO)
+    valor_descuento = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    activo = models.BooleanField(default=True)
+    productos = models.ForeignKey(Producto, related_name='promociones', blank=True,  on_delete=models.CASCADE)
+
+    def str(self):
+        return self.nombre

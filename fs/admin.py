@@ -54,3 +54,7 @@ class Proveedoradmin(admin.ModelAdmin):
 @admin.register(DetalleProveedor)
 class DetalleProveedoradmin(admin.ModelAdmin):
     list_display = ('id','proveedor', 'producto', 'fecha', 'totalapagar', 'tipocomprobante', 'metododepago', 'numerocomprobante', 'cantidad')
+    
+@admin.register(Promocion)    
+class Promocionadmin(admin.ModelAdmin):
+    list_display = ('id','nombre', 'descripcion', 'tipo_descuento', 'valor_descuento', 'fecha_inicio', 'fecha_fin', 'activo', 'productos')
