@@ -47,7 +47,7 @@ const options = {
   filterType: 'checkbox',
 };
 
-
+w
 
 export function Tabla() {    
     return (

@@ -17,11 +17,15 @@ class Modeloadmin(admin.ModelAdmin):
     
 @admin.register(Cliente)
 class Clienteadmin(admin.ModelAdmin):
-    list_display = ('id','identificacion', 'nombre', 'apellido', 'telefono')
+    list_display = ('id','tipo', 'telefono')
 
 @admin.register(ClienteJuridico)
 class ClienteJuridicoadmin(admin.ModelAdmin):
-    list_display = ('id','cliente', 'razon_social')
+    list_display = ('cliente', 'razon_social', 'ruc')
+
+@admin.register(ClienteNatural)
+class ClienteNaturaladmin(admin.ModelAdmin):
+    list_display = ('cliente', 'nombre', 'apellido', 'cedula')
     
 @admin.register(Empleado)
 class Empleadoadmin(admin.ModelAdmin):
@@ -29,23 +33,23 @@ class Empleadoadmin(admin.ModelAdmin):
     
 @admin.register(Bodega)
 class Bodegaadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'estado', 'capacidad', 'idempleado')
+    list_display = ('id','nombre', 'estado', 'capacidad', 'empleado')
     
 @admin.register(Producto)
 class Productoadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad', 'fechadeactualizacion')
+    list_display = ('id','nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad')
 
 @admin.register(PrecioProveedorProducto)
 class PrecioProveedorProductoadmin(admin.ModelAdmin):
-    list_display = ('id','producto', 'proveedor', 'precio', 'ganancia', 'iva', 'fecha_actualizacion')
+    list_display = ('id','producto', 'proveedor', 'precio', 'iva')
     
 @admin.register(Venta)
 class Ventadmin(admin.ModelAdmin):
-    list_display = ('id','fecha', 'cliente', 'empleado', 'totalapagar', 'metododepago', 'instalacion', 'direccion')
+    list_display = ('id','fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'direccion')
     
 @admin.register(DetalleVenta)
 class DetalleVentaadmin(admin.ModelAdmin):
-    list_display = ('id','venta', 'producto', 'cantidadporproducto')
+    list_display = ('id','venta', 'producto', 'cantidad_por_producto')
     
 @admin.register(Proveedor)
 class Proveedoradmin(admin.ModelAdmin):
@@ -53,8 +57,5 @@ class Proveedoradmin(admin.ModelAdmin):
     
 @admin.register(DetalleProveedor)
 class DetalleProveedoradmin(admin.ModelAdmin):
-    list_display = ('id','proveedor', 'producto', 'fecha', 'totalapagar', 'tipocomprobante', 'metododepago', 'numerocomprobante', 'cantidad')
+    list_display = ('id','proveedor', 'producto', 'fecha', 'total_a_pagar', 'tipo_comprobante', 'metodo_de_pago', 'numero_comprobante', 'cantidad')
     
-@admin.register(Promocion)    
-class Promocionadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'descripcion', 'tipo_descuento', 'valor_descuento', 'fecha_inicio', 'fecha_fin', 'activo', 'productos')

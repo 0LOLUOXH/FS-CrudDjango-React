@@ -1,6 +1,12 @@
 from rest_framework import serializers
 from .models import *
 
+class userSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'date_joined')
+
+
 class marcaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marca
@@ -60,8 +66,3 @@ class detalleproveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetalleProveedor        
         fields = ('id', 'proveedor', 'producto', 'tipocomprobante', 'metododepago', 'numerocomprobante', 'fecha', 'totalapagar', 'cantidad')
-
-class promocionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Promocion
-        fields = ('id', 'nombre', 'descripcion', 'tipo_descuento', 'valor_descuento', 'fecha_inicio', 'fecha_fin', 'productos', 'activo')
