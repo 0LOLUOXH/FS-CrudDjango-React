@@ -2,7 +2,7 @@ import React from 'react'
 import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Navegation } from './components/navegation'
-//import './app.css'
+import './app.css'
 
 const pages = [
   { path: '/', component: lazy(() => import('./pages/inicio')) },
