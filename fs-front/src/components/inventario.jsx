@@ -26,7 +26,7 @@ export function Inventario (){
                     <p>{producto.preciounitario}</p>
                     <hr />
                 </div>
-            ))}
+            ))} 
 
         </div>
     )

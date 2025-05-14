@@ -19,6 +19,10 @@ class clientejuridicoViewSet(viewsets.ModelViewSet):
     queryset = ClienteJuridico.objects.all()
     serializer_class = clienteJuridicoSerializer
     
+class clienteNaturalViewSet(viewsets.ModelViewSet):
+    queryset = ClienteNatural.objects.all()
+    serializer_class = ClienteNaturalSerializer
+    
 class empleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all()
     serializer_class = empleadoSerializer
@@ -31,6 +35,10 @@ class productoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = productoSerializer
     
+class stockViewSet(viewsets.ModelViewSet):
+    queryset = Stock.objects.all()
+    serializer_class = stockSerializer
+
 class precioproveedorproductoViewSet(viewsets.ModelViewSet):
     queryset = PrecioProveedorProducto.objects.all()
     serializer_class = PrecioProveedorProductoSerializer

@@ -39,6 +39,10 @@ class Bodegaadmin(admin.ModelAdmin):
 class Productoadmin(admin.ModelAdmin):
     list_display = ('id','nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad')
 
+@admin.register(Stock)
+class Stockadmin(admin.ModelAdmin):
+    list_display = ('producto', 'precio_venta')
+
 @admin.register(PrecioProveedorProducto)
 class PrecioProveedorProductoadmin(admin.ModelAdmin):
     list_display = ('id','producto', 'proveedor', 'precio', 'iva')

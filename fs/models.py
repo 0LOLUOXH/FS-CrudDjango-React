@@ -68,7 +68,7 @@ class Bodega(models.Model):
 # ============================
 TIPO_CLIENTE = [
     ('N', 'Natural'),
-    ('J', 'JurÃ­dico'),
+    ('J', 'Jurídico'),
 ]
 
 class Cliente(models.Model):
@@ -122,13 +122,6 @@ class Producto(models.Model):
     def __str__(self):
         return self.nombre
 
-class Stock(models.Model):
-    producto    = models.OneToOneField(Producto, on_delete=models.CASCADE, primary_key=True, related_name='stock')
-    precio_venta= models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.producto.nombre} - {self.precio_venta}"
-
 class PrecioProveedorProducto(models.Model):
     precio    = models.DecimalField(max_digits=10, decimal_places=2)
     iva       = models.DecimalField(max_digits=5,  decimal_places=2)
@@ -138,7 +131,12 @@ class PrecioProveedorProducto(models.Model):
     def __str__(self):
         return f"{self.producto.nombre} - {self.proveedor.nombre} @ {self.precio}"
 
+class Stock(models.Model):
+    producto    = models.OneToOneField(PrecioProveedorProducto, on_delete=models.CASCADE, primary_key=True, related_name='stock')
+    precio_venta= models.DecimalField(max_digits=10, decimal_places=2)
 
+    def __str__(self):
+        return f"{self.producto.nombre} - {self.precio_venta}"
 # ============================
 # Ventas
 # ============================

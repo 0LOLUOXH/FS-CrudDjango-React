@@ -11,6 +11,7 @@ export function Navegation (){
             <Link to="/compras">Compras</Link>
             <Link to="/ventas">Ventas</Link>
             <Link to="/producto">producto</Link>
+            <Link to="/clientes">Clientes</Link>
         </div>
     )
 }
