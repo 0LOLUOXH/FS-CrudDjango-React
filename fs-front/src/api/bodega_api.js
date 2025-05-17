@@ -34,7 +34,7 @@ export const createBodega = async (bodega) => {
 
 export const updateBodega = async (id, bodega) => {
     try {
-        const response = await axios.put(`${API_URL}${id}`, bodega);
+        const response = await axios.put(`${API_URL}${id}/`, bodega);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar la bodega:', error);

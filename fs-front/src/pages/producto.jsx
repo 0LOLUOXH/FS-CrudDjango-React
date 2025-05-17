@@ -1,17 +1,15 @@
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import {Tabla} from '../components/tabla'
 import { Inventario } from '../components/inventario'
+import { IngresarProducto } from '../components/ingresarproducto'
+
+//<Inventario />
+//<Tabla />
 
 function producto (){
     return (
         <div>
-            <Link to="/addproducto">
-                <h1 class="bg-indigo-600 hover:not-focus:bg-indigo-700">
-                    Agregar Producto
-                </h1>
-            </Link>
-            <Tabla />
-            <Inventario />
+            <IngresarProducto />
         </div>
     )
 }

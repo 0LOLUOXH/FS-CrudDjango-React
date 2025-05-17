@@ -3,7 +3,7 @@ import { ModeloSelect } from '../components/modelosandmarca';
 import { createProducto } from '../api/producto_api';
 import { fetchBodegas } from '../api/bodega_api';
 
-const AddProducto = () => {
+export function IngresarProducto (){
 
     async function upproducto(producto) {
         const res = await createProducto(producto);
@@ -24,18 +24,10 @@ const AddProducto = () => {
     const [producto, setProducto] = useState({
         nombre: '',
         modeloandmarca: '', 
-        preciounitario: '',
-        ganancia: '',
-        iva: '',
         codigobodega: '',
         descripcion: '',
         cantidad: '',
     });
-
-    const calcularIVA = (precio, ganancia) => {
-        const subtotal = parseFloat(precio || 0) + parseFloat(ganancia || 0);
-        return (subtotal * 0.15).toFixed(2); // IVA del 15%
-    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -47,13 +39,6 @@ const AddProducto = () => {
         if (name === 'bodega') {
             console.log('cambio de bodega')
             nuevoProducto.bodega = e.target.value
-        }
-
-        if (name === 'precio_unitario' || name === 'ganancia') {
-            nuevoProducto.iva = calcularIVA(
-                name === 'precio_unitario' ? value : producto.precio_unitario,
-                name === 'ganancia' ? value : producto.ganancia
-            );
         }
         
         setProducto(nuevoProducto);
@@ -76,9 +61,6 @@ const AddProducto = () => {
 
         const productoParaEnviar = {
             ...producto,
-            preciounitario: Number(producto.precio_unitario),
-            ganancia: Number(producto.ganancia),
-            iva: Number(producto.iva),
             cantidad: Number(producto.cantidad),
             modeloandmarca: Number(producto.modelo),
             codigobodega: Number(producto.bodega),
@@ -93,9 +75,6 @@ const AddProducto = () => {
         setProducto({
             nombre: '',
             modeloandmarca: '', 
-            preciounitario: '',
-            ganancia: '',
-            iva: '',
             codigobodega: '',
             descripcion: '',
             cantidad: '',
@@ -114,42 +93,6 @@ const AddProducto = () => {
                         value={producto.nombre}
                         onChange={handleChange}
                         required
-                    />
-                </div>
-                
-                <div className="form-group">
-                    <label>Precio Unitario:</label>
-                    <input
-                        type="number"
-                        name="precio_unitario"
-                        value={producto.precio_unitario}
-                        onChange={handleChange}
-                        required
-                        min="0"
-                        step="0.01"
-                    />
-                </div>
-                
-                <div className="form-group">
-                    <label>Ganancia:</label>
-                    <input
-                        type="number"
-                        name="ganancia"
-                        value={producto.ganancia}
-                        onChange={handleChange}
-                        required
-                        min="0"
-                        step="0.01"
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>IVA (15%):</label>
-                    <input
-                        type="text"
-                        name="iva"
-                        value={producto.iva || '0.00'}
-                        readOnly
                     />
                 </div>
 
@@ -196,11 +139,9 @@ const AddProducto = () => {
                 </div>
 
                 <button type="submit" >
-                    Agregar Producto
+                    Agregar producto
                 </button>
             </form>
         </div>
     );
 };
-
-export default AddProducto;

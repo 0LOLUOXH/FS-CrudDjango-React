@@ -11,7 +11,6 @@ const pages = [
   { path: '/producto', component: lazy(() => import('./pages/producto')) }, 
   { path: '/clientes', component: lazy(() => import('./pages/clientes')) }, 
   { path: '/bodega', component: lazy(() => import('./pages/bodega')) }, 
-  { path: '/addproducto', component: lazy(() => import('./pages/addproducto')) }, 
   { path: '/proveedores', component: lazy(() => import('./pages/proveedores')) }, 
   { path: '/empleados', component: lazy(() => import('./pages/empleados')) }, 
   { path: '/inventario', component: lazy(() => import('./pages/inventario')) }, 
