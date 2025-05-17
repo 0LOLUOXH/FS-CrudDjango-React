@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { createCliente, createClienteJuridico, createClienteNatural } from '../api/clientes_api'
+
 
 export function Ingresar_Cliente() {
     const [tipoCliente, setTipoCliente] = useState('natural');
@@ -47,15 +49,48 @@ export function Ingresar_Cliente() {
         });
     };
 
-    const handleSubmit = (e) => {
+    async function handleSubmit (e) {
         e.preventDefault();
         
         if (tipoCliente === 'natural') {
-            console.log('Cliente Natural enviado:', clienteNatural);
+
+            const res = await createCliente({
+                'tipo': 'N',
+                'telefono': clienteNatural.telefono});
+
+            console.log('res', res);
+
+            if (res) {
+                console.log('Cliente creado:', res.id);
+                const response =await createClienteNatural({
+                    'cliente': res.id,
+                    'nombre': clienteNatural.nombre,
+                    'apellido': clienteNatural.apellido,
+                    'cedula': clienteNatural.cedula,
+                });
+
+                console.log('Cliente Natural creado:', response);
+            }
+
             // Aquí puedes enviar los datos a tu API
             limpiarFormularios();
         } else {
-            console.log('Cliente Jurídico enviado:', clienteJuridico);
+            const res = await createCliente({
+                'tipo': 'J',
+                'telefono': clienteJuridico.telefono});
+
+            console.log('res', res);
+
+            if (res) {
+                console.log('Cliente creado:', res.id);
+                const response =await createClienteJuridico({
+                    'cliente': res.id,
+                    'razon_social': clienteJuridico.razon_social,
+                    'ruc': clienteJuridico.ruc,
+                });
+
+                console.log('Cliente Natural creado:', response);
+            }
             // Aquí puedes enviar los datos a tu API
             limpiarFormularios();
         }

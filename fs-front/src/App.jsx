@@ -10,6 +10,7 @@ const pages = [
   { path: '/ventas', component: lazy(() => import('./pages/ventas')) },
   { path: '/producto', component: lazy(() => import('./pages/producto')) }, 
   { path: '/clientes', component: lazy(() => import('./pages/clientes')) }, 
+  { path: '/bodega', component: lazy(() => import('./pages/bodega')) }, 
   { path: '/addproducto', component: lazy(() => import('./pages/addproducto')) }, 
   // Agrega más rutas
 ];

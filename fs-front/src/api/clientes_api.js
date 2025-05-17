@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:8000/fs/apibd/v1/cliente/';
+const API_URL_NATURAL = 'http://localhost:8000/fs/apibd/v1/clientenatural/';
+const API_URL_JURIDICO = 'http://localhost:8000/fs/apibd/v1/clientejuridico/';
 
 export const fetchClientes = async () => {
     try {
@@ -52,9 +54,19 @@ export const deleteCliente = async (id) => {
     }
 };                        
 
+export const fetchClientesJuridicos = async () => {
+    try {
+        const response = await axios.get(API_URL_JURIDICO);
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener los clientes:', error);
+        throw error;
+    }
+}; 
+
 export const fetchClienteJuridico = async (id) => {
     try {
-        const response = await axios.get(`${API_URL}juridico/${id}`);
+        const response = await axios.get(`${API_URL_JURIDICO}/${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al obtener el cliente juridico:', error);
@@ -64,7 +76,7 @@ export const fetchClienteJuridico = async (id) => {
 
 export const createClienteJuridico = async (clienteJuridico) => {
     try {
-        const response = await axios.post(`${API_URL}juridico`, clienteJuridico);
+        const response = await axios.post(`${API_URL_JURIDICO}`, clienteJuridico);
         return response.data;
     } catch (error) {
         console.error('Error al crear el cliente juridico:', error);
@@ -74,7 +86,7 @@ export const createClienteJuridico = async (clienteJuridico) => {
 
 export const updateClienteJuridico = async (id, clienteJuridico) => {
     try {
-        const response = await axios.put(`${API_URL}juridico/${id}`, clienteJuridico);
+        const response = await axios.put(`${API_URL_JURIDICO}/${id}`, clienteJuridico);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar el cliente juridico:', error);
@@ -84,7 +96,7 @@ export const updateClienteJuridico = async (id, clienteJuridico) => {
 
 export const deleteClienteJuridico = async (id) => {
     try {
-        const response = await axios.delete(`${API_URL}juridico/${id}`);
+        const response = await axios.delete(`${API_URL_JURIDICO}/${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al eliminar el cliente juridico:', error);
@@ -92,9 +104,19 @@ export const deleteClienteJuridico = async (id) => {
     }
 };
 
+export const fetchClientesNaturales = async () => {
+    try {
+        const response = await axios.get(API_URL_NATURAL);
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener los clientes:', error);
+        throw error;
+    }
+}; 
+
 export const fetchClienteNatural = async (id) => {
     try {
-        const response = await axios.get(`${API_URL}natural/${id}`);
+        const response = await axios.get(`${API_URL_NATURAL}/${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al obtener el cliente natural:', error);
@@ -104,7 +126,7 @@ export const fetchClienteNatural = async (id) => {
 
 export const createClienteNatural = async (clienteNatural) => {
     try {
-        const response = await axios.post(`${API_URL}natural`, clienteNatural);
+        const response = await axios.post(`${API_URL_NATURAL}`, clienteNatural);
         return response.data;
     } catch (error) {
         console.error('Error al crear el cliente natural:', error);
@@ -114,7 +136,7 @@ export const createClienteNatural = async (clienteNatural) => {
 
 export const updateClienteNatural = async (id, clienteNatural) => {
     try {
-        const response = await axios.put(`${API_URL}natural/${id}`, clienteNatural);
+        const response = await axios.put(`${API_URL_NATURAL}/${id}`, clienteNatural);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar el cliente natural:', error);
@@ -124,7 +146,7 @@ export const updateClienteNatural = async (id, clienteNatural) => {
 
 export const deleteClienteNatural = async (id) => {
     try {
-        const response = await axios.delete(`${API_URL}natural/${id}`);
+        const response = await axios.delete(`${API_URL_NATURAL}/${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al eliminar el cliente natural:', error);

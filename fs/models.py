@@ -57,7 +57,7 @@ class Bodega(models.Model):
     nombre    = models.CharField(max_length=100)
     estado    = models.BooleanField()
     capacidad = models.IntegerField()
-    empleado  = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='bodegas', default=None)
+    empleado  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bodegas', default=None)
 
     def __str__(self):
         return self.nombre

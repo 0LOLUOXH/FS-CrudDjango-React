@@ -23,14 +23,18 @@ class clienteSerializer(serializers.ModelSerializer):
         fields = ('id', 'tipo', 'telefono')
         
 class clienteJuridicoSerializer(serializers.ModelSerializer):
+    telefono = serializers.CharField(source='cliente.telefono', read_only=True)
+    
     class Meta:
         model = ClienteJuridico
-        fields = ('cliente', 'razon_social', 'ruc')
+        fields = ('cliente', 'razon_social', 'ruc', 'telefono')
         
 class ClienteNaturalSerializer(serializers.ModelSerializer):
+    telefono = serializers.CharField(source='cliente.telefono', read_only=True)
+
     class Meta:
         model = ClienteNatural
-        fields = ('cliente', 'nombre', 'apellido', 'cedula')
+        fields = ('cliente', 'nombre', 'apellido', 'cedula', 'telefono')
         
 class empleadoSerializer(serializers.ModelSerializer):
     class Meta:
