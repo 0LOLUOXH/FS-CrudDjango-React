@@ -44,7 +44,11 @@ export function Navegation() {
               strokeWidth={1.5}
               className="h-6 w-6"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+              />
             </svg>
           </button>
 
@@ -58,7 +62,7 @@ export function Navegation() {
           </div>
         </div>
 
-        {/* CENTRO: título */}  
+        {/* CENTRO: título */}
         <div className="absolute left-1/2 transform -translate-x-1/2 text-lg font-semibold text-[#FEBA53]">
           {currentPage}
         </div>
@@ -84,7 +88,11 @@ export function Navegation() {
                 strokeWidth={2}
                 className="h-4 w-4"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
             {userMenuOpen && (
@@ -106,7 +114,9 @@ export function Navegation() {
       {/* Overlay */}
       <div
         className={`fixed inset-0 z-30 transition-all duration-300 ${
-          open ? "backdrop-blur-sm bg-black/30 pointer-events-auto" : "pointer-events-none bg-transparent"
+          open
+            ? "backdrop-blur-sm bg-black/30 pointer-events-auto"
+            : "pointer-events-none bg-transparent"
         }`}
         aria-hidden="true"
       />
@@ -142,7 +152,11 @@ export function Navegation() {
               strokeWidth={1.5}
               className="h-6 w-6"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5"
+              />
             </svg>
           </button>
         </div>
@@ -192,6 +206,61 @@ export function Navegation() {
             onClick={() => setOpen(false)}
           >
             Clientes
+          </Link>
+          <Link
+            to="/bodega"
+            className={`${linkBase} ${
+              location.pathname === "/bodega" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Bodega
+          </Link>
+          <Link
+            to="/proveedores"
+            className={`${linkBase} ${
+              location.pathname === "/proveedores" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Proveedor
+          </Link>
+          
+          <Link
+            to="/empleados"
+            className={`${linkBase} ${
+              location.pathname === "/empleados" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Empleados
+          </Link>
+          <Link
+            to="/inventario"
+            className={`${linkBase} ${
+              location.pathname === "/inventario" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            inventario
+          </Link>
+          <Link
+            to="/historialventa"
+            className={`${linkBase} ${
+              location.pathname === "/historialventa" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            registro de ventas
+          </Link>
+          <Link
+            to="/historialcompra"
+            className={`${linkBase} ${
+              location.pathname === "/historialcompra" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            registro de compras
           </Link>
         </nav>
       </div>

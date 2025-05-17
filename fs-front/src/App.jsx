@@ -12,6 +12,11 @@ const pages = [
   { path: '/clientes', component: lazy(() => import('./pages/clientes')) }, 
   { path: '/bodega', component: lazy(() => import('./pages/bodega')) }, 
   { path: '/addproducto', component: lazy(() => import('./pages/addproducto')) }, 
+  { path: '/proveedores', component: lazy(() => import('./pages/proveedores')) }, 
+  { path: '/empleados', component: lazy(() => import('./pages/empleados')) }, 
+  { path: '/inventario', component: lazy(() => import('./pages/inventario')) }, 
+  { path: '/historialventa', component: lazy(() => import('./pages/historialventa')) }, 
+  { path: '/historialcompra', component: lazy(() => import('./pages/historialcompra')) }, 
   // Agrega más rutas
 ];
 
