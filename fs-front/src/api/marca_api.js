@@ -34,7 +34,7 @@ export const createMarca = async (marca) => {
 
 export const updateMarca = async (id, marca) => {
     try {
-        const response = await axios.put(`${API_URL}${id}`, marca);
+        const response = await axios.put(`${API_URL}${id}/`, marca);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar la marca:', error);

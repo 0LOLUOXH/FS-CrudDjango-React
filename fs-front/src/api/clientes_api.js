@@ -96,7 +96,7 @@ export const updateClienteJuridico = async (id, clienteJuridico) => {
 
 export const deleteClienteJuridico = async (id) => {
     try {
-        const response = await axios.delete(`${API_URL_JURIDICO}/${id}`);
+        const response = await axios.delete(`${API_URL_JURIDICO}${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al eliminar el cliente juridico:', error);
@@ -146,7 +146,7 @@ export const updateClienteNatural = async (id, clienteNatural) => {
 
 export const deleteClienteNatural = async (id) => {
     try {
-        const response = await axios.delete(`${API_URL_NATURAL}/${id}`);
+        const response = await axios.delete(`${API_URL_NATURAL}${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al eliminar el cliente natural:', error);

@@ -34,7 +34,7 @@ export const createModelo = async (modelo) => {
 
 export const updateModelo = async (id, modelo) => {
     try {
-        const response = await axios.put(`${API_URL}${id}`, modelo);
+        const response = await axios.put(`${API_URL}${id}/`, modelo);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar el modelo:', error);

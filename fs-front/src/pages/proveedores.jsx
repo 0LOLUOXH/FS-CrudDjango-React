@@ -92,7 +92,7 @@ function Proveedores() {
 
             {/* Edit Popup */}
             {isPopupOpen && (
-                <div className="popup-overlay">
+                <div className="popup-overlay backdrop-blur-sm bg-black/30">
                     <div className="popup-content">
                         <h2>Editar Proveedor</h2>
                         <form onSubmit={handleFormSubmit}>

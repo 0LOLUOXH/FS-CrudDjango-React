@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ModeloSelect } from '../components/modelosandmarca';
 import { createProducto } from '../api/producto_api';
 import { fetchBodegas } from '../api/bodega_api';
+import { useNavigate } from 'react-router-dom';
 
 export function IngresarProducto (){
 
+    const navegation = useNavigate();
+
     async function upproducto(producto) {
         const res = await createProducto(producto);
+        navegation('/inventario')
         console.log('res', res);
     }
 
@@ -131,9 +135,7 @@ export function IngresarProducto (){
                     >
                     <option value="">Seleccione una Bodega</option>
                     {Bodegas.map((bodega) => (
-                        <option key={`bodega-${bodega.id}`} value={bodega.id}>
-                            {bodega.nombre}
-                        </option>
+                        bodega.estado? <option key={`bodega-${bodega.id}`} value={bodega.id}>    {bodega.nombre}</option> : null    
                     ))}
                 </select>
                 </div>

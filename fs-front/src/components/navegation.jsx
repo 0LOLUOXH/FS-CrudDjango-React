@@ -11,6 +11,7 @@ export function Navegation() {
     "/compras": "Compras",
     "/ventas": "Ventas",
     "/producto": "Producto",
+    "/marcasymodelos": "Marcas y Modelos",
     "/clientes": "Clientes",
     "/bodega": "Bodega",
     "/proveedores": "Proveedor",
@@ -170,6 +171,17 @@ export function Navegation() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v18" />
             </svg>
             Producto
+          </Link>
+          <Link
+            to="/marcasymodelos"
+            className={`${linkBase} ${location.pathname === "/marcasymodelos" ? linkActive : linkInactive}`}
+            onClick={() => setOpen(false)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-5 w-5 mr-3 text-[#FEBA53]">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4v11a1 1 0 001 1l7-4 7 4a1 1 0 001-1V7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v18" />
+            </svg>
+            Marcas y Modelos
           </Link>
           <Link
             to="/clientes"

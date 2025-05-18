@@ -9,6 +9,7 @@ const pages = [
   { path: '/compras', component: lazy(() => import('./pages/compras')) },
   { path: '/ventas', component: lazy(() => import('./pages/ventas')) },
   { path: '/producto', component: lazy(() => import('./pages/producto')) }, 
+  { path: '/marcasymodelos', component: lazy(() => import('./pages/marcasymodelos')) }, 
   { path: '/clientes', component: lazy(() => import('./pages/clientes')) }, 
   { path: '/bodega', component: lazy(() => import('./pages/bodega')) }, 
   { path: '/proveedores', component: lazy(() => import('./pages/proveedores')) }, 
