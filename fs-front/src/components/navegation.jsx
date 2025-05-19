@@ -271,14 +271,16 @@ export function Navegation() {
               >
                 Bodega
               </Link>
+
               <Link
-                to="/inventario"
+                to="/stock"
                 className={`${linkBase} ${location.pathname === "/inventario" ? linkActive : linkInactive} ml-6`}
                 onClick={() => setOpen(false)}
               >
-                Inventario
+                Stock
               </Link>
-              <span className={`${linkBase} ml-6`}>Stock</span>
+              
+            
             </div>
           </div>
 
