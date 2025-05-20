@@ -62,3 +62,86 @@ class detalleproveedorViewSet(viewsets.ModelViewSet):
 class userViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = userSerializer
+    
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
+from .serializer import LoginSerializer, userSerializer
+from django.core.cache import cache
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        attempts = cache.get(f"login_attempts_{username}", 0)
+        
+        if attempts >= 3:
+            return Response({'error': 'Maximum login attempts exceeded.'}, status=403)
+        
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            cache.delete(f"login_attempts_{username}")
+            return Response(userSerializer(serializer.validated_data).data)
+        else:
+            cache.set(f"login_attempts_{username}", attempts + 1, timeout=300)
+            return Response(serializer.errors, status=400)
+
+class PasswordResetView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        user = User.objects.filter(email=email).first()
+        if user:
+            token = get_random_string(32)
+            cache.set(f"password_reset_token_{token}", user.username, timeout=15*60)  # 15 min
+            # Aquí guardar token si se requiere validación
+            send_mail(
+                'Password Reset',
+                f'Click the link to reset your password: http://localhost:5173/reset-password/{token}',
+                'mAlbertOrtega@gmail.com',
+                [email],
+                fail_silently=False
+            )
+        return Response({'message': 'If email exists, reset link was sent.'})
+    
+#class PasswordResetConfirmView(APIView):
+#   def post(self, request):
+#       token = request.data.get("token")
+#       new_password = request.data.get("password")
+#
+#       username = cache.get(f"password_reset_token_{token}")
+#       if not username:
+#           return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+#
+#       user = User.objects.filter(username=username).first()
+#       if not user:
+#           return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+#
+#       user.set_password(new_password)
+#       user.save()
+
+        # Eliminar el token después de usarlo
+#       cache.delete(f"password_reset_token_{token}")
+
+#       return Response({"message": "Password has been reset successfully"})
+    
+token_store = {}
+    
+class PasswordChangeFromTokenView(APIView):
+    def post(self, request, token):
+        password = request.data.get('password')
+        # Aquí deberías buscar el usuario relacionado con el token
+        username = token_store.get(token)
+        if not username:
+            return Response({'error': 'Invalid or expired token'}, status=400)
+
+        user = User.objects.filter(username=username).first()
+        if user:
+            user.set_password(password)
+            user.save()
+            return Response({'message': 'Password changed successfully'})
+        return Response({'error': 'User not found'}, status=404)
