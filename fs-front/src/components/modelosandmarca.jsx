@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { fetchModelos } from '../api/modelo_api';
-import { fetchMarcas } from '../api/marca_api';
+import { fetchModelos } from '../api/modelo_api.js';
+import { fetchMarcas } from '../api/marca_api.js';
 
 export function ModeloSelect({ onModeloChange }) {
     const [modelos, setModelos] = useState([]);

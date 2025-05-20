@@ -79,4 +79,4 @@ export function IngresarModelo() {
             <hr />
         </div>
     )
-}   
+}
