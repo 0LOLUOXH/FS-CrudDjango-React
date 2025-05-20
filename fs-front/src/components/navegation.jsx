@@ -274,7 +274,7 @@ export function Navegation() {
 
               <Link
                 to="/stock"
-                className={`${linkBase} ${location.pathname === "/inventario" ? linkActive : linkInactive} ml-6`}
+                className={`${linkBase} ${location.pathname === "/stock" ? linkActive : linkInactive} ml-6`}
                 onClick={() => setOpen(false)}
               >
                 Stock
