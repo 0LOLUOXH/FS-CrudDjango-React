@@ -177,3 +177,7 @@ class DetalleProveedor(models.Model):
 
     def __str__(self):
         return f"Compra {self.id} - {self.proveedor.nombre}"
+    
+    
+
+     

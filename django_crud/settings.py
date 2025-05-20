@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'coreapi',
     'fs',
 ]
@@ -147,3 +148,14 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
+
+# settings.py
+
+# Configuración de email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # O tu proveedor de email
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'mAlbertOrtega@gmail.com'
+EMAIL_HOST_PASSWORD = 'ubhebotodobvwgvp'
+DEFAULT_FROM_EMAIL = 'mAlbertOrtega@gmail.com'

@@ -1,8 +1,11 @@
 import React from 'react'
 import { lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Navegation } from './components/navegation'
+import Login from './pages/login';
+import ResetPassword from './pages/resetPassword';
 import './app.css'
+import PasswordResetPage from './pages/PasswordResetPage';
 
 const pages = [
   { path: '/', component: lazy(() => import('./pages/inicio')) },
@@ -29,8 +32,13 @@ function App (){
         {pages.map(({ path, component: Component }) => (
           <Route key={path} path={path} element={<Component />} />
         ))}
+        <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password/:token" element={<PasswordResetPage />} />
       </Routes>
     </BrowserRouter>
+
+    
   )
 }
 
