@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.documentation import include_docs_urls
 from rest_framework import routers
 from .views import *
-from .views import LoginView, PasswordResetView, PasswordChangeFromTokenView
+from .views import LoginView, PasswordResetView, PasswordResetConfirmView
 
 router = routers.DefaultRouter()
 router.register(r'marca', marcaViewSet)
@@ -26,5 +26,5 @@ urlpatterns = [
     path('docs/', include_docs_urls(title='API BD', description='Documentación de la API BD')),
     path('login/', LoginView.as_view(), name='api_login'),
     path('reset-password/', PasswordResetView.as_view(), name='password_reset'),  
-    path('reset-password/<str:token>/', PasswordChangeFromTokenView.as_view(),),   
+    path('reset-password/<str:token>/', PasswordResetConfirmView.as_view(),),   
 ]

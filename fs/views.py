@@ -72,24 +72,40 @@ from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from .serializer import LoginSerializer, userSerializer
 from django.core.cache import cache
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class LoginView(APIView):
-    def post(self, request):
-        username = request.data.get('username')
-        attempts = cache.get(f"login_attempts_{username}", 0)
+    def post(self, request, *args, **kwargs):
+        serializer = LoginSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
         
-        if attempts >= 3:
-            return Response({'error': 'Maximum login attempts exceeded.'}, status=403)
-        
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            cache.delete(f"login_attempts_{username}")
-            return Response(userSerializer(serializer.validated_data).data)
-        else:
-            cache.set(f"login_attempts_{username}", attempts + 1, timeout=300)
-            return Response(serializer.errors, status=400)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'username': user.username,
+            'email': user.email
+        })
+
+#class LoginView(APIView):
+#    def post(self, request):
+#        username = request.data.get('username')
+#        attempts = cache.get(f"login_attempts_{username}", 0)
+#        
+#        if attempts >= 3:
+#            return Response({'error': 'Maximum login attempts exceeded.'}, status=403)
+#        
+#        serializer = LoginSerializer(data=request.data)
+#        if serializer.is_valid():
+#            cache.delete(f"login_attempts_{username}")
+#            return Response(userSerializer(serializer.validated_data).data)
+#        else:
+#            cache.set(f"login_attempts_{username}", attempts + 1, timeout=300)
+#            return Response(serializer.errors, status=400)
 
 class PasswordResetView(APIView):
     def post(self, request):
@@ -131,17 +147,22 @@ class PasswordResetView(APIView):
     
 token_store = {}
     
-class PasswordChangeFromTokenView(APIView):
+# views.py
+class PasswordResetConfirmView(APIView):
     def post(self, request, token):
-        password = request.data.get('password')
-        # Aquí deberías buscar el usuario relacionado con el token
-        username = token_store.get(token)
+        username = cache.get(f"password_reset_token_{token}")
         if not username:
             return Response({'error': 'Invalid or expired token'}, status=400)
-
+        
         user = User.objects.filter(username=username).first()
-        if user:
-            user.set_password(password)
-            user.save()
-            return Response({'message': 'Password changed successfully'})
-        return Response({'error': 'User not found'}, status=404)
+        if not user:
+            return Response({'error': 'User not found'}, status=404)
+        
+        password = request.data.get('password')
+        user.set_password(password)
+        user.save()
+
+        cache.delete(f"password_reset_token_{token}")
+
+        return Response({'message': 'Password reset successful'})
+

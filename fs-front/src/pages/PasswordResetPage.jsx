@@ -10,7 +10,7 @@ export default function PasswordResetPage() {
   const handleReset = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`http://localhost:8000/fs/apibd/v1/reset-password/${token}/`, {
+      await axios.post(`http://localhost:8000/fs/reset-password/${token}/`, {
         password
       });
       setMessage('Password changed successfully!');

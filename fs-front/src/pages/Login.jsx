@@ -11,11 +11,27 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8000/fs/apibd/v1/login/', { username, password });
-      navigate('/clientes');
+      // Ajusta esta URL a tu backend de Django
+      const response = await fetch("http://localhost:8000/fs/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error al iniciar sesión");
+      }
+
+      // Manejar el token o la sesión según tu implementación
+      localStorage.setItem("token", data.token);
+      window.location.href = "/"; // Redirigir después del login
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-    }
+      setError(err.message || "Error al iniciar sesión. Inténtalo de nuevo.");
+    } 
   };
 
   return (
