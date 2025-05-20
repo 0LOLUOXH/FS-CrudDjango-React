@@ -1,6 +1,7 @@
+// src/pages/Clientes.jsx
 import React, { useEffect, useState } from 'react';
-import { 
-  fetchClientesNaturales, 
+import {
+  fetchClientesNaturales,
   fetchClientesJuridicos,
   updateClienteNatural,
   updateClienteJuridico,
@@ -22,380 +23,420 @@ export default function Clientes() {
     razon_social: '',
     ruc: ''
   });
-  const [editingClient, setEditingClient] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [editData, setEditData] = useState({ ...formData });
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    tipo: 'Natural',
-    nombre: '',
-    apellido: '',
-    cedula: '',
-    telefono: '',
-    razon_social: '',
-    ruc: ''
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Carga inicial
   useEffect(() => {
-    async function load() {
-      setNaturales(await fetchClientesNaturales());
-      setJuridicos(await fetchClientesJuridicos());
-    }
-    load();
+    (async () => {
+      setIsLoading(true);
+      try {
+        const [nat, jur] = await Promise.all([
+          fetchClientesNaturales(),
+          fetchClientesJuridicos()
+        ]);
+        setNaturales(nat);
+        setJuridicos(jur);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, []);
 
+  // Combina y filtra
   const allClients = [
     ...naturales.map(c => ({
       tipo: 'Natural',
       id: c.cliente,
-      nombre: c.nombre,
-      apellido: c.apellido,
-      cedula: c.cedula,
-      telefono: c.telefono,
-      rawData: c
+      nombre: `${c.nombre} ${c.apellido}`,
+      documento: c.cedula,
+      telefono: c.telefono
     })),
     ...juridicos.map(c => ({
       tipo: 'Juridico',
       id: c.cliente,
-      razon_social: c.razon_social,
-      ruc: c.ruc,
-      telefono: c.telefono,
-      rawData: c
+      nombre: c.razon_social,
+      documento: c.ruc,
+      telefono: c.telefono
     }))
-  ].filter(c => 
-    (c.tipo === 'Natural' 
-      ? `${c.nombre} ${c.apellido}`.toLowerCase() 
-      : c.razon_social.toLowerCase()
-    ).includes(search.toLowerCase())
+  ].filter(c =>
+    c.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    c.documento.includes(search)
   );
 
-  const handleEditClick = (client) => {
-    setEditingClient(client);
-    if (client.tipo === 'Natural') {
-      setEditFormData({
+  // Handlers formulario nuevo
+  const onChangeForm = e => {
+    const { name, value } = e.target;
+    setFormData(f => ({ ...f, [name]: value }));
+  };
+  const onSubmitForm = e => {
+    e.preventDefault();
+    // Aquí la lógica de creación...
+  };
+
+  // Preparar edición
+  const onEditClick = c => {
+    setEditing(c);
+    if (c.tipo === 'Natural') {
+      const [first = '', last = ''] = c.nombre.split(' ');
+      setEditData({
         tipo: 'Natural',
-        nombre: client.nombre,
-        apellido: client.apellido,
-        cedula: client.cedula,
-        telefono: client.telefono,
+        nombre: first,
+        apellido: last,
+        cedula: c.documento,
+        telefono: c.telefono,
         razon_social: '',
         ruc: ''
       });
     } else {
-      setEditFormData({
+      setEditData({
         tipo: 'Juridico',
         nombre: '',
         apellido: '',
         cedula: '',
-        telefono: client.telefono,
-        razon_social: client.razon_social,
-        ruc: client.ruc
+        telefono: c.telefono,
+        razon_social: c.nombre,
+        ruc: c.documento
       });
     }
+    setError(null);
     setIsEditOpen(true);
   };
 
-  const handleEditSubmit = async (e) => {
+  // Handlers edición
+  const onEditChange = e => {
+    const { name, value } = e.target;
+    setEditData(d => ({ ...d, [name]: value }));
+  };
+  const onEditSubmit = async e => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      if (editFormData.tipo === 'Natural') {
-        await updateClienteNatural(editingClient.id, {
-          nombre: editFormData.nombre,
-          apellido: editFormData.apellido,
-          cedula: editFormData.cedula,
-          telefono: editFormData.telefono
+      if (editData.tipo === 'Natural') {
+        await updateClienteNatural(editing.id, {
+          nombre: editData.nombre,
+          apellido: editData.apellido,
+          cedula: editData.cedula,
+          telefono: editData.telefono
         });
       } else {
-        await updateClienteJuridico(editingClient.id, {
-          razon_social: editFormData.razon_social,
-          ruc: editFormData.ruc,
-          telefono: editFormData.telefono
+        await updateClienteJuridico(editing.id, {
+          razon_social: editData.razon_social,
+          ruc: editData.ruc,
+          telefono: editData.telefono
         });
       }
-      
-      // Refresh data
       setNaturales(await fetchClientesNaturales());
       setJuridicos(await fetchClientesJuridicos());
       setIsEditOpen(false);
-    } catch (error) {
-      console.error('Error updating client:', error);
+    } catch {
+      setError('Error al actualizar');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleDeleteClick = async (id, tipo) => {
-    if (!window.confirm('¿Estás seguro de eliminar este cliente?')) return;
-    console.log('Deleting client with ID:', id);
-    
-    if (tipo === 'Natural') {
-      try {
+  // Eliminar
+  const onDeleteClick = async (id, tipo) => {
+    if (!window.confirm('¿Eliminar este cliente?')) return;
+    setIsLoading(true);
+    try {
+      if (tipo === 'Natural') {
         await deleteClienteNatural(id);
         await deleteCliente(id);
-        // Refresh data
-        const updatedClientes = await fetchClientesNaturales();
-        setNaturales(updatedClientes);
-      } catch (error) {
-        console.error('Error deleting client:', error);
-      }
-    } else {
-      try {
+        setNaturales(await fetchClientesNaturales());
+      } else {
         await deleteClienteJuridico(id);
         await deleteCliente(id);
-        // Refresh data
-        const updatedClientes = await fetchClientesJuridicos();
-        setJuridicos(updatedClientes);
-      } catch (error) {
-        console.error('Error deleting client:', error);
+        setJuridicos(await fetchClientesJuridicos());
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-100">
-      {/* Formulario en columna izquierda */}
-      <div className="w-1/2 bg-white rounded-lg shadow m-6 p-6 overflow-auto">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Ingresar Cliente</h2>
-        <div className="space-y-4">
-          <label className="block">
-            <span className="text-gray-700">Tipo de cliente</span>
+    <div className="
+      w-full px-4 sm:px-6 lg:px-8 py-6
+      grid grid-cols-1 lg:grid-cols-2 gap-6
+    ">
+      {/* === FORMULARIO === */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-2xl font-serif text-[#081A2D] mb-6">Ingresar Cliente</h2>
+        <form onSubmit={onSubmitForm} className="space-y-6">
+          <div className="space-y-1">
+            <label className="block text-gray-700">Tipo de cliente</label>
             <select
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
+              name="tipo"
               value={formData.tipo}
-              onChange={e => setFormData({ ...formData, tipo: e.target.value })}
+              onChange={onChangeForm}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
             >
               <option>Natural</option>
               <option>Juridico</option>
             </select>
-          </label>
+          </div>
+
           {formData.tipo === 'Natural' ? (
-            <>                
-              <label className="block">
-                <span className="text-gray-700">Nombre</span>
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-gray-700">Nombre</label>
+                  <input
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={onChangeForm}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-gray-700">Apellido</label>
+                  <input
+                    name="apellido"
+                    value={formData.apellido}
+                    onChange={onChangeForm}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-gray-700">Cédula</label>
                 <input
-                  type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
-                  value={formData.nombre}
-                  onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-700">Apellido</span>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
-                  value={formData.apellido}
-                  onChange={e => setFormData({ ...formData, apellido: e.target.value })}
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-700">Cédula</span>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
+                  name="cedula"
                   value={formData.cedula}
-                  onChange={e => setFormData({ ...formData, cedula: e.target.value })}
+                  onChange={onChangeForm}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
                 />
-              </label>
+              </div>
             </>
           ) : (
             <>
-              <label className="block">
-                <span className="text-gray-700">Razón Social</span>
+              <div className="space-y-1">
+                <label className="block text-gray-700">Razón Social</label>
                 <input
-                  type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
+                  name="razon_social"
                   value={formData.razon_social}
-                  onChange={e => setFormData({ ...formData, razon_social: e.target.value })}
+                  onChange={onChangeForm}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
                 />
-              </label>
-              <label className="block">
-                <span className="text-gray-700">RUC</span>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-gray-700">RUC</label>
                 <input
-                  type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
+                  name="ruc"
                   value={formData.ruc}
-                  onChange={e => setFormData({ ...formData, ruc: e.target.value })}
+                  onChange={onChangeForm}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
                 />
-              </label>
+              </div>
             </>
           )}
-          <label className="block">
-            <span className="text-gray-700">Teléfono</span>
+
+          <div className="space-y-1">
+            <label className="block text-gray-700">Teléfono</label>
             <input
-              type="text"
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-2"
+              name="telefono"
               value={formData.telefono}
-              onChange={e => setFormData({ ...formData, telefono: e.target.value })}
+              onChange={onChangeForm}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
             />
-          </label>
-          <button className="w-full bg-[#549ABE] text-white px-4 py-2 rounded-lg hover:bg-[#417887] transition">
-            Enviar
-          </button>
-        </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
+            >
+              Ingresar
+            </button>
+          </div>
+        </form>
       </div>
 
-      {/* Tabla y acciones en columna derecha */}
-      <div className="w-1/2 bg-white rounded-lg shadow m-6 p-6 flex flex-col">
-        <div className="flex items-center mb-4 space-x-4">
+      {/* === TABLA === */}
+      <div className="bg-white shadow rounded-lg p-6 overflow-x-auto">
+        <h2 className="font-serif text-[#081A2D] text-xl mb-4">Búsqueda Clientes</h2>
+        <div className="mb-4">
           <input
             type="text"
             placeholder="Buscar cliente..."
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#15608B]"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none font-serif"
           />
         </div>
-        
-        <div className="flex-1 overflow-auto">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-[#15608B] text-white">
-                <th className="px-4 py-2">ID</th>
-                <th className="px-4 py-2">Tipo</th>
-                <th className="px-4 py-2">Nombre / Razón</th>
-                <th className="px-4 py-2">Documento</th>
-                <th className="px-4 py-2">Teléfono</th>
-                <th className="px-4 py-2">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allClients.map(c => (
-                <tr key={c.id} className="border-b hover:bg-gray-100">
-                  <td className="px-4 py-2">{c.id}</td>
-                  <td className="px-4 py-2">{c.tipo}</td>
-                  <td className="px-4 py-2">
-                    {c.tipo === 'Natural' ? `${c.nombre} ${c.apellido}` : c.razon_social}
-                  </td>
-                  <td className="px-4 py-2">
-                    {c.tipo === 'Natural' ? c.cedula : c.ruc}
-                  </td>
-                  <td className="px-4 py-2">{c.telefono}</td>
-                  <td className="px-4 py-2">
-                    <button 
-                      onClick={() => handleEditClick(c)}
-                      className="text-[#15608B] hover:text-[#0e4a6b]"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteClick(c.id, c.tipo)}
-                      className="text-red-600 hover:text-red-800 ml-4"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">                        
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {['ID','Tipo','Nombre / Razón','Documento','Teléfono','Acciones'].map(h => (
+                <th
+                  key={h}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  {h}
+                </th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {allClients.map(c => (
+              <tr key={c.id}>
+                <td className="px-6 py-4 text-sm text-gray-700">{c.id}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{c.tipo}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{c.nombre}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{c.documento}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{c.telefono}</td>
+                <td className="px-6 py-4 text-right text-sm font-medium">
+                  <button
+                    onClick={() => onEditClick(c)}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => onDeleteClick(c.id, c.tipo)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {allClients.length === 0 && (
+              <tr>
+                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                  No se encontraron resultados
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Popup de edición */}
+      {/* === POPUP DE EDICIÓN === */}
       {isEditOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">
-              Editar Cliente {editingClient?.tipo}
-            </h2>
-            
-            <form onSubmit={handleEditSubmit}>
-              {editFormData.tipo === 'Natural' ? (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-xl font-serif text-[#081A2D] mb-4">Editar Cliente</h3>
+            {error && (
+              <div className="bg-red-100 text-red-800 p-2 rounded mb-4">
+                {error}
+              </div>
+            )}
+            <form onSubmit={onEditSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="block text-gray-700">Tipo de cliente</label>
+                <select
+                  name="tipo"
+                  value={editData.tipo}
+                  onChange={onEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
+                >
+                  <option>Natural</option>
+                  <option>Juridico</option>
+                </select>
+              </div>
+
+              {editData.tipo === 'Natural' ? (
                 <>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Nombre</label>
+                  <div className="space-y-1">
+                    <label className="block text-gray-700">Nombre</label>
                     <input
-                      type="text"
                       name="nombre"
-                      className="w-full border rounded-lg px-4 py-2"
-                      value={editFormData.nombre}
-                      onChange={handleEditChange}
+                      value={editData.nombre}
+                      onChange={onEditChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                       required
                     />
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Apellido</label>
+                  <div className="space-y-1">
+                    <label className="block text-gray-700">Apellido</label>
                     <input
-                      type="text"
                       name="apellido"
-                      className="w-full border rounded-lg px-4 py-2"
-                      value={editFormData.apellido}
-                      onChange={handleEditChange}
+                      value={editData.apellido}
+                      onChange={onEditChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                       required
                     />
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Cédula</label>
+                  <div className="space-y-1">
+                    <label className="block text-gray-700">Cédula</label>
                     <input
-                      type="text"
                       name="cedula"
-                      className="w-full border rounded-lg px-4 py-2"
-                      value={editFormData.cedula}
-                      onChange={handleEditChange}
+                      value={editData.cedula}
+                      onChange={onEditChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                       required
                     />
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Razón Social</label>
+                  <div className="space-y-1">
+                    <label className="block text-gray-700">Razón Social</label>
                     <input
-                      type="text"
                       name="razon_social"
-                      className="w-full border rounded-lg px-4 py-2"
-                      value={editFormData.razon_social}
-                      onChange={handleEditChange}
+                      value={editData.razon_social}
+                      onChange={onEditChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                       required
                     />
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">RUC</label>
+                  <div className="space-y-1">
+                    <label className="block text-gray-700">RUC</label>
                     <input
-                      type="text"
                       name="ruc"
-                      className="w-full border rounded-lg px-4 py-2"
-                      value={editFormData.ruc}
-                      onChange={handleEditChange}
+                      value={editData.ruc}
+                      onChange={onEditChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                       required
                     />
                   </div>
                 </>
               )}
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Teléfono</label>
+
+              <div className="space-y-1">
+                <label className="block text-gray-700">Teléfono</label>
                 <input
-                  type="text"
                   name="telefono"
-                  className="w-full border rounded-lg px-4 py-2"
-                  value={editFormData.telefono}
-                  onChange={handleEditChange}
+                  value={editData.telefono}
+                  onChange={onEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                   required
                 />
               </div>
-              
-              <div className="flex justify-end space-x-3">
+
+              <div className="flex justify-end space-x-3 mt-4">
                 <button
                   type="button"
                   onClick={() => setIsEditOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#15608B] text-white rounded-lg hover:bg-[#0e4a6b]"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
-                  Guardar Cambios
+                  Guardar
                 </button>
               </div>
             </form>
