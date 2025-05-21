@@ -43,7 +43,7 @@ export function Navegation() {
     navigate('/login');
   };
 
-
+  const { user } = useAuth();
   return (
     <>
       {/* Topbar */}
@@ -87,7 +87,7 @@ export function Navegation() {
               onClick={() => setUserMenuOpen(u => !u)}
               className="flex items-center space-x-1 focus:outline-none"
             >
-              <span className="text-[#FEBA53] font-semibold">Usuario</span>
+              <span className="text-[#FEBA53] font-semibold ">{user.username}</span>
               <img
                 src="https://www.w3schools.com/howto/img_avatar.png"
                 alt="Avatar usuario"

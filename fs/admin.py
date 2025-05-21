@@ -49,7 +49,7 @@ class PrecioProveedorProductoadmin(admin.ModelAdmin):
     
 @admin.register(Venta)
 class Ventadmin(admin.ModelAdmin):
-    list_display = ('id','fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'direccion')
+    list_display = ('id','fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'precio_instalacion', 'direccion')
     
 @admin.register(DetalleVenta)
 class DetalleVentaadmin(admin.ModelAdmin):

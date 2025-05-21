@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchProductos } from '../api/producto_api';
-import { fetchStocks, createStock } from '../api/stock_api';
+import { fetchStocks, createStock, updateStock, deleteStock } from '../api/stock_api';
 import { fetchPrecioProveedorProductos } from '../api/precioproveedorproducto_api';
 
 function Stock() {
@@ -13,6 +13,24 @@ function Stock() {
     const [precioFinal, setPrecioFinal] = useState(0);
     const [cantidadDisponible, setCantidadDisponible] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [editModal, setEditModal] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [currentStock, setCurrentStock] = useState(null);
+    const [nuevoPrecio, setNuevoPrecio] = useState(0);
+    const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    // Obtener productos con precios de proveedor que no estén ya en stock
+    const productosConPrecio = productos.filter(producto => 
+        preciosProveedor.some(pp => pp.producto === producto.id) &&
+        !stocks.some(stock => stock.producto === producto.id)
+    );
+
+    // Filtrar productos basados en el término de búsqueda
+    const filteredProductos = productosConPrecio.filter(producto =>
+        producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     useEffect(() => {
         const fetchData = async () => {
@@ -27,9 +45,6 @@ function Stock() {
                 setStocks(stocksData);
                 setPreciosProveedor(preciosData);
                 setLoading(false);
-                console.log('Productos:', productosData);
-                console.log('Stocks:', stocksData);
-                console.log('Precios:', preciosData);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 setLoading(false);
@@ -50,30 +65,34 @@ function Stock() {
         const precioProveedor = preciosProveedor.find(pp => pp.producto === parseInt(selectedProducto));
         
         if (producto && precioProveedor) {
-            // Calcular subtotal (precio + IVA)
-            const nuevoSubtotal = Number(precioProveedor.precio)+Number(precioProveedor.iva);
+            const nuevoSubtotal = Number(precioProveedor.precio) + Number(precioProveedor.iva);
             setSubtotal(nuevoSubtotal); 
             
-            // Calcular precio final (subtotal + ganancia)
             const nuevoPrecioFinal = nuevoSubtotal + parseFloat(ganancia);
             setPrecioFinal(nuevoPrecioFinal);
             
-            // Obtener cantidad disponible del producto
             setCantidadDisponible(producto.cantidad || 0);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         
         if (!selectedProducto || !ganancia) {
-            alert('Por favor complete todos los campos');
+            setError('Por favor complete todos los campos');
+            return;
+        }
+        
+        // Validar que el producto no esté ya en stock
+        if (stocks.some(stock => stock.producto === parseInt(selectedProducto))) {
+            setError('Este producto ya existe en el stock');
             return;
         }
         
         try {
             const nuevoStock = {
-                precio_venta: parseFloat(precioFinal),
+                precio_venta: Number(precioFinal),
                 producto: parseInt(selectedProducto),
             };
             
@@ -86,43 +105,120 @@ function Stock() {
             setSubtotal(0);
             setPrecioFinal(0);
             setCantidadDisponible(0);
+            setSearchTerm('');
         } catch (error) {
             console.error('Error al crear stock:', error);
+            setError('Error al crear el stock. Por favor intente nuevamente.');
         }
     };
 
+    const openEditModal = (stock) => {
+        setCurrentStock(stock);
+        setNuevoPrecio(stock.precio_venta);
+        setEditModal(true);
+    };
+
+    const openDeleteModal = (stock) => {
+        setCurrentStock(stock);
+        setDeleteModal(true);
+    };
+
+    const handleUpdatePrice = async () => {
+        try {
+            const updatedStock = await updateStock(currentStock.producto, {
+                precio_venta: nuevoPrecio
+            });
+            
+            setStocks(stocks.map(stock => 
+                stock.producto === updatedStock.producto ? updatedStock : stock
+            ));
+            setEditModal(false);
+        } catch (error) {
+            console.error('Error al actualizar precio:', error);
+        }
+    };
+
+    const handleDeleteStock = async () => {
+        try {
+            await deleteStock(currentStock.producto);
+            setStocks(stocks.filter(stock => stock.producto !== currentStock.producto));
+            setDeleteModal(false);
+        } catch (error) {
+            console.error('Error al eliminar stock:', error);
+        }
+    };
+
+    const handleProductSelect = (productoId) => {
+        setSelectedProducto(productoId);
+        setIsDropdownOpen(false);
+        setSearchTerm(productos.find(p => p.id === productoId)?.nombre || '');
+    };
+
     if (loading) {
-        return <div>Cargando...</div>;
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
     }
 
     return (
-        <div className="stock-container p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded shadow">
-                    <h2 className="text-xl font-bold mb-4">Agregar Producto al Stock</h2>
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Gestión de Stock</h1>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Formulario para agregar stock */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Agregar Producto al Stock</h2>
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+                            <p>{error}</p>
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Producto</label>
-                            <select
-                                className="w-full p-2 border rounded"
-                                value={selectedProducto}
-                                onChange={(e) => setSelectedProducto(e.target.value)}
-                                required
-                            >
-                                <option value="">Seleccione un producto</option>
-                                {productos.map(producto => (
-                                    <option key={producto.id} value={producto.id}>
-                                        {producto.nombre}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="mb-4 relative">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Producto</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setIsDropdownOpen(true);
+                                    }}
+                                    onFocus={() => setIsDropdownOpen(true)}
+                                    placeholder="Buscar producto..."
+                                    required
+                                />
+                                {selectedProducto && (
+                                    <input type="hidden" name="producto" value={selectedProducto} />
+                                )}
+                                {isDropdownOpen && (
+                                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                        {filteredProductos.length > 0 ? (
+                                            filteredProductos.map(producto => (
+                                                <div
+                                                    key={producto.id}
+                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                                                    onClick={() => handleProductSelect(producto.id)}
+                                                >
+                                                    {producto.nombre}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-2 text-gray-500">No se encontraron productos</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         
                         <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Ganancia</label>
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Ganancia ($)</label>
                             <input
                                 type="number"
-                                className="w-full p-2 border rounded"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={ganancia}
                                 onChange={(e) => setGanancia(e.target.value)}
                                 min="0"
@@ -131,31 +227,32 @@ function Stock() {
                             />
                         </div>
                         
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Subtotal (Precio + IVA)</label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded bg-gray-100"
-                                value={subtotal}
-                                readOnly
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Subtotal</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                                    value={subtotal.toFixed(2)}
+                                    readOnly
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Precio Final</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                                    value={precioFinal.toFixed(2)}
+                                    readOnly
+                                />
+                            </div>
                         </div>
                         
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Precio Final (Subtotal + Ganancia)</label>
+                        <div className="mb-6">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Cantidad Disponible</label>
                             <input
                                 type="text"
-                                className="w-full p-2 border rounded bg-gray-100"
-                                value={precioFinal}
-                                readOnly
-                            />
-                        </div>
-                        
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Cantidad Disponible</label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded bg-gray-100"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
                                 value={cantidadDisponible}
                                 readOnly
                             />
@@ -163,34 +260,56 @@ function Stock() {
                         
                         <button
                             type="submit"
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150"
                         >
                             Agregar al Stock
                         </button>
                     </form>
                 </div>
                 
-                <div className="bg-white p-4 rounded shadow">
-                    <h2 className="text-xl font-bold mb-4">Productos en Stock</h2>
+                {/* Tabla de productos en stock */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Productos en Stock</h2>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white">
-                            <thead>
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="py-2 px-4 border-b">Producto</th>
-                                    <th className="py-2 px-4 border-b">Precio Venta</th>
-                                    <th className="py-2 px-4 border-b">Cantidad</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="bg-white divide-y divide-gray-200">
                                 {stocks.map(stock => {
                                     const producto = productos.find(p => p.id === stock.producto);
                                     return (
-                                        <tr key={stock.id}>
-                                            <td className="py-2 px-4 border-b">
-                                                {producto ? producto.nombre : 'Producto no encontrado'}
+                                        <tr key={stock.producto}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {producto ? producto.nombre : 'Producto no encontrado'}
+                                                </div>
                                             </td>
-                                            <td className="py-2 px-4 border-b">${stock.precio_venta}</td>
-                                            <td className="py-2 px-4 border-b">{stock.cantidad}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">${stock.precio_venta}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">{stock.cantidad || 0}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button
+                                                    onClick={() => openEditModal(stock)}
+                                                    className="text-blue-600 hover:text-blue-900 mr-4"
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => openDeleteModal(stock)}
+                                                    className="text-red-600 hover:text-red-900"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -199,6 +318,67 @@ function Stock() {
                     </div>
                 </div>
             </div>
+            
+            {/* Modal para editar precio */}
+            {editModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Precio de Venta</h3>
+                        
+                        <div className="mb-4">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Nuevo Precio</label>
+                            <input
+                                type="number"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={nuevoPrecio}
+                                onChange={(e) => setNuevoPrecio(e.target.value)}
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+                        
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setEditModal(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleUpdatePrice}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            >
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Modal para eliminar stock */}
+            {deleteModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Confirmar Eliminación</h3>
+                        <p className="mb-6">¿Estás seguro que deseas eliminar este producto del stock?</p>
+                        
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setDeleteModal(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleDeleteStock}
+                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

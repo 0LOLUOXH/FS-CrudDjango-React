@@ -1,18 +1,30 @@
-import { useState, useEffect } from 'react';
-import { fetchProductos, updateProducto } from '../api/producto_api';
-import { fetchClientes } from '../api/clientes_api';
-import { fetchPrecioProveedorProductos } from '../api/precioproveedorproducto_api';
+import { useState, useEffect, useRef } from 'react';
+import { fetchStocks } from '../api/stock_api';
+import { fetchClientes, fetchClientesNaturales, fetchClientesJuridicos } from '../api/clientes_api';
 import { createVenta } from '../api/venta_api';
 import { createDetalleVenta } from '../api/detalleventa_api';
+import { fetchProductos, updateProducto } from '../api/producto_api';
+import { useAuth } from '../auth/AuthContext';
 
 function Ventas() {
+    const { user } = useAuth();
+
     // Estados para datos
     const [productos, setProductos] = useState([]);
+    const [stocks, setStocks] = useState([]);
     const [clientes, setClientes] = useState([]);
-    const [preciosProductos, setPreciosProductos] = useState([]);
+    const [clientesNaturales, setClientesNaturales] = useState([]);
+    const [clientesJuridicos, setClientesJuridicos] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [clienteSearchTerm, setClienteSearchTerm] = useState('');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isClienteDropdownOpen, setIsClienteDropdownOpen] = useState(false);
+
+    // Referencias para manejar clicks fuera del dropdown
+    const clienteDropdownRef = useRef(null);
+    const productoDropdownRef = useRef(null);
 
     // Estados para el carrito
     const [carrito, setCarrito] = useState([]);
@@ -27,14 +39,19 @@ function Ventas() {
         async function loadData() {
             setIsLoading(true);
             try {
-                const [productosData, clientesData, preciosData] = await Promise.all([
+                const [productosData, stocksData, clientesData, naturalesData, juridicosData] = await Promise.all([
                     fetchProductos(),
+                    fetchStocks(),
                     fetchClientes(),
-                    fetchPrecioProveedorProductos()
+                    fetchClientesNaturales(),
+                    fetchClientesJuridicos()
                 ]);
+                
                 setProductos(productosData);
+                setStocks(stocksData);
                 setClientes(clientesData);
-                setPreciosProductos(preciosData);
+                setClientesNaturales(naturalesData);
+                setClientesJuridicos(juridicosData);
             } catch (error) {
                 setError('Error al cargar datos iniciales');
                 console.error(error);
@@ -45,25 +62,89 @@ function Ventas() {
         loadData();
     }, []);
 
-    // Filtrar productos
-    const filteredProductos = productos.filter(producto =>
+    // Manejador de clicks fuera del dropdown
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (clienteDropdownRef.current && !clienteDropdownRef.current.contains(event.target)) {
+                setIsClienteDropdownOpen(false);
+            }
+            if (productoDropdownRef.current && !productoDropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Obtener cliente completo por ID
+    const getClienteCompleto = (clienteId) => {
+        const cliente = clientes.find(c => c.id === clienteId);
+        if (!cliente) return null;
+
+        if (cliente.tipo === 'N') {
+            const natural = clientesNaturales.find(n => n.cliente === clienteId);
+            return { ...cliente, ...natural };
+        } else {
+            const juridico = clientesJuridicos.find(j => j.cliente === clienteId);
+            return { ...cliente, ...juridico };
+        }
+    };
+
+    // Filtrar clientes basados en el término de búsqueda
+    const filteredClientes = clientes.filter(cliente => {
+        if (cliente.tipo === 'N') {
+            const natural = clientesNaturales.find(n => n.cliente === cliente.id);
+            if (!natural) return false;
+            return (
+                natural.nombre.toLowerCase().includes(clienteSearchTerm.toLowerCase()) ||
+                natural.apellido.toLowerCase().includes(clienteSearchTerm.toLowerCase()) ||
+                natural.cedula.toLowerCase().includes(clienteSearchTerm.toLowerCase())
+            );
+        } else {
+            const juridico = clientesJuridicos.find(j => j.cliente === cliente.id);
+            if (!juridico) return false;
+            return (
+                juridico.razon_social.toLowerCase().includes(clienteSearchTerm.toLowerCase()) ||
+                (juridico.ruc && juridico.ruc.toLowerCase().includes(clienteSearchTerm.toLowerCase()))
+            );
+        }
+    });
+
+    // Obtener productos con stock disponible
+    const productosDisponibles = productos.filter(producto => {
+        const stockItem = stocks.find(s => s.producto === producto.id);
+        return stockItem && stockItem.cantidad > 0;
+    });
+
+    // Filtrar productos basados en el término de búsqueda
+    const filteredProductos = productosDisponibles.filter(producto =>
         producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+        producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Obtener precio de venta de un producto
     const getPrecioVenta = (productoId) => {
-        const precio = preciosProductos.find(p => p.producto === productoId);
-        return precio ? precio.precio: 0;
+        const stockItem = stocks.find(s => s.producto === productoId);
+        return stockItem ? stockItem.precio_venta : 0;
+    };
+
+    // Obtener stock disponible de un producto
+    const getStockDisponible = (productoId) => {
+        const stockItem = stocks.find(s => s.producto === productoId);
+        return stockItem ? stockItem.cantidad : 0;
     };
 
     // Agregar al carrito con validación
     const agregarAlCarrito = (producto) => {
         const existe = carrito.find(item => item.producto.id === producto.id);
         const precioVenta = getPrecioVenta(producto.id);
+        const stockDisponible = getStockDisponible(producto.id);
         
         if (existe) {
-            if (existe.cantidad >= producto.cantidad) {
+            if (existe.cantidad >= stockDisponible) {
                 setError(`No hay suficiente stock de ${producto.nombre}`);
                 return;
             }
@@ -73,7 +154,7 @@ function Ventas() {
                     : item
             ));
         } else {
-            if (producto.cantidad < 1) {
+            if (stockDisponible < 1) {
                 setError(`No hay stock disponible de ${producto.nombre}`);
                 return;
             }
@@ -84,22 +165,24 @@ function Ventas() {
             }]);
         }
         setError(null);
+        setSearchTerm('');
+        setIsDropdownOpen(false);
     };
 
     // Actualizar cantidad en carrito con validación
     const actualizarCantidad = (productoId, cantidad) => {
-        const producto = productos.find(p => p.id === productoId);
-        const itemCarrito = carrito.find(item => item.producto.id === productoId);
+        const stockDisponible = getStockDisponible(productoId);
+        const cantidadNum = parseInt(cantidad) || 0;
         
-        if (cantidad < 0) return;
-        if (cantidad > producto.cantidad) {
-            setError(`No hay suficiente stock (disponible: ${producto.cantidad})`);
+        if (cantidadNum < 1) return;
+        if (cantidadNum > stockDisponible) {
+            setError(`No hay suficiente stock (disponible: ${stockDisponible})`);
             return;
         }
 
         setCarrito(carrito.map(item =>
             item.producto.id === productoId
-                ? { ...item, cantidad: parseInt(cantidad) || 0 }
+                ? { ...item, cantidad: cantidadNum }
                 : item
         ));
         setError(null);
@@ -117,6 +200,17 @@ function Ventas() {
         }, 0);
         
         return subtotal + (instalacion ? parseFloat(precioInstalacion) || 0 : 0);
+    };
+
+    // Seleccionar cliente
+    const seleccionarCliente = (cliente) => {
+        setClienteId(cliente.id);
+        setClienteSearchTerm(
+            cliente.tipo === 'N' ? 
+            `${cliente.nombre} ${cliente.apellido}` : 
+            cliente.razon_social
+        );
+        setIsClienteDropdownOpen(false);
     };
 
     // Procesar venta
@@ -143,6 +237,7 @@ function Ventas() {
             // 1. Crear la venta principal
             const ventaData = {
                 cliente: clienteId,
+                empleado: user.user_id,
                 total_a_pagar: calcularTotal(),
                 metodo_de_pago: metodoPago,
                 instalacion: instalacion,
@@ -163,17 +258,26 @@ function Ventas() {
                 });
 
                 // Actualizar stock del producto
-                const nuevaCantidad = item.producto.cantidad - item.cantidad;
-                await updateProducto(item.producto.id, {
-                    cantidad: nuevaCantidad
-                });
+                const stockActual = stocks.find(s => s.producto === item.producto.id);
+                if (stockActual) {
+                    const nuevaCantidad = stockActual.cantidad - item.cantidad;
+                    await updateProducto(item.producto.id, {
+                        cantidad: nuevaCantidad
+                    });
+                }
             }
 
             // 3. Actualizar lista de productos y limpiar formulario
-            const productosActualizados = await fetchProductos();
+            const [productosActualizados, stocksActualizados] = await Promise.all([
+                fetchProductos(),
+                fetchStocks()
+            ]);
+            
             setProductos(productosActualizados);
+            setStocks(stocksActualizados);
             setCarrito([]);
             setClienteId('');
+            setClienteSearchTerm('');
             setPrecioInstalacion(0);
             setDireccion('');
             setInstalacion(false);
@@ -187,80 +291,177 @@ function Ventas() {
         }
     };
 
-    if (isLoading) return <div className="loading">Cargando...</div>;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="ventas-container p-4">
-            <h1 className="text-2xl font-bold mb-6">Módulo de Ventas</h1>
-            
-            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+        <div className="container mx-auto px-4 py-8">            
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+                    <p>{error}</p>
+                </div>
+            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Sección de búsqueda y productos */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold mb-4">Productos Disponibles</h2>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Productos Disponibles</h2>
                     
-                    <div className="mb-4">
-                        <input
-                            type="text"
-                            placeholder="Buscar productos..."
-                            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="mb-4 relative" ref={productoDropdownRef}>
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Buscar Producto</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setIsDropdownOpen(true);
+                                }}
+                                onFocus={() => setIsDropdownOpen(true)}
+                                placeholder="Buscar producto..."
+                            />
+                            {isDropdownOpen && (
+                                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {filteredProductos.length > 0 ? (
+                                        filteredProductos.map(producto => (
+                                            <div
+                                                key={producto.id}
+                                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex justify-between items-center"
+                                                onClick={() => agregarAlCarrito(producto)}
+                                            >
+                                                <div>
+                                                    <div className="font-medium">{producto.nombre}</div>
+                                                    <div className="text-sm text-gray-600">
+                                                        Stock: {getStockDisponible(producto.id)} | 
+                                                        Precio: ${getPrecioVenta(producto.id)}
+                                                    </div>
+                                                </div>
+                                                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                                    Agregar
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-2 text-gray-500">No se encontraron productos</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="productos-list mb-6 max-h-96 overflow-y-auto">
-                        {filteredProductos.map(producto => (
-                            <div key={producto.id} className="flex justify-between items-center p-3 border-b hover:bg-gray-50">
-                                <div className="flex-1">
-                                    <h3 className="font-medium">{producto.nombre}</h3>
-                                    <p className="text-sm text-gray-600">
-                                        {producto.descripcion.substring(0, 50)}...
-                                    </p>
-                                    <p className="text-sm">
-                                        Stock: {producto.cantidad} 
-                                    </p>
+                    <h3 className="text-lg font-semibold text-gray-700 mt-6 mb-2">Productos en Carrito</h3>
+                    
+                    {carrito.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No hay productos en el carrito</p>
+                    ) : (
+                        <div className="carrito-list mb-4 max-h-64 overflow-y-auto">
+                            {carrito.map(item => (
+                                <div key={item.producto.id} className="border-b pb-4 mb-4 px-4 bg-white rounded-lg shadow-sm">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="text-lg font-semibold text-gray-800">{item.producto.nombre}</h4>
+                                            <p className="text-sm text-gray-500">
+                                                Precio unitario: <span className="text-gray-700 font-medium">${item.precio}</span>
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => eliminarDelCarrito(item.producto.id)}
+                                            className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center mt-3">
+                                        <label className="mr-2 text-sm font-medium text-gray-700">Cantidad:</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max={getStockDisponible(item.producto.id) + item.cantidad}
+                                            value={item.cantidad}
+                                            onChange={(e) => actualizarCantidad(item.producto.id, e.target.value)}
+                                            className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm text-gray-500 ml-3">
+                                            (Disponible: {getStockDisponible(item.producto.id)})
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-2 text-sm text-gray-700">
+                                        Subtotal: <span className="font-semibold">${(item.precio * item.cantidad)}</span>
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => agregarAlCarrito(producto)}
-                                    className={`px-3 py-1 rounded ${producto.cantidad <= 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                                    disabled={producto.cantidad <= 0}
-                                >
-                                    {producto.cantidad <= 0 ? 'Sin stock' : 'Agregar'}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Sección del carrito y datos de venta */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold mb-4">Detalles de Venta</h2>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Detalles de Venta</h2>
                     
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                        <select
-                            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={clienteId}
-                            onChange={(e) => setClienteId(e.target.value)}
-                            required
-                        >
-                            <option value="">Seleccione un cliente</option>
-                            {clientes.map(cliente => (
-                                <option key={cliente.id} value={cliente.id}>
-                                    {cliente.tipo === 'N' ? 
-                                        `${cliente.natural.nombre} ${cliente.natural.apellido}` : 
-                                        cliente.juridico.razon_social}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="mb-4 relative" ref={clienteDropdownRef}>
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Cliente</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={clienteSearchTerm}
+                                onChange={(e) => {
+                                    setClienteSearchTerm(e.target.value);
+                                    setIsClienteDropdownOpen(true);
+                                }}
+                                onFocus={() => setIsClienteDropdownOpen(true)}
+                                placeholder="Buscar cliente..."
+                            />
+                            <input type="hidden" name="clienteId" value={clienteId} />
+                            {isClienteDropdownOpen && (
+                                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {filteredClientes.length > 0 ? (
+                                        filteredClientes.map(cliente => {
+                                            const clienteCompleto = getClienteCompleto(cliente.id);
+                                            if (!clienteCompleto) return null;
+                                            
+                                            return (
+                                                <div
+                                                    key={cliente.id}
+                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                                                    onClick={() => seleccionarCliente(clienteCompleto)}
+                                                >
+                                                    {cliente.tipo === 'N' ? (
+                                                        <div>
+                                                            <div className="text-sm text-gray-600">Tipo: Natural</div> 
+                                                            <div className="font-medium">{clienteCompleto.nombre} {clienteCompleto.apellido}</div>
+                                                            <div className="text-sm text-gray-600">Cédula: {clienteCompleto.cedula}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <div className="text-sm text-gray-600">Tipo: Juridico</div> 
+                                                            <div className="font-medium">{clienteCompleto.razon_social}</div>
+                                                            <div className="text-sm text-gray-600">RUC: {clienteCompleto.ruc || 'No especificado'}</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="px-4 py-2 text-gray-500">No se encontraron clientes</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Método de Pago</label>
                         <select
-                            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={metodoPago}
                             onChange={(e) => setMetodoPago(e.target.value)}
                         >
@@ -286,96 +487,51 @@ function Ventas() {
                     {instalacion && (
                         <>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Instalación ($)</label>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Precio Instalación ($)</label>
                                 <input
                                     type="number"
                                     min="0"
                                     step="0.01"
-                                    className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={precioInstalacion}
                                     onChange={(e) => setPrecioInstalacion(e.target.value)}
                                     placeholder="0.00"
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Dirección de Instalación</label>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Dirección de Instalación</label>
                                 <input
                                     type="text"
-                                    className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={direccion}
                                     onChange={(e) => setDireccion(e.target.value)}
                                     placeholder="Dirección completa"
                                 />
                             </div>
                         </>
-                    )}
-
-                    <h3 className="text-lg font-semibold mt-6 mb-2">Productos en Carrito</h3>
-                    
-                    {carrito.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No hay productos en el carrito</p>
-                    ) : (
-                        <div className="carrito-list mb-4 max-h-64 overflow-y-auto">
-                            {carrito.map(item => (
-                                <div key={item.producto.id} className="border-b pb-3 mb-3">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h4 className="font-medium">{item.producto.nombre}</h4>
-                                            <p className="text-sm text-gray-600">
-                                                Precio unitario: ${item.precio.toFixed(2)}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => eliminarDelCarrito(item.producto.id)}
-                                            className="text-red-500 hover:text-red-700 text-sm"
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="flex items-center mt-2">
-                                        <label className="mr-2 text-sm">Cantidad:</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max={item.producto.cantidad}
-                                            value={item.cantidad}
-                                            onChange={(e) => actualizarCantidad(item.producto.id, e.target.value)}
-                                            className="w-20 border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                        />
-                                        <span className="text-sm text-gray-600 ml-2">
-                                            (Disponible: {item.producto.cantidad})
-                                        </span>
-                                    </div>
-                                    <div className="mt-1 text-sm">
-                                        Subtotal: ${(item.precio * item.cantidad).toFixed(2)}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    )}       
 
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                         <div className="flex justify-between font-medium text-lg">
                             <span>Subtotal:</span>
-                            <span>${carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0).toFixed(2)}</span>
+                            <span>${carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0)}</span>
                         </div>
                         {instalacion && (
                             <div className="flex justify-between mt-2">
                                 <span className="text-sm">Instalación:</span>
-                                <span className="text-sm">${parseFloat(precioInstalacion).toFixed(2)}</span>
+                                <span className="text-sm">${parseFloat(precioInstalacion)}</span>
                             </div>
                         )}
                         <div className="flex justify-between mt-2 pt-2 border-t border-gray-200 font-bold text-lg">
                             <span>Total:</span>
-                            <span>${calcularTotal().toFixed(2)}</span>
+                            <span>${calcularTotal()}</span>
                         </div>
                     </div>
 
                     <button
                         onClick={procesarVenta}
                         disabled={carrito.length === 0 || isLoading || !clienteId}
-                        className={`w-full px-4 py-2 rounded-lg mt-4 text-white ${carrito.length === 0 || isLoading || !clienteId ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                        className={`w-full px-4 py-2 rounded-lg mt-4 text-white font-medium ${carrito.length === 0 || isLoading || !clienteId ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
                     >
                         {isLoading ? 'Procesando...' : 'Finalizar Venta'}
                     </button>

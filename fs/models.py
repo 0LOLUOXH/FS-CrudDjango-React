@@ -132,7 +132,7 @@ class PrecioProveedorProducto(models.Model):
         return f"{self.producto.nombre} - {self.proveedor.nombre} @ {self.precio}"
 
 class Stock(models.Model):
-    producto    = models.OneToOneField(PrecioProveedorProducto, on_delete=models.CASCADE, primary_key=True, related_name='stock')
+    producto    = models.OneToOneField(Producto, on_delete=models.CASCADE, primary_key=True, related_name='stock')
     precio_venta= models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
@@ -148,7 +148,7 @@ class Venta(models.Model):
     direccion          = models.CharField(max_length=300)
     precio_instalacion = models.DecimalField(default=None, max_digits=12, decimal_places=2)
     cliente            = models.ForeignKey(Cliente,  on_delete=models.CASCADE, related_name='ventas')
-    empleado           = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='ventas')
+    empleado           = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ventas')
 
     def __str__(self):
         return f"Venta {self.id}"

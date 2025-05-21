@@ -70,14 +70,21 @@ class bodegaSerializer(serializers.ModelSerializer):
         fields = ('id', 'nombre', 'estado', 'capacidad', 'empleado')
         
 class productoSerializer(serializers.ModelSerializer):
+    nmodelo = serializers.CharField(source='modelo.nombre', read_only=True)
+    nmarca = serializers.CharField(source='modelo.marca.nombre', read_only=True)
+    bodega = serializers.CharField(source='codigobodega.nombre', read_only=True)
+    
     class Meta:
         model = Producto
-        fields = ('id', 'nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad')
+        fields = ('id', 'nombre', 'modelo', 'bodega', 'codigobodega', 'descripcion', 'cantidad', 'nmodelo', 'nmarca')
 
 class stockSerializer(serializers.ModelSerializer):
+    cantidad = serializers.IntegerField(source='producto.cantidad', read_only=True, default=0)
+    modelo = serializers.CharField(source='producto.modelo.nombre', read_only=True)
+    marca = serializers.CharField(source='producto.modelo.marca.nombre', read_only=True)
     class Meta:
         model = Stock
-        fields = ('producto', 'precio_venta')
+        fields = ('cantidad', 'producto', 'precio_venta', 'modelo', 'marca')
 
 class PrecioProveedorProductoSerializer(serializers.ModelSerializer):
     class Meta:
