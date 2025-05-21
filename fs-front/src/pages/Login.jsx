@@ -1,12 +1,21 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirige si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/inicio', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +37,7 @@ export default function Login() {
 
       // Manejar el token o la sesión según tu implementación
       localStorage.setItem("token", data.token);
-      window.location.href = "/"; // Redirigir después del login
+      window.location.href = "/inicio"; // Redirigir después del login
     } catch (err) {
       setError(err.message || "Error al iniciar sesión. Inténtalo de nuevo.");
     } 
@@ -38,7 +47,6 @@ export default function Login() {
     <div className="flex min-h-screen bg-gray-900 text-white">
       <div className="w-1/2 bg-cover bg-center" style={{ backgroundImage: "url('/login-image.jpg')" }}>
         <div className="p-8 text-white">
-          <button className="bg-gray-700 px-4 py-2 rounded">Volver al sitio</button>
           <h1 className="mt-20 text-3xl font-bold">Captura momentos,<br />crea recuerdos</h1>
         </div>
       </div>

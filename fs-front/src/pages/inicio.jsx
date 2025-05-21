@@ -2,8 +2,7 @@
 function Inicio (){
     return (
         <div>
-      
-            
+hola
         </div>
     )
 }

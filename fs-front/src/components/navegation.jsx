@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from '../auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export function Navegation() {
   const [open, setOpen] = useState(false);
@@ -10,7 +12,7 @@ export function Navegation() {
   const location = useLocation();
 
   const pageTitles = {
-    "/": "Inicio",
+    "/inicio": "Inicio",
     "/compras": "Compras",
     "/ventas": "Ventas",
     "/producto": "Producto",
@@ -32,6 +34,15 @@ export function Navegation() {
     "flex items-center gap-3 justify-start w-full px-4 py-2 mb-2 rounded-lg text-[17px] font-serif transition-colors duration-200";
   const linkInactive = "text-white hover:bg-[#15608B] hover:text-white";
   const linkActive = "bg-[#FEBA53] text-[#081A2D]";
+
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
 
   return (
     <>
@@ -96,7 +107,7 @@ export function Navegation() {
             {userMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-40 bg-[#15608B] border border-[#FEBA53] shadow-lg rounded-lg">
                 <button
-                  onClick={() => {/* lógica logout */}}
+                  onClick={() => {handleLogout()}}
                   className="w-full text-left px-4 py-2 text-[#081A2D] hover:bg-[#549ABE] rounded transition-colors"
                 >
                   Cerrar sesión
@@ -155,9 +166,9 @@ export function Navegation() {
         <nav className="mt-10 flex flex-col px-2">
           {/* Inicio */}
           <Link
-            to="/"
+            to="/inicio"
             className={`${linkBase} ${
-              location.pathname === "/" ? linkActive : linkInactive
+              location.pathname === "/inicio" ? linkActive : linkInactive
             }`}
             onClick={() => setOpen(false)}
           >

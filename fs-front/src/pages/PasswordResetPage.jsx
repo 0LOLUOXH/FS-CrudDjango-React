@@ -1,8 +1,9 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import axios from 'axios';
 
 export default function PasswordResetPage() {
+  const navigate = useNavigate();
   const { token } = useParams();
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -14,6 +15,7 @@ export default function PasswordResetPage() {
         password
       });
       setMessage('Password changed successfully!');
+      setTimeout(() => navigate('/login'), 3000); // Redirige tras 3s
     } catch (err) {
       setMessage('Error resetting password');
     }
