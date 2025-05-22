@@ -49,7 +49,7 @@ export default function Login() {
     <div className="flex min-h-screen bg-gray-900 text-white">
       <div className="w-1/2 bg-cover bg-center" style={{ backgroundImage: "url('/login-image.jpg')" }}>
         <div className="p-8 text-white">
-          <h1 className="mt-20 text-3xl font-bold">Captura momentos,<br />crea recuerdos</h1>
+          <h1 className="mt-20 text-3xl font-bold">Energía renovable, <br />compromiso imparable.</h1>
         </div>
       </div>
       <div className="w-1/2 flex items-center justify-center">
