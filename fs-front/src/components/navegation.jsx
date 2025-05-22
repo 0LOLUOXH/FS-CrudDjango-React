@@ -24,6 +24,8 @@ export function Navegation() {
     "/inventario": "Inventario",
     "/historialventa": "Historial de ventas",
     "/historialcompra": "Historial de compras",
+     "/stock": "Stock",
+
   };
   const currentPage = pageTitles[location.pathname] || "";
 
@@ -187,7 +189,34 @@ export function Navegation() {
             </svg>
             Inicio
           </Link>
+                  {/* Clientes */}
+          <Link
+            to="/clientes"
+            className={`${linkBase} ${
+              location.pathname === "/clientes" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
+              <path d="M10 5a3 3 0 11-6 0 3 3 0 016 0ZM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572ZM16.25 5.75a.75.75 0 10-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2Z" />
+            </svg>
+            Clientes
+          </Link>
 
+          {/* Proveedores */}
+          <Link
+            to="/proveedores"
+            className={`${linkBase} ${
+              location.pathname === "/proveedores" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
+              <path d="M6.5 3c-1.051 0-2.093.04-3.125.117A1.49 1.49 0 002 4.607V10.5h9V4.606c0-.771-.59-1.43-1.375-1.489A41.568 41.568 0 006.5 3ZM2 12v2.5A1.5 1.5 0 0 013.5 16h.041a3 3 0 015.918 0h.791a.75.75 0 00.75-.75V12H2Z" />
+              <path d="M6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3ZM13.25 5a.75.75 0 00-.75.75v8.514a3.001 3.001 0 004.893 1.44c.37-.275.61-.719.595-1.227a24.905 24.905 0 00-1.784-8.549A1.486 1.486 0 0014.823 5H13.25ZM14.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3Z" />
+            </svg>
+            Proveedor
+          </Link>
           {/* Compras dropdown */}
           <div
             className="w-full"
@@ -295,34 +324,8 @@ export function Navegation() {
             </div>
           </div>
 
-          {/* Clientes */}
-          <Link
-            to="/clientes"
-            className={`${linkBase} ${
-              location.pathname === "/clientes" ? linkActive : linkInactive
-            }`}
-            onClick={() => setOpen(false)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
-              <path d="M10 5a3 3 0 11-6 0 3 3 0 016 0ZM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572ZM16.25 5.75a.75.75 0 10-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2Z" />
-            </svg>
-            Clientes
-          </Link>
+  
 
-          {/* Proveedores */}
-          <Link
-            to="/proveedores"
-            className={`${linkBase} ${
-              location.pathname === "/proveedores" ? linkActive : linkInactive
-            }`}
-            onClick={() => setOpen(false)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
-              <path d="M6.5 3c-1.051 0-2.093.04-3.125.117A1.49 1.49 0 002 4.607V10.5h9V4.606c0-.771-.59-1.43-1.375-1.489A41.568 41.568 0 006.5 3ZM2 12v2.5A1.5 1.5 0 0 013.5 16h.041a3 3 0 015.918 0h.791a.75.75 0 00.75-.75V12H2Z" />
-              <path d="M6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3ZM13.25 5a.75.75 0 00-.75.75v8.514a3.001 3.001 0 004.893 1.44c.37-.275.61-.719.595-1.227a24.905 24.905 0 00-1.784-8.549A1.486 1.486 0 0014.823 5H13.25ZM14.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3Z" />
-            </svg>
-            Proveedor
-          </Link>
 
           {/* Empleados */}
           <Link
