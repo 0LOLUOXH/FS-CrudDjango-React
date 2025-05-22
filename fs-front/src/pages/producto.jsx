@@ -4,6 +4,7 @@ import { ModeloSelect } from '../components/modelosandmarca'
 import { Tabla } from '../components/tabla'
 import { createProducto } from '../api/producto_api'
 import { fetchBodegas } from '../api/bodega_api'
+import { fetchProductos } from '../api/producto_api'
 
 export default function IngresarProducto() {
   const navigate = useNavigate()
@@ -18,6 +19,10 @@ export default function IngresarProducto() {
     cantidad: '',
     bodega: '',
   })
+  const [productos, setProductos] = useState([]);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
+
+
 
   // Carga bodegas
   useEffect(() => {
@@ -30,6 +35,18 @@ export default function IngresarProducto() {
       }
     })()
   }, [])
+//carga productos
+  useEffect(() => {
+  (async () => {
+    try {
+      const res = await fetchProductos();
+      setProductos(res);
+    } catch (e) {
+      console.error('Error al cargar productos:', e);
+    }
+  })();
+}, []);
+
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -162,9 +179,11 @@ export default function IngresarProducto() {
           </form>
         </div>
 
+        
+
         {/* → Tabla (65%) */}
         <div className="w-full lg:w-[65%]">
-          <Tabla />
+          <Tabla data={productos} />
         </div>
       </div>
     </div>
