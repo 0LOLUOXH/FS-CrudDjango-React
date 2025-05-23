@@ -2,6 +2,15 @@ import axios from 'axios';
 
 const baseUrl = 'http://localhost:8000/fs/apibd/v1/detalleproveedor/';
 
+export const fetchDetalleProveedors = async () => {
+    try {
+        const response = await axios.get(`${baseUrl}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching detalle proveedor:', error);
+        throw error;
+    }
+};
 export const fetchDetalleProveedor = async (id) => {
     try {
         const response = await axios.get(`${baseUrl}${id}`);

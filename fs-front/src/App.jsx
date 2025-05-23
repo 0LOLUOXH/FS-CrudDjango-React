@@ -5,9 +5,9 @@ import { Navegation } from './components/navegation';
 import Login from './pages/login';
 import ResetPassword from './pages/resetPassword';
 import PasswordResetPage from './pages/PasswordResetPage';
-import './app.css';
 import { PrivateRoute } from './auth/PrivateRoute';
 import { AuthProvider } from './auth/AuthContext';
+import './app.css';
 
 const pages = [
   { path: '/inicio', component: lazy(() => import('./pages/inicio')) },

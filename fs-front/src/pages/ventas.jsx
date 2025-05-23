@@ -310,7 +310,7 @@ function Ventas() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Sección de búsqueda y productos */}
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Productos Disponibles</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos Disponibles</h2>
                     
                     <div className="mb-4 relative" ref={productoDropdownRef}>
                         <label className="block text-gray-700 text-sm font-bold mb-2">Buscar Producto</label>
@@ -404,7 +404,7 @@ function Ventas() {
 
                 {/* Sección del carrito y datos de venta */}
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Detalles de Venta</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Detalles de Venta</h2>
                     
                     <div className="mb-4 relative" ref={clienteDropdownRef}>
                         <label className="block text-gray-700 text-sm font-bold mb-2">Cliente</label>

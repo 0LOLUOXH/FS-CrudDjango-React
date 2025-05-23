@@ -1,7 +1,6 @@
 from rest_framework import viewsets
 from .models import *
 from .serializer import *
-
 # Create your views here.
 class marcaViewSet(viewsets.ModelViewSet):
     queryset = Marca.objects.all()
@@ -59,10 +58,6 @@ class detalleproveedorViewSet(viewsets.ModelViewSet):
     queryset = DetalleProveedor.objects.all()
     serializer_class = detalleproveedorSerializer
     
-class userViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = userSerializer
-    
 # views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -88,7 +83,8 @@ class LoginView(APIView):
             'token': token.key,
             'user_id': user.pk,
             'username': user.username,
-            'email': user.email
+            'email': user.email,
+            'is_staff': user.is_staff,
         })
 
 #class LoginView(APIView):
@@ -124,27 +120,6 @@ class PasswordResetView(APIView):
             )
         return Response({'message': 'If email exists, reset link was sent.'})
     
-#class PasswordResetConfirmView(APIView):
-#   def post(self, request):
-#       token = request.data.get("token")
-#       new_password = request.data.get("password")
-#
-#       username = cache.get(f"password_reset_token_{token}")
-#       if not username:
-#           return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#       user = User.objects.filter(username=username).first()
-#       if not user:
-#           return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-#
-#       user.set_password(new_password)
-#       user.save()
-
-        # Eliminar el token después de usarlo
-#       cache.delete(f"password_reset_token_{token}")
-
-#       return Response({"message": "Password has been reset successfully"})
-    
 token_store = {}
     
 # views.py
@@ -166,3 +141,10 @@ class PasswordResetConfirmView(APIView):
 
         return Response({'message': 'Password reset successful'})
 
+class userViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = userSerializer
+    
+    def get_queryset(self):
+        # Puedes añadir filtros adicionales aquí si es necesario
+        return super().get_queryset()

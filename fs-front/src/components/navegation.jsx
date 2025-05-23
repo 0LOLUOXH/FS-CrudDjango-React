@@ -11,6 +11,8 @@ export function Navegation() {
   const [productoOpen, setProductoOpen] = useState(false);
   const location = useLocation();
 
+  
+
   const pageTitles = {
     "/inicio": "Inicio",
     "/compras": "Compras",
@@ -24,7 +26,7 @@ export function Navegation() {
     "/inventario": "Inventario",
     "/historialventa": "Historial de ventas",
     "/historialcompra": "Historial de compras",
-     "/stock": "Stock",
+    "/stock": "Stock",
 
   };
   const currentPage = pageTitles[location.pathname] || "";
@@ -33,7 +35,7 @@ export function Navegation() {
   const handleMouseLeave = () => setOpen(false);
 
   const linkBase =
-    "flex items-center gap-3 justify-start w-full px-4 py-2 mb-2 rounded-lg text-[17px] font-serif transition-colors duration-200";
+    "flex items-center gap-3 justify-start w-full px-4 py-2 mb-2 rounded-lg text-[17px] transition-colors duration-200";
   const linkInactive = "text-white hover:bg-[#15608B] hover:text-white";
   const linkActive = "bg-[#FEBA53] text-[#081A2D]";
 
@@ -70,7 +72,7 @@ export function Navegation() {
           </button>
           <div className="flex items-center space-x-2">
             <img
-              src="https://media-hosting.imagekit.io/0ce98b7c0e8f4d37/a4691a66-0e6a-4755-a9dc-4bc8a692161b.jpg"
+              src="https://ik.imagekit.io/jfcrjyrcq/fusion_solar_logo.jpg?updatedAt=1747926845910"
               alt="Fusion Solar logo"
               className="h-8 w-8 rounded-full object-cover border-2 border-[#FEBA53]"
             />
@@ -89,7 +91,7 @@ export function Navegation() {
               onClick={() => setUserMenuOpen(u => !u)}
               className="flex items-center space-x-1 focus:outline-none"
             >
-              <span className="text-[#FEBA53] font-semibold ">{user.username}</span>
+              <span className="text-[#FEBA53] font-semibold ">{ user.username }</span>
               <img
                 src="https://www.w3schools.com/howto/img_avatar.png"
                 alt="Avatar usuario"
@@ -107,10 +109,10 @@ export function Navegation() {
               </svg>
             </button>
             {userMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-40 bg-[#15608B] border border-[#FEBA53] shadow-lg rounded-lg">
+              <div className="absolute right-0 top-full mt-2 w-40 bg-[#081A2D] border border-[#FEBA53] shadow-lg rounded-lg">
                 <button
                   onClick={() => {handleLogout()}}
-                  className="w-full text-left px-4 py-2 text-[#081A2D] hover:bg-[#549ABE] rounded transition-colors"
+                  className="w-full text-left px-4 py-2 font-bold text-[#FEBA53] hover:bg-[#15608B] rounded transition-colors"
                 >
                   Cerrar sesión
                 </button>
@@ -203,7 +205,7 @@ export function Navegation() {
             Clientes
           </Link>
 
-          {/* Proveedores */}
+      {user?.is_staff && (
           <Link
             to="/proveedores"
             className={`${linkBase} ${
@@ -217,7 +219,8 @@ export function Navegation() {
             </svg>
             Proveedor
           </Link>
-          {/* Compras dropdown */}
+      )}
+      {user?.is_staff && (
           <div
             className="w-full"
             onMouseEnter={() => setComprasOpen(true)}
@@ -246,7 +249,7 @@ export function Navegation() {
               </Link>
             </div>
           </div>
-
+      )}
           {/* Ventas dropdown */}
           <div
             className="w-full"
@@ -295,8 +298,9 @@ export function Navegation() {
                 className={`${linkBase} ${location.pathname === "/producto" ? linkActive : linkInactive} ml-6`}
                 onClick={() => setOpen(false)}
               >
-                Ingresar producto
+                Ver productos
               </Link>
+          {user?.is_staff && (
               <Link
                 to="/marcasymodelos"
                 className={`${linkBase} ${location.pathname === "/marcasymodelos" ? linkActive : linkInactive} ml-6`}
@@ -304,6 +308,8 @@ export function Navegation() {
               >
                 Marcas y modelos
               </Link>
+          )}
+          {user?.is_staff && (
               <Link
                 to="/bodega"
                 className={`${linkBase} ${location.pathname === "/bodega" ? linkActive : linkInactive} ml-6`}
@@ -311,23 +317,20 @@ export function Navegation() {
               >
                 Bodega
               </Link>
-
+          )}
+          {user?.is_staff && (
               <Link
                 to="/stock"
                 className={`${linkBase} ${location.pathname === "/stock" ? linkActive : linkInactive} ml-6`}
                 onClick={() => setOpen(false)}
               >
-                Stock
+                Stock para vender
               </Link>
-              
-            
+          )}
             </div>
           </div>
 
-  
-
-
-          {/* Empleados */}
+      {user?.is_staff && (
           <Link
             to="/empleados"
             className={`${linkBase} ${
@@ -340,6 +343,7 @@ export function Navegation() {
             </svg>
             Empleados
           </Link>
+    )}
         </nav>
       </div>
     </>

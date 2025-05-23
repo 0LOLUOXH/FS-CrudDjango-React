@@ -128,7 +128,7 @@ export default function Bodega() {
     >
       {/* === FORMULARIO === */}
       <div className="bg-white shadow rounded-lg p-8">
-        <h2 className="text-2xl font-serif text-[#081A2D] mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">
           Ingresar Bodega
         </h2>
         {error && (
@@ -199,7 +199,7 @@ export default function Bodega() {
 
       {/* === TABLA con buscador === */}
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="font-serif text-[#081A2D] text-xl mb-4">
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">
           Búsqueda Bodegas
         </h2>
         <div className="mb-4">

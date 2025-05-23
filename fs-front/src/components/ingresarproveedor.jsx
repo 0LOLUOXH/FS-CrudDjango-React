@@ -24,7 +24,7 @@ export function Ingresar_Proveedor (){
     
     return (
         <div>
-            <h2>Ingresar Proveedor</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Ingresar Proveedor</h2>
 
             <form onSubmit={onUp}>
                 <label htmlFor="cedula">Cedula:</label>

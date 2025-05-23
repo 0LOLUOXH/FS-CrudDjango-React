@@ -14,10 +14,9 @@ const Empleados = () => {
         email: '',
         password: '',
         is_staff: false,
-        is_superuser: false
     });
 
-    // Fetch all users on component mount
+    // Cargar usuarios al montar el componente
     useEffect(() => {
         const loadUsers = async () => {
             try {
@@ -33,7 +32,7 @@ const Empleados = () => {
         loadUsers();
     }, []);
 
-    // Handle form input changes
+    // Manejar cambios en los inputs del formulario
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData({
@@ -42,7 +41,7 @@ const Empleados = () => {
         });
     };
 
-    // Open modal for creating a new user
+    // Abrir modal para crear nuevo usuario
     const openCreateModal = () => {
         setCurrentUser(null);
         setFormData({
@@ -50,12 +49,11 @@ const Empleados = () => {
             email: '',
             password: '',
             is_staff: false,
-            is_superuser: false
         });
         setIsModalOpen(true);
     };
 
-    // Open modal for editing an existing user
+    // Abrir modal para editar usuario existente
     const openEditModal = async (id) => {
         try {
             const user = await fetchUser(id);
@@ -63,9 +61,8 @@ const Empleados = () => {
             setFormData({
                 username: user.username,
                 email: user.email,
-                password: '', // Password is not fetched for security reasons
+                password: '', // No mostramos la contraseña actual por seguridad
                 is_staff: user.is_staff,
-                is_superuser: user.is_superuser
             });
             setIsModalOpen(true);
         } catch (error) {
@@ -74,23 +71,34 @@ const Empleados = () => {
         }
     };
 
-    // Open delete confirmation modal
+    // Abrir modal de confirmación para eliminar
     const openDeleteModal = (user) => {
         setCurrentUser(user);
         setIsDeleteModalOpen(true);
     };
 
-    // Handle form submission (create or update)
+    // Manejar envío del formulario (crear o actualizar)
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (currentUser) {
-                // Update existing user
-                const updatedUser = await updateUser(currentUser.id, formData);
+                // Actualizar usuario existente
+                const userToUpdate = {
+                    username: formData.username,
+                    email: formData.email,
+                    is_staff: formData.is_staff
+                };
+                
+                // Solo incluir password si no está vacío
+                if (formData.password) {
+                    userToUpdate.password = formData.password;
+                }
+
+                const updatedUser = await updateUser(currentUser.id, userToUpdate);
                 setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user));
                 toast.success('Usuario actualizado correctamente');
             } else {
-                // Create new user
+                // Crear nuevo usuario
                 const newUser = await createUser(formData);
                 setUsers([...users, newUser]);
                 toast.success('Usuario creado correctamente');
@@ -98,11 +106,19 @@ const Empleados = () => {
             setIsModalOpen(false);
         } catch (error) {
             console.error('Error saving user:', error);
-            toast.error('Error al guardar usuario');
+            
+            // Mostrar errores específicos del backend si existen
+            if (error.response?.data) {
+                Object.entries(error.response.data).forEach(([field, errors]) => {
+                    toast.error(`${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`);
+                });
+            } else {
+                toast.error('Error al guardar usuario');
+            }
         }
     };
 
-    // Handle user deletion
+    // Manejar eliminación de usuario
     const handleDelete = async () => {
         try {
             await deleteUser(currentUser.id);
@@ -119,8 +135,9 @@ const Empleados = () => {
         <div className="container mx-auto px-4 py-8">
             <ToastContainer position="top-right" autoClose={3000} />
             
+            {/* Encabezado y botón de crear */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Gestión de Usuarios</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Gestión de Empleados</h1>
                 <button
                     onClick={openCreateModal}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
@@ -129,6 +146,7 @@ const Empleados = () => {
                 </button>
             </div>
 
+            {/* Tabla de usuarios */}
             {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -142,7 +160,6 @@ const Empleados = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Administrador</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Superusuario</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
@@ -154,13 +171,6 @@ const Empleados = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {user.is_staff ? (
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Sí</span>
-                                        ) : (
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">No</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {user.is_superuser ? (
                                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Sí</span>
                                         ) : (
                                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">No</span>
@@ -187,9 +197,9 @@ const Empleados = () => {
                 </div>
             )}
 
-            {/* Create/Edit User Modal */}
+            {/* Modal para crear/editar usuario */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
                         <div className="p-6">
                             <h2 className="text-xl font-semibold mb-4">
@@ -251,19 +261,6 @@ const Empleados = () => {
                                         Es administrador
                                     </label>
                                 </div>
-                                <div className="mb-4 flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="is_superuser"
-                                        name="is_superuser"
-                                        checked={formData.is_superuser}
-                                        onChange={handleInputChange}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="is_superuser" className="ml-2 block text-sm text-gray-700">
-                                        Es superusuario
-                                    </label>
-                                </div>
                                 <div className="flex justify-end space-x-3">
                                     <button
                                         type="button"
@@ -285,9 +282,9 @@ const Empleados = () => {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
+            {/* Modal de confirmación para eliminar */}
             {isDeleteModalOpen && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
                         <div className="p-6">
                             <h2 className="text-xl font-semibold mb-4">Confirmar Eliminación</h2>

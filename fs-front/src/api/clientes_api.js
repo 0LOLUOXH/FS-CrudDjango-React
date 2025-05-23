@@ -36,7 +36,7 @@ export const createCliente = async (cliente) => {
 
 export const updateCliente = async (id, cliente) => {
     try {
-        const response = await axios.put(`${API_URL}${id}`, cliente);
+        const response = await axios.put(`${API_URL}${id}/`, cliente);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar el cliente:', error);
@@ -66,7 +66,7 @@ export const fetchClientesJuridicos = async () => {
 
 export const fetchClienteJuridico = async (id) => {
     try {
-        const response = await axios.get(`${API_URL_JURIDICO}/${id}`);
+        const response = await axios.get(`${API_URL_JURIDICO}${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al obtener el cliente juridico:', error);
@@ -86,7 +86,7 @@ export const createClienteJuridico = async (clienteJuridico) => {
 
 export const updateClienteJuridico = async (id, clienteJuridico) => {
     try {
-        const response = await axios.put(`${API_URL_JURIDICO}/${id}`, clienteJuridico);
+        const response = await axios.put(`${API_URL_JURIDICO}${id}/`, clienteJuridico);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar el cliente juridico:', error);
@@ -116,7 +116,7 @@ export const fetchClientesNaturales = async () => {
 
 export const fetchClienteNatural = async (id) => {
     try {
-        const response = await axios.get(`${API_URL_NATURAL}/${id}`);
+        const response = await axios.get(`${API_URL_NATURAL}${id}`);
         return response.data;
     } catch (error) {
         console.error('Error al obtener el cliente natural:', error);
@@ -136,7 +136,7 @@ export const createClienteNatural = async (clienteNatural) => {
 
 export const updateClienteNatural = async (id, clienteNatural) => {
     try {
-        const response = await axios.put(`${API_URL_NATURAL}/${id}`, clienteNatural);
+        const response = await axios.put(`${API_URL_NATURAL}${id}/`, clienteNatural);
         return response.data;
     } catch (error) {
         console.error('Error al actualizar el cliente natural:', error);

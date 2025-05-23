@@ -217,12 +217,11 @@ function Compras() {
 
     return (
         <div className="compras-container">
-            <h1>Registro de Compras</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Sección de búsqueda y carrito */}
                 <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold mb-4">Productos</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos</h2>
                     
                     <div className="mb-4">
                         <div className="relative">
@@ -343,7 +342,7 @@ function Compras() {
 
                 {/* Formulario de compra */}
                 <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold mb-4">Detalles de la Compra</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Detalles de la Compra</h2>
                     
                     <form onSubmit={handleSubmit}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

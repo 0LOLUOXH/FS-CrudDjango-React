@@ -36,6 +36,7 @@ export default function Login() {
             // Guardar el token y los datos del usuario
             console.log(data);
             login(data.token, {
+              'is_staff': data.is_staff,
               'user_id': data.user_id,
               'username': data.username,
             }); 

@@ -164,12 +164,11 @@ function Stock() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Gestión de Stock</h1>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Formulario para agregar stock */}
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Agregar Producto al Stock</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Agregar Producto al Stock</h2>
                     {error && (
                         <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
                             <p>{error}</p>
@@ -269,7 +268,7 @@ function Stock() {
                 
                 {/* Tabla de productos en stock */}
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Productos en Stock</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos en Stock</h2>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">

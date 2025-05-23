@@ -41,45 +41,46 @@ export function ModeloSelect({ onModeloChange }) {
         ? modelos.filter(modelo => modelo.marca.toString() === marcaSeleccionada)
         : [];
 
-    return (
-        <div className="modelo-selector">
-            <div className="form-group">
-                <label>Marca</label>
-                <select 
-                    name="marca" 
-                    onChange={handleMarcaChange}
-                    value={marcaSeleccionada}
-                    className="form-control"
-                >
-                    <option value="">Seleccione una marca</option>
-                    {marcas.map((marca) => (
-                        <option key={`marca-${marca.id}`} value={marca.id}>
-                            {marca.nombre}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="form-group">
-                <label>Modelo</label>
-                <select 
-                    name="modelo" 
-                    onChange={handleModeloChange}
-                    value={modeloSeleccionado}
-                    disabled={!marcaSeleccionada}
-                    className="form-control"
-                    required
-                >
-                    <option value="">
-                        {marcaSeleccionada ? 'Seleccione un modelo' : 'Seleccione una marca primero'}
+return (
+    <div className="space-y-4 max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+        <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Marca</label>
+            <select 
+                name="marca" 
+                onChange={handleMarcaChange}
+                value={marcaSeleccionada}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+                <option value="">Seleccione una marca</option>
+                {marcas.map((marca) => (
+                    <option key={`marca-${marca.id}`} value={marca.id}>
+                        {marca.nombre}
                     </option>
-                    {modelosFiltrados.map((modelo) => (
-                        <option key={`modelo-${modelo.id}`} value={modelo.id}>
-                            {modelo.nombre}
-                        </option>
-                    ))}
-                </select>
-            </div>
+                ))}
+            </select>
         </div>
-    );
-}
+
+        <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Modelo</label>
+            <select 
+                name="modelo" 
+                onChange={handleModeloChange}
+                value={modeloSeleccionado}
+                disabled={!marcaSeleccionada}
+                className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                    !marcaSeleccionada ? 'bg-gray-100 text-gray-500' : ''
+                }`}
+                required
+            >
+                <option value="">
+                    {marcaSeleccionada ? 'Seleccione un modelo' : 'Seleccione una marca primero'}
+                </option>
+                {modelosFiltrados.map((modelo) => (
+                    <option key={`modelo-${modelo.id}`} value={modelo.id}>
+                        {modelo.nombre}
+                    </option>
+                ))}
+            </select>
+        </div>
+    </div>
+);}

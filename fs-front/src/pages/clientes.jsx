@@ -7,8 +7,10 @@ import {
   updateClienteJuridico,
   deleteClienteNatural,
   deleteClienteJuridico,
+  updateCliente,
   deleteCliente
 } from '../api/clientes_api';
+import { Ingresar_Cliente } from '../components/ingresarcliente';
 
 export default function Clientes() {
   const [naturales, setNaturales] = useState([]);
@@ -53,7 +55,8 @@ export default function Clientes() {
     ...naturales.map(c => ({
       tipo: 'Natural',
       id: c.cliente,
-      nombre: `${c.nombre} ${c.apellido}`,
+      nombre: c.nombre,
+      apellido: c.apellido,
       documento: c.cedula,
       telefono: c.telefono
     })),
@@ -69,25 +72,14 @@ export default function Clientes() {
     c.documento.includes(search)
   );
 
-  // Handlers formulario nuevo
-  const onChangeForm = e => {
-    const { name, value } = e.target;
-    setFormData(f => ({ ...f, [name]: value }));
-  };
-  const onSubmitForm = e => {
-    e.preventDefault();
-    // Aquí la lógica de creación...
-  };
-
   // Preparar edición
   const onEditClick = c => {
     setEditing(c);
     if (c.tipo === 'Natural') {
-      const [first = '', last = ''] = c.nombre.split(' ');
       setEditData({
         tipo: 'Natural',
-        nombre: first,
-        apellido: last,
+        nombre: c.nombre,
+        apellido: c.apellido,
         cedula: c.documento,
         telefono: c.telefono,
         razon_social: '',
@@ -113,34 +105,63 @@ export default function Clientes() {
     const { name, value } = e.target;
     setEditData(d => ({ ...d, [name]: value }));
   };
-  const onEditSubmit = async e => {
+  
+const onEditSubmit = async e => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
+    
     try {
       if (editData.tipo === 'Natural') {
+        // Actualizar cliente base
+        await updateCliente(editing.id, {
+          telefono: editData.telefono,
+          tipo: 'N' // Verificar si la API espera 'N' o 'Natural'
+        });
+        
+        // Actualizar cliente natural
         await updateClienteNatural(editing.id, {
           nombre: editData.nombre,
           apellido: editData.apellido,
           cedula: editData.cedula,
-          telefono: editData.telefono
+          cliente: editing.id // Asegurar que incluimos la relación
         });
       } else {
+        // Actualizar cliente base
+        await updateCliente(editing.id, {
+          telefono: editData.telefono,
+          tipo: 'J' // Verificar si la API espera 'J' o 'Juridico'
+        });
+        
+        // Actualizar cliente jurídico
         await updateClienteJuridico(editing.id, {
           razon_social: editData.razon_social,
           ruc: editData.ruc,
-          telefono: editData.telefono
+          cliente: editing.id // Asegurar que incluimos la relación
         });
       }
-      setNaturales(await fetchClientesNaturales());
-      setJuridicos(await fetchClientesJuridicos());
+      
+      // Refrescar datos
+      const [nat, jur] = await Promise.all([
+        fetchClientesNaturales(),
+        fetchClientesJuridicos()
+      ]);
+      setNaturales(nat);
+      setJuridicos(jur);
+      
       setIsEditOpen(false);
-    } catch {
-      setError('Error al actualizar');
+    } catch (err) {
+        console.error('Error completo:', {
+          message: err.message,
+          response: err.response,
+          request: err.request,
+          config: err.config
+        });
+      setError(`Error al actualizar: ${err.response?.data?.message || err.message || 'Verifica los datos'}`);
     } finally {
       setIsLoading(false);
     }
-  };
-
+};
   // Eliminar
   const onDeleteClick = async (id, tipo) => {
     if (!window.confirm('¿Eliminar este cliente?')) return;
@@ -179,101 +200,11 @@ export default function Clientes() {
       grid grid-cols-1 lg:grid-cols-2 gap-6
     ">
       {/* === FORMULARIO === */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-serif text-[#081A2D] mb-6">Ingresar Cliente</h2>
-        <form onSubmit={onSubmitForm} className="space-y-6">
-          <div className="space-y-1">
-            <label className="block text-gray-700">Tipo de cliente</label>
-            <select
-              name="tipo"
-              value={formData.tipo}
-              onChange={onChangeForm}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-            >
-              <option>Natural</option>
-              <option>Juridico</option>
-            </select>
-          </div>
-
-          {formData.tipo === 'Natural' ? (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-gray-700">Nombre</label>
-                  <input
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={onChangeForm}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-gray-700">Apellido</label>
-                  <input
-                    name="apellido"
-                    value={formData.apellido}
-                    onChange={onChangeForm}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="block text-gray-700">Cédula</label>
-                <input
-                  name="cedula"
-                  value={formData.cedula}
-                  onChange={onChangeForm}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="space-y-1">
-                <label className="block text-gray-700">Razón Social</label>
-                <input
-                  name="razon_social"
-                  value={formData.razon_social}
-                  onChange={onChangeForm}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-gray-700">RUC</label>
-                <input
-                  name="ruc"
-                  value={formData.ruc}
-                  onChange={onChangeForm}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-                />
-              </div>
-            </>
-          )}
-
-          <div className="space-y-1">
-            <label className="block text-gray-700">Teléfono</label>
-            <input
-              name="telefono"
-              value={formData.telefono}
-              onChange={onChangeForm}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
-            >
-              Ingresar
-            </button>
-          </div>
-        </form>
-      </div>
+      <Ingresar_Cliente />
 
       {/* === TABLA === */}
       <div className="bg-white shadow rounded-lg p-6 overflow-x-auto">
-        <h2 className="font-serif text-[#081A2D] text-xl mb-4">Búsqueda Clientes</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Búsqueda Clientes</h2>
         <div className="mb-4">
           <input
             type="text"
@@ -333,7 +264,7 @@ export default function Clientes() {
 
       {/* === POPUP DE EDICIÓN === */}
       {isEditOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
             <h3 className="text-xl font-serif text-[#081A2D] mb-4">Editar Cliente</h3>
             {error && (
@@ -342,18 +273,6 @@ export default function Clientes() {
               </div>
             )}
             <form onSubmit={onEditSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-gray-700">Tipo de cliente</label>
-                <select
-                  name="tipo"
-                  value={editData.tipo}
-                  onChange={onEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                >
-                  <option>Natural</option>
-                  <option>Juridico</option>
-                </select>
-              </div>
 
               {editData.tipo === 'Natural' ? (
                 <>

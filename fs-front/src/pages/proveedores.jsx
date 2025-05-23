@@ -31,6 +31,7 @@ export default function Proveedores() {
     try {
       const data = await fetchProveedores()
       setProveedores(data)
+      setFormData({ cedula: '', nombre: '', apellido: '', telefono: '' })
       setError(null)
     } catch {
       setError('Error cargando proveedores')
@@ -103,7 +104,7 @@ export default function Proveedores() {
 
         {/* === PANEL IZQUIERDO: FORMULARIO === */}
         <div className="bg-white rounded-lg shadow p-6 flex flex-col h-full">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Ingresar Proveedor</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Ingresar Proveedor</h2>
           <form onSubmit={handleFormSubmit} className="space-y-5 flex-grow">
             <div className="flex flex-col">
               <label htmlFor="cedula" className="text-sm font-medium text-gray-700 mb-1">Cédula</label>
@@ -182,7 +183,7 @@ export default function Proveedores() {
 
         {/* === PANEL DERECHO: TABLA === */}
         <div className="bg-white rounded-lg shadow p-6 flex flex-col h-full">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Proveedores</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Proveedores</h2>
           <div className="overflow-x-auto flex-grow">
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -227,13 +228,72 @@ export default function Proveedores() {
 
       {/* === POPUP DE EDICIÓN === */}
       {isPopupOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30  flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               {editingProveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}
             </h2>
             <form onSubmit={handleFormSubmit} className="space-y-4">
-              {/* Mismo formulario interior, usa las mismas clases de input */}
+              <div className="flex flex-col">
+              <label htmlFor="cedula" className="text-sm font-medium text-gray-700 mb-1">Cédula</label>
+              <input
+                id="cedula"
+                name="cedula"
+                type="text"
+                value={formData.cedula}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-lg 
+                           focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500
+                           transition"
+                placeholder="Ej. 001-020601-0001A"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="nombre" className="text-sm font-medium text-gray-700 mb-1">Nombre</label>
+              <input
+                id="nombre"
+                name="nombre"
+                type="text"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-lg 
+                           focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500
+                           transition"
+                placeholder="Nombre del proveedor"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="apellido" className="text-sm font-medium text-gray-700 mb-1">Apellido</label>
+              <input
+                id="apellido"
+                name="apellido"
+                type="text"
+                value={formData.apellido}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-lg 
+                           focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500
+                           transition"
+                placeholder="Apellido del proveedor"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="telefono" className="text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <input
+                id="telefono"
+                name="telefono"
+                type="text"
+                value={formData.telefono}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-lg 
+                           focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500
+                           transition"
+                placeholder="8880-1234"
+              />
+            </div>
               {/* ... */}
               <div className="flex justify-end space-x-3 pt-4">
                 <button
