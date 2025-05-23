@@ -136,6 +136,8 @@ class proveedorSerializer(serializers.ModelSerializer):
         fields = ('id', 'cedula', 'nombre', 'apellido', 'telefono')
         
 class detalleproveedorSerializer(serializers.ModelSerializer):
+    nproducto = serializers.CharField(source='producto.nombre', read_only=True)
+    nproveedor = serializers.CharField(source='proveedor.nombre', read_only=True)
     class Meta:
         model = DetalleProveedor        
-        fields = ('id', 'proveedor', 'producto', 'tipo_comprobante', 'metodo_de_pago', 'numero_comprobante', 'fecha', 'total_a_pagar', 'cantidad')
+        fields = ('id', 'proveedor', 'producto', 'tipo_comprobante', 'metodo_de_pago', 'numero_comprobante', 'fecha', 'total_a_pagar', 'cantidad', 'nproveedor', 'nproducto',)

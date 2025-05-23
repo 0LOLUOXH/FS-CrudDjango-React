@@ -43,7 +43,7 @@ const columns = [
     name: "descripcion",
     label: "Descripcion",
     options: {
-      filter: true,
+      filter: false,
       sort: false,
     }
   },
@@ -101,7 +101,6 @@ const options = {
       deleteAria: "Eliminar fila seleccionada",
     },
   },
-  filterType: 'checkbox',
   selectableRows: 'none',
   serverSide: true,
   serverSideFilterKey: true,

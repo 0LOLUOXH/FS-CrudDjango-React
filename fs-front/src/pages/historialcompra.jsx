@@ -1,52 +1,65 @@
 import { useState, useEffect } from 'react'
 import { TablaCompras } from '../components/tabla_compras'
-import { fetchDetalleProveedors, updateDetalleProveedor, deleteDetalleProveedor } from '../api/detalleproveedor_api'
+import { fetchDetalleProveedors } from '../api/detalleproveedor_api'
+import { fetchPrecioProveedorProductos } from '../api/precioproveedorproducto_api'
 
-function historialcompra (){
-    const [detallperoveedor, setDetalleProveedor] = useState([]);
+function HistorialCompra() {
+    const [detalleProveedor, setDetalleProveedor] = useState([]);
+    const [precios, setPrecios] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        (async () => {
+        const fetchData = async () => {
             try {
-                const res = fetchDetalleProveedors();
-                setDetalleProveedor(detallperoveedor);
-                console.log(detallperoveedor);
-                console.log(res);
+                setLoading(true);
+                
+                const [detallesRes, preciosRes] = await Promise.all([
+                    fetchDetalleProveedors(),
+                    fetchPrecioProveedorProductos()
+                ]);
+
+                setPrecios(preciosRes);
+                
+                const detallesConPrecios = detallesRes.map(detalle => {
+                    const precioEncontrado = preciosRes.find(
+                        precio => 
+                            precio.producto === detalle.producto && 
+                            precio.proveedor === detalle.proveedor
+                    );
+                    
+                    return {
+                        ...detalle,
+                        precio_unitario: precioEncontrado ? parseFloat(precioEncontrado.precio) : 0,
+                        iva: precioEncontrado ? parseFloat(precioEncontrado.precio) * 0.15 : 0,
+                        total_a_pagar: detalle.total_a_pagar || (detalle.cantidad * (precioEncontrado?.precio || 0))
+                    };
+                });
+
+                setDetalleProveedor(detallesConPrecios);
+                console.log("Detalles con precios:", detallesConPrecios);
             } catch (e) {
-                console.error(e);
+                console.error("Error cargando datos:", e);
+            } finally {
+                setLoading(false);
             }
-        })();
-    }, [])
+        };
+
+        fetchData();
+    }, []);
+
     return (
         <div>
-
-            <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-slate-200 flex flex-col items-center justify-center px-6 py-12">
-
-                <h1 className='text-2xl font-bold text-gray-800 text-center mb-4'>Historial de compras</h1>
-                    
-                {/* Logo */}
-                <img
-                    src="https://ik.imagekit.io/jfcrjyrcq/fusion_solar_logo.jpg?updatedAt=1747926845910"
-                    alt="Logo Fusión Solar"
-                    className="w-52 md:w-64 rounded-xl shadow-lg mb-8"
-                />
-
-                {/* Título y bienvenida */}
-                <h1 className="text-4xl font-bold text-gray-800 text-center mb-4">
-                    Modulo en proceso
-                </h1>
-                <p className="text-lg text-gray-600 text-center max-w-2xl mb-10">
-                    Gracias por su comprension
-                </p>
+            <div className="w-full mx-auto">
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                ) : (
+                    <TablaCompras data={detalleProveedor} />
+                )}
             </div>
-            {/* <div className="w-full mx-auto">
-                <TablaCompras data={detallperoveedor} onUpdate={async () => {
-                    const res = await fetchDetalleProveedors();
-                    setProductos(res);
-                }} />
-            </div> */}
         </div>
     )
 }
 
-export default historialcompra
+export default HistorialCompra;
