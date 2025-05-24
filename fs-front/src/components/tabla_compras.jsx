@@ -66,12 +66,10 @@ const options = {
   selectableRows: 'none',
   rowsPerPage: 10,
   rowsPerPageOptions: [10, 25, 50],
-  downloadOptions: {
-    filename: 'historial_compras.csv',
-    separator: ',',
-  },
   print: false,
+  download: false,
   elevation: 0,
+  rowHover: true,
 };
 
 export function TablaCompras({ data }) {
@@ -353,8 +351,8 @@ const handleExportDetallePDF = (comprobante, productos) => {
       name: "id",
       label: "ID",
       options: {
-        filter: true,
-        sort: true,
+        filter: false,
+        sort: false,
         display: false
       }
     },
@@ -370,16 +368,16 @@ const handleExportDetallePDF = (comprobante, productos) => {
       name: "numero_comprobante",
       label: "N° Comprobante",
       options: {
-        filter: true,
-        sort: true,
+        filter: false,
+        sort: false,
       }
     },
     {
       name: "fecha",
       label: "Fecha",
       options: {
-        filter: true,
-        sort: true,
+        filter: false,
+        sort: false,
         customBodyRender: (value) => format(value, 'dd/MM/yyyy')
       }
     },
@@ -388,7 +386,7 @@ const handleExportDetallePDF = (comprobante, productos) => {
       label: "Proveedor",
       options: {
         filter: true,
-        sort: true,
+        sort: false,
       }
     },
     {
@@ -426,8 +424,8 @@ const handleExportDetallePDF = (comprobante, productos) => {
       name: "total_a_pagar",
       label: "Total",
       options: {
-        filter: true,
-        sort: true,
+        filter: false,
+        sort: false,
         customBodyRender: (value) => `$${parseFloat(value).toFixed(2)}`
       }
     },

@@ -12,7 +12,7 @@ const columns = [
     label: "Codigo",
     options: {
       filter: true,
-      sort: false,
+      sort: true,
     }
   },
   {
@@ -20,7 +20,7 @@ const columns = [
     label: "Nombre",
     options: {
       filter: true,
-      sort: false,
+      sort: true,
     }
   },
   {
@@ -28,7 +28,7 @@ const columns = [
     label: "Modelo",
     options: {
       filter: true,
-      sort: false,
+      sort: true,
     }
   },
   {
@@ -36,7 +36,7 @@ const columns = [
     label: "Marca",
     options: {
       filter: true,
-      sort: false,
+      sort: true,
     }
   },
   {
@@ -44,7 +44,7 @@ const columns = [
     label: "Descripcion",
     options: {
       filter: false,
-      sort: false,
+      sort: true,
     }
   },
   {
@@ -52,7 +52,7 @@ const columns = [
     label: "Bodega",
     options: {
       filter: true,
-      sort: false,
+      sort: true,
     }
   },
   {
@@ -60,7 +60,7 @@ const columns = [
     label: "Cantidad",
     options: {
       filter: true,
-      sort: false,
+      sort: true,
     }
   }, 
 ];
@@ -114,11 +114,10 @@ const options = {
       useDisplayedColumnsOnly: true,
     },
   },
-  elevation: 3,
+  elevation: 0,
   filterType: 'dropdown',
   responsive: 'standard',
   fixedHeader: true,  
-  jumpToPage: true,
   rowHover: true,
 };
 
@@ -217,7 +216,7 @@ export function Tabla({ data, onUpdate }) {
   return (
     <div>
       <MUIDataTable
-        title={"Inventario de productos"}
+        title={`Inventario de Productos`}
         data={data}
         columns={columns}
         options={tableOptions}

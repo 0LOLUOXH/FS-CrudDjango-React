@@ -122,7 +122,7 @@ class PrecioProveedorProductoSerializer(serializers.ModelSerializer):
 class ventaSerializer(serializers.ModelSerializer):
     ncliente = serializers.CharField(source='cliente.nombre', read_only=True)
     tcliente = serializers.CharField(source='cliente.tipo', read_only=True)
-    nempleado = serializers.CharField(source='empleado.nombre', read_only=True)
+    nempleado = serializers.CharField(source='empleado.username', read_only=True)
     class Meta:
         model = Venta
         fields = ('id', 'fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'direccion', 'precio_instalacion', 'ncliente', 'tcliente', 'nempleado')

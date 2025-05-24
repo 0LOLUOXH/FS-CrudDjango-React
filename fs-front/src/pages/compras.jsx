@@ -169,6 +169,10 @@ function Compras() {
                     proveedor: formData.proveedor,
                 });
 
+                console.log('Precio registrado para producto:', item.producto.id);
+                // Verificar si el producto ya tiene un precio registrado
+                console.log('Producto en carrito:', formData.numero_comprobante);
+
                 // Actualizar el stock del producto
                 const nuevaCantidad = item.producto.cantidad + parseInt(item.cantidad);
                 await updateProducto(item.producto.id, {

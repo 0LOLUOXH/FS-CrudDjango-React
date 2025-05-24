@@ -145,9 +145,9 @@ class Venta(models.Model):
     fecha              = models.DateTimeField(auto_now_add=True)
     total_a_pagar      = models.DecimalField(default=None, max_digits=12, decimal_places=2)
     metodo_de_pago     = models.CharField(max_length=50)
-    instalacion        = models.BooleanField()
-    direccion          = models.CharField(max_length=300)
-    precio_instalacion = models.DecimalField(default=None, max_digits=12, decimal_places=2)
+    instalacion        = models.BooleanField(default=False, null=True, blank=True)
+    direccion          = models.CharField(max_length=300, default=None, null=True, blank=True)
+    precio_instalacion = models.DecimalField(default=None, max_digits=15, decimal_places=2, null=True, blank=True)
     cliente            = models.ForeignKey(Cliente,  on_delete=models.CASCADE, related_name='ventas')
     empleado           = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ventas')
 

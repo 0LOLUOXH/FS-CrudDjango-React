@@ -254,7 +254,7 @@ function Ventas() {
                     venta: venta.id,
                     producto: item.producto.id,
                     cantidad_por_producto: item.cantidad,
-                    precio_unitario: item.precio
+                    preciodelproducto: item.precio
                 });
 
                 // Actualizar stock del producto
@@ -266,7 +266,7 @@ function Ventas() {
                     });
                 }
             }
-
+            console.log('detalles creados exitosamente:', carrito);
             // 3. Actualizar lista de productos y limpiar formulario
             const [productosActualizados, stocksActualizados] = await Promise.all([
                 fetchProductos(),

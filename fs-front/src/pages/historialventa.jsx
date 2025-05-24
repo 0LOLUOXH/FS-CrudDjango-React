@@ -1,71 +1,73 @@
 import { useState, useEffect } from 'react'
 import { fetchVentas } from '../api/venta_api'
 import { fetchDetalleVentas } from '../api/detalleventa_api'
-import { fetchPrecioProveedorProductos } from '../api/precioproveedorproducto_api'
+import { fetchClientesNaturales, fetchClientesJuridicos } from '../api/clientes_api'
 import TablaVentas from '../components/tabla_ventas'
+import { Box } from '@mui/material'
 
 function historialventa() {
-  const [ventasConDetalles, setVentasConDetalles] = useState([])
+    const [ventasConDetalles, setVentasConDetalles] = useState([])
 
-  useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        const [ventas, detalles, precios] = await Promise.all([
-          fetchVentas(),
-          fetchDetalleVentas(),
-          fetchPrecioProveedorProductos()
-        ])
+    useEffect(() => {
+        const cargarDatos = async () => {
+        try {
+            const [ventas, detalles, naturales, juridicos] = await Promise.all([
+            fetchVentas(),
+            fetchDetalleVentas(),
+            fetchClientesNaturales(),
+            fetchClientesJuridicos()
+            ])
 
-        // Crear un diccionario de precios por producto
-        const preciosPorProducto = {}
-        precios.forEach(precio => {
-          const idProducto = precio.producto
-          // solo tomamos el primer precio encontrado si hay varios
-          if (!preciosPorProducto[idProducto]) {
-            preciosPorProducto[idProducto] = precio.precio
-          }
-        })
+            const clienteNaturalPorId = {}
+            naturales.forEach(nat => {
+            clienteNaturalPorId[nat.cliente] = `${nat.nombre} ${nat.apellido}`
+            })
 
-        // Agrupar detalles por venta
-        const detallesPorVenta = {}
-        detalles.forEach(detalle => {
-          const idVenta = detalle.venta
-          if (!detallesPorVenta[idVenta]) {
-            detallesPorVenta[idVenta] = []
-          }
+            const clienteJuridicoPorId = {}
+            juridicos.forEach(jur => {
+            clienteJuridicoPorId[jur.cliente] = jur.razon_social
+            })
 
-          const precioUnitario = preciosPorProducto[detalle.producto] || 0
-          detallesPorVenta[idVenta].push({
-            ...detalle,
-            precio_unitario: precioUnitario
-          })
-        })
+            const detallesPorVenta = {}
+            detalles.forEach(detalle => {
+            const idVenta = detalle.venta
+            if (!detallesPorVenta[idVenta]) detallesPorVenta[idVenta] = []
+            detallesPorVenta[idVenta].push(detalle)
+            })
 
-        // Unir ventas con sus detalles
-        const ventasUnidas = ventas
-          .map(venta => ({
-            ...venta,
-            detalles: detallesPorVenta[venta.id] || []
-          }))
-          .sort((a, b) => a.id - b.id)
+            const ventasUnidas = ventas
+            .map(venta => {
+                const idCliente = venta.cliente
+                const tipo = venta.tcliente
+                const nombreCliente =
+                tipo === 'N'
+                    ? clienteNaturalPorId[idCliente] || 'Cliente Natural desconocido'
+                    : clienteJuridicoPorId[idCliente] || 'Cliente Jurídico desconocido'
 
-        setVentasConDetalles(ventasUnidas)
-      } catch (error) {
-        console.error('Error al cargar ventas, detalles o precios:', error)
-      }
-    }
+                return {
+                ...venta,
+                ncliente: nombreCliente,
+                detalles: detallesPorVenta[venta.id] || []
+                }
+            })
+            .sort((a, b) => a.id - b.id)
 
-    cargarDatos()
-  }, [])
+            setVentasConDetalles(ventasUnidas)
+        } catch (error) {
+            console.error('Error al cargar ventas:', error)
+        }
+        }
 
-  return (
-    <div>
-      <h1>Historial de Ventas</h1>
-      {ventasConDetalles.map(venta => (
-        <TablaVentas key={venta.id} data={venta} />
-      ))}
-    </div>
-  )
+        cargarDatos()
+    }, [])
+
+    return (
+    <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
+        <Box width="90%" minWidth="300px">
+            <TablaVentas data={ventasConDetalles} />
+        </Box>
+    </Box>
+    )
 }
 
 export default historialventa
