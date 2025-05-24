@@ -2,6 +2,15 @@ import axios from 'axios'
 
 const API_URL = 'http://localhost:8000/fs/apibd/v1/detalleventa/'
 
+export const fetchDetalleVentas = async () => { 
+  try {
+    const response = await axios.get(API_URL) 
+    return response.data
+  } catch (error) {
+    console.error('Error al obtener los detalles de las ventas:', error)
+    throw error
+  }
+}
 export const fetchDetalleVenta = async (id) => {
   try {
     const response = await axios.get(`${API_URL}${id}`)

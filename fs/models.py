@@ -123,6 +123,7 @@ class Producto(models.Model):
         return self.nombre
 
 class PrecioProveedorProducto(models.Model):
+    numero_comprobante = models.CharField(max_length=100, default="NO HAY COMPROBANTE", null=True)
     precio    = models.DecimalField(max_digits=10, decimal_places=2)
     iva       = models.DecimalField(max_digits=5,  decimal_places=2)
     producto  = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='precios_proveedor')
@@ -156,6 +157,7 @@ class Venta(models.Model):
 class DetalleVenta(models.Model):
     venta                = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
     producto             = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    preciodelproducto    = models.DecimalField(default=None, max_digits=12, decimal_places=2)
     cantidad_por_producto= models.IntegerField(default=1)
 
     def __str__(self):

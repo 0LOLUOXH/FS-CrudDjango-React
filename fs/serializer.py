@@ -117,18 +117,21 @@ class stockSerializer(serializers.ModelSerializer):
 class PrecioProveedorProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrecioProveedorProducto
-        fields = ('id', 'producto', 'proveedor', 'precio', 'iva')
+        fields = ('id', 'producto', 'proveedor', 'precio', 'iva', 'numero_comprobante')
         
 class ventaSerializer(serializers.ModelSerializer):
+    ncliente = serializers.CharField(source='cliente.nombre', read_only=True)
+    tcliente = serializers.CharField(source='cliente.tipo', read_only=True)
+    nempleado = serializers.CharField(source='empleado.nombre', read_only=True)
     class Meta:
         model = Venta
-        fields = ('id', 'fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'direccion', 'precio_instalacion')
+        fields = ('id', 'fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'direccion', 'precio_instalacion', 'ncliente', 'tcliente', 'nempleado')
         
 class detalleventaSerializer(serializers.ModelSerializer):
     nproducto = serializers.CharField(source='producto.nombre', read_only=True)
     class Meta:
         model = DetalleVenta
-        fields = ('id', 'venta', 'producto', 'cantidad_por_producto', 'nproducto')
+        fields = ('id', 'venta', 'producto', 'cantidad_por_producto', 'nproducto', 'preciodelproducto',)
         
 class proveedorSerializer(serializers.ModelSerializer):
     class Meta:

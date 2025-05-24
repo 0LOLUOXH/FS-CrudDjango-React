@@ -21,17 +21,33 @@ function HistorialCompra() {
                 setPrecios(preciosRes);
                 
                 const detallesConPrecios = detallesRes.map(detalle => {
+                    // Buscar el precio que coincida con producto, proveedor Y número de comprobante
                     const precioEncontrado = preciosRes.find(
                         precio => 
                             precio.producto === detalle.producto && 
-                            precio.proveedor === detalle.proveedor
+                            precio.proveedor === detalle.proveedor &&
+                            precio.numero_comprobante === detalle.numero_comprobante
                     );
                     
+                    // Si no encontramos precio exacto, buscar solo por producto y proveedor
+                    const precioAlternativo = !precioEncontrado 
+                        ? preciosRes.find(
+                            precio => 
+                                precio.producto === detalle.producto && 
+                                precio.proveedor === detalle.proveedor
+                          )
+                        : null;
+
+                    const precioFinal = precioEncontrado || precioAlternativo;
+                    const precioUnitario = precioFinal ? parseFloat(precioFinal.precio) : 0;
+                    const ivaCalculado = precioUnitario * 0.15;
+                    const total = detalle.total_a_pagar || (detalle.cantidad * (precioUnitario + ivaCalculado));
+
                     return {
                         ...detalle,
-                        precio_unitario: precioEncontrado ? parseFloat(precioEncontrado.precio) : 0,
-                        iva: precioEncontrado ? parseFloat(precioEncontrado.precio) * 0.15 : 0,
-                        total_a_pagar: detalle.total_a_pagar || (detalle.cantidad * (precioEncontrado?.precio || 0))
+                        precio_unitario: precioUnitario,
+                        iva: ivaCalculado,
+                        total_a_pagar: total
                     };
                 });
 
@@ -49,7 +65,7 @@ function HistorialCompra() {
 
     return (
         <div>
-            <div className="w-full mx-auto">
+            <div className="w-full mx-auto container mt-10">
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

@@ -45,7 +45,7 @@ class Stockadmin(admin.ModelAdmin):
 
 @admin.register(PrecioProveedorProducto)
 class PrecioProveedorProductoadmin(admin.ModelAdmin):
-    list_display = ('id','producto', 'proveedor', 'precio', 'iva')
+    list_display = ('id','producto', 'proveedor', 'precio', 'iva', 'numero_comprobante')
     
 @admin.register(Venta)
 class Ventadmin(admin.ModelAdmin):
@@ -53,7 +53,7 @@ class Ventadmin(admin.ModelAdmin):
     
 @admin.register(DetalleVenta)
 class DetalleVentaadmin(admin.ModelAdmin):
-    list_display = ('id','venta', 'producto', 'cantidad_por_producto')
+    list_display = ('id','venta', 'producto', 'cantidad_por_producto', 'preciodelproducto')
     
 @admin.register(Proveedor)
 class Proveedoradmin(admin.ModelAdmin):

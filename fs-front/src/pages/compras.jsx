@@ -155,13 +155,14 @@ function Compras() {
                     ...formData,
                     total_a_pagar: calcularTotal(),
                     producto: item.producto.id,
-                    cantidad: carrito.reduce((sum, item) => sum + parseInt(item.cantidad), 0)
+                    cantidad: item.cantidad
                 });
             }
             
             // 2. Crear los precios por producto
             for (const item of carrito) {
                 await createPrecioProveedorProducto({
+                    numero_comprobante: formData.numero_comprobante,
                     precio: parseFloat(item.precio),
                     iva: parseFloat(item.precio) * IVA_PORCENTAJE,
                     producto: item.producto.id,

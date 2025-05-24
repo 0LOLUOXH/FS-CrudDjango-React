@@ -1,30 +1,71 @@
 import { useState, useEffect } from 'react'
-import {Tabla} from '../components/tabla'
+import { fetchVentas } from '../api/venta_api'
+import { fetchDetalleVentas } from '../api/detalleventa_api'
+import { fetchPrecioProveedorProductos } from '../api/precioproveedorproducto_api'
+import TablaVentas from '../components/tabla_ventas'
 
-function historialventa (){
-    return (
-        <div>
-            <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-slate-200 flex flex-col items-center justify-center px-6 py-12">
+function historialventa() {
+  const [ventasConDetalles, setVentasConDetalles] = useState([])
 
-                <h1 className='text-2xl font-bold text-gray-800 text-center mb-4'>Historial de ventas</h1>
-                
-                        {/* Logo */}
-                <img
-                    src="https://ik.imagekit.io/jfcrjyrcq/fusion_solar_logo.jpg?updatedAt=1747926845910"
-                    alt="Logo Fusión Solar"
-                    className="w-52 md:w-64 rounded-xl shadow-lg mb-8"
-                />
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        const [ventas, detalles, precios] = await Promise.all([
+          fetchVentas(),
+          fetchDetalleVentas(),
+          fetchPrecioProveedorProductos()
+        ])
 
-                {/* Título y bienvenida */}
-                <h1 className="text-4xl font-bold text-gray-800 text-center mb-4">
-                    Modulo en proceso
-                </h1>
-                <p className="text-lg text-gray-600 text-center max-w-2xl mb-10">
-                    Gracias por su comprension
-                </p>
-            </div>
-        </div>
-)
+        // Crear un diccionario de precios por producto
+        const preciosPorProducto = {}
+        precios.forEach(precio => {
+          const idProducto = precio.producto
+          // solo tomamos el primer precio encontrado si hay varios
+          if (!preciosPorProducto[idProducto]) {
+            preciosPorProducto[idProducto] = precio.precio
+          }
+        })
+
+        // Agrupar detalles por venta
+        const detallesPorVenta = {}
+        detalles.forEach(detalle => {
+          const idVenta = detalle.venta
+          if (!detallesPorVenta[idVenta]) {
+            detallesPorVenta[idVenta] = []
+          }
+
+          const precioUnitario = preciosPorProducto[detalle.producto] || 0
+          detallesPorVenta[idVenta].push({
+            ...detalle,
+            precio_unitario: precioUnitario
+          })
+        })
+
+        // Unir ventas con sus detalles
+        const ventasUnidas = ventas
+          .map(venta => ({
+            ...venta,
+            detalles: detallesPorVenta[venta.id] || []
+          }))
+          .sort((a, b) => a.id - b.id)
+
+        setVentasConDetalles(ventasUnidas)
+      } catch (error) {
+        console.error('Error al cargar ventas, detalles o precios:', error)
+      }
+    }
+
+    cargarDatos()
+  }, [])
+
+  return (
+    <div>
+      <h1>Historial de Ventas</h1>
+      {ventasConDetalles.map(venta => (
+        <TablaVentas key={venta.id} data={venta} />
+      ))}
+    </div>
+  )
 }
 
 export default historialventa
