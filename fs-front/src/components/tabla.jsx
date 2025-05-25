@@ -11,7 +11,7 @@ const columns = [
     name: "id",
     label: "Codigo",
     options: {
-      filter: true,
+      filter: false,
       sort: true,
     }
   },
@@ -19,7 +19,7 @@ const columns = [
     name: "nombre",
     label: "Nombre",
     options: {
-      filter: true,
+      filter: false,
       sort: true,
     }
   },

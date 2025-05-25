@@ -27,4 +27,9 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='api_login'),
     path('reset-password/', PasswordResetView.as_view(), name='password_reset'),  
     path('reset-password/<str:token>/', PasswordResetConfirmView.as_view(),),   
+    path('backups/create/', CreateBackupView.as_view(), name='create_backup'),
+    path('backups/restore/', RestoreBackupView.as_view(), name='restore_backup'),
+    path('backups/list/', ListBackupsView.as_view(), name='list_backups'),
+    path('backups/download/', DownloadBackupView.as_view(), name='download_backup'),
+    path('backups/delete/', DeleteBackupView.as_view(), name='delete_backup'),
 ]

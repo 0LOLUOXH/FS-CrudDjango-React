@@ -66,7 +66,7 @@ const options = {
   selectableRows: 'none',
   rowsPerPage: 10,
   rowsPerPageOptions: [10, 25, 50],
-  print: false,
+  print: true,
   download: false,
   elevation: 0,
   rowHover: true,

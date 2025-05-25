@@ -23,6 +23,7 @@ const pages = [
   { path: '/stock', component: lazy(() => import('./pages/stock')) },
   { path: '/historialventa', component: lazy(() => import('./pages/historialventa')) },
   { path: '/historialcompra', component: lazy(() => import('./pages/historialcompra')) },
+  { path: '/backups', component: lazy(() => import('./pages/backups')) },
 ];
 
 function App() {

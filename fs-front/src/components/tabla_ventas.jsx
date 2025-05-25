@@ -47,7 +47,7 @@ const options = {
   rowsPerPage: 10,
   rowsPerPageOptions: [10, 25, 50],
   downloadOptions: { filename: 'historial_compras.csv', separator: ',' },
-  print: false,
+  print: true,
   download: false,
   elevation: 0,
   rowHover: true,
