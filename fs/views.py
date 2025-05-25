@@ -70,16 +70,50 @@ from .serializer import LoginSerializer, userSerializer
 from django.core.cache import cache
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+import re
 User = get_user_model()
 
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+
+        if not username:
+            raise AuthenticationFailed('Se requiere nombre de usuario.')
+
+        # Claves de cache por usuario
+        attempts_cache_key = f'login_attempts_{username}'
+        blocked_cache_key = f'login_blocked_{username}'
+
+        # Verificar si está bloqueado
+        if cache.get(blocked_cache_key):
+            raise AuthenticationFailed('Demasiados intentos fallidos. Inténtalo de nuevo en 1 minuto.')
+
         serializer = LoginSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except AuthenticationFailed as e:
+            # Manejo de intento fallido
+            attempts = cache.get(attempts_cache_key, 0) + 1
+            cache.set(attempts_cache_key, attempts, timeout=60)  # Guarda por 60 segundos
+
+            if attempts >= 3:
+                cache.set(blocked_cache_key, True, timeout=60)  # Bloquea por 60 segundos
+                cache.delete(attempts_cache_key)  # Reinicia intentos
+                raise AuthenticationFailed('Demasiados intentos fallidos. Usuario bloqueado por 1 minuto.')
+
+            raise AuthenticationFailed(f'Credenciales inválidas. Intentos restantes: {3 - attempts}')
+
+        # Si el login fue exitoso, limpiamos los intentos
+        cache.delete(attempts_cache_key)
+        cache.delete(blocked_cache_key)
+
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
-        
+
         return Response({
             'token': token.key,
             'user_id': user.pk,
@@ -87,39 +121,45 @@ class LoginView(APIView):
             'email': user.email,
             'is_staff': user.is_staff,
         })
-
-#class LoginView(APIView):
-#    def post(self, request):
-#        username = request.data.get('username')
-#        attempts = cache.get(f"login_attempts_{username}", 0)
-#        
-#        if attempts >= 3:
-#            return Response({'error': 'Maximum login attempts exceeded.'}, status=403)
-#        
-#        serializer = LoginSerializer(data=request.data)
-#        if serializer.is_valid():
-#            cache.delete(f"login_attempts_{username}")
-#            return Response(userSerializer(serializer.validated_data).data)
-#        else:
-#            cache.set(f"login_attempts_{username}", attempts + 1, timeout=300)
-#            return Response(serializer.errors, status=400)
-
+        
+        
 class PasswordResetView(APIView):
     def post(self, request):
         email = request.data.get('email')
+
+        if not email:
+            raise ValidationError({"detail": "El correo electrónico es obligatorio."})
+
+        if not self.validate_email(email):
+            raise ValidationError({"detail": "Formato de correo inválido."})
+
         user = User.objects.filter(email=email).first()
+
         if user:
-            token = get_random_string(32)
-            cache.set(f"password_reset_token_{token}", user.username, timeout=15*60)  # 15 min
-            # Aquí guardar token si se requiere validación
-            send_mail(
-                'Password Reset',
-                f'Click the link to reset your password: http://localhost:5173/reset-password/{token}',
-                'mAlbertOrtega@gmail.com',
-                [email],
-                fail_silently=False
-            )
-        return Response({'message': 'If email exists, reset link was sent.'})
+            token = get_random_string(48)  # Token más largo y seguro
+            cache.set(f"password_reset_token_{token}", user.username, timeout=15*60)  # 15 minutos
+
+            reset_url = f"http://localhost:5173/reset-password/{token}"
+
+            try:
+                send_mail(
+                    'Restablecer contraseña',
+                    f'Hola {user.username},\n\nHaz clic en el siguiente enlace para restablecer tu contraseña:\n{reset_url}\n\nEste enlace es válido por 15 minutos.',
+                    'fsolar2025@gmail.com',
+                    [email],
+                    fail_silently=False
+                )
+            except Exception as e:
+                # Log or notify error
+                print(f"Error enviando correo: {e}")
+
+        # Siempre responder igual, para proteger privacidad del usuario
+        return Response({'detail': 'Si el correo está registrado, se ha enviado un enlace para restablecer la contraseña.'}, status=status.HTTP_200_OK)
+
+    def validate_email(self, email):
+        """Validar formato de correo."""
+        pattern = r"[^@]+@[^@]+\.[^@]+"
+        return re.match(pattern, email)
     
 token_store = {}
     

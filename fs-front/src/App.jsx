@@ -9,6 +9,10 @@ import { PrivateRoute } from './auth/PrivateRoute';
 import { AuthProvider } from './auth/AuthContext';
 import './app.css';
 
+//  IMPORTACIONES PARA TOASTIFY
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 const pages = [
   { path: '/inicio', component: lazy(() => import('./pages/inicio')) },
   { path: '/compras', component: lazy(() => import('./pages/compras')) },
@@ -57,6 +61,8 @@ function App() {
             ))}
           </Route>
         </Routes>
+        {/*  TOAST CONTAINER ACTIVO PARA TODA LA APP */}
+        <ToastContainer position="top-right" autoClose={5000} pauseOnHover theme="colored" />
       </BrowserRouter>
     </AuthProvider>
   );

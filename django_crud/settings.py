@@ -189,6 +189,13 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # O tu proveedor de email
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'mAlbertOrtega@gmail.com'
-EMAIL_HOST_PASSWORD = 'ubhebotodobvwgvp'
-DEFAULT_FROM_EMAIL = 'mAlbertOrtega@gmail.com'
+EMAIL_HOST_USER = 'fsolar2025@gmail.com'
+EMAIL_HOST_PASSWORD = 'ddyzfvkipbehxmee'
+DEFAULT_FROM_EMAIL = 'fsolar2025@gmail.com'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
