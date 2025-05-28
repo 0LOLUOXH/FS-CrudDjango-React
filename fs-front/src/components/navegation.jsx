@@ -38,7 +38,7 @@ export function Navegation() {
   const linkBase =
     "flex items-center gap-3 justify-start w-full px-4 py-2 mb-2 rounded-lg text-[17px] transition-colors duration-200";
   const linkInactive = "text-white hover:bg-[#15608B] hover:text-white";
-  const linkActive = "bg-[#FEBA53] text-[#081A2D]";
+  const linkActive = "bg-[#FEBA53] text-[#081A2D] ";
 
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -178,17 +178,12 @@ export function Navegation() {
             onClick={() => setOpen(false)}
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-5 w-5 text-[#FEBA53]"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 10l9-7 9 7v11a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6h-4v6a2 2 0 01-2 2H5a2 2 0 01-2-2V10z"
-              />
+              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5
+                ${
+                  location.pathname === "/inicio" ? 'text-[#081A2D]' : 'text-[#FEBA53]'
+                }
+              `}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l9-7 9 7v11a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6h-4v6a2 2 0 01-2 2H5a2 2 0 01-2-2V10z" />
             </svg>
             Inicio
           </Link>
@@ -200,7 +195,11 @@ export function Navegation() {
             }`}
             onClick={() => setOpen(false)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5
+                ${
+                  location.pathname === "/clientes" ? 'text-[#081A2D]' : 'text-[#FEBA53]'
+                }
+              `}>
               <path d="M10 5a3 3 0 11-6 0 3 3 0 016 0ZM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572ZM16.25 5.75a.75.75 0 10-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2Z" />
             </svg>
             Clientes
@@ -214,7 +213,11 @@ export function Navegation() {
             }`}
             onClick={() => setOpen(false)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5
+                ${
+                  location.pathname === "/proveedores" ? 'text-[#081A2D]' : 'text-[#FEBA53]'
+                }
+              `}>
               <path d="M6.5 3c-1.051 0-2.093.04-3.125.117A1.49 1.49 0 002 4.607V10.5h9V4.606c0-.771-.59-1.43-1.375-1.489A41.568 41.568 0 006.5 3ZM2 12v2.5A1.5 1.5 0 0 013.5 16h.041a3 3 0 015.918 0h.791a.75.75 0 00.75-.75V12H2Z" />
               <path d="M6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3ZM13.25 5a.75.75 0 00-.75.75v8.514a3.001 3.001 0 004.893 1.44c.37-.275.61-.719.595-1.227a24.905 24.905 0 00-1.784-8.549A1.486 1.486 0 0014.823 5H13.25ZM14.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3Z" />
             </svg>
@@ -339,7 +342,11 @@ export function Navegation() {
             }`}
             onClick={() => setOpen(false)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5
+                ${
+                  location.pathname === "/empleados" ? 'text-[#081A2D]' : 'text-[#FEBA53]'
+                }
+              `}>
               <path d="M10 9a3 3 0 100-6 3 3 0 000 6ZM6 8a2 2 0 11-4 0 2 2 0 014 0ZM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654ZM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654ZM18 8a2 2 0 11-4 0 2 2 0 014 0ZM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81Z" />
             </svg>
             Empleados
@@ -353,9 +360,17 @@ export function Navegation() {
             }`}
             onClick={() => setOpen(false)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#FEBA53]">
-              <path d="M10 9a3 3 0 100-6 3 3 0 000 6ZM6 8a2 2 0 11-4 0 2 2 0 014 0ZM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654ZM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654ZM18 8a2 2 0 11-4 0 2 2 0 014 0ZM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81Z" />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`h-5 w-5
+                ${
+                  location.pathname === "/backups" ? 'text-[#081A2D]' : 'text-[#FEBA53]'
+                }
+              `}>
+              <path d="M21 6.375c0 2.692-4.03 4.875-9 4.875S3 9.067 3 6.375 7.03 1.5 12 1.5s9 2.183 9 4.875Z" />
+              <path d="M12 12.75c2.685 0 5.19-.586 7.078-1.609a8.283 8.283 0 0 0 1.897-1.384c.016.121.025.244.025.368C21 12.817 16.97 15 12 15s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.285 8.285 0 0 0 1.897 1.384C6.809 12.164 9.315 12.75 12 12.75Z" />
+              <path d="M12 16.5c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 0 0 1.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 0 0 1.897 1.384C6.809 15.914 9.315 16.5 12 16.5Z" />
+              <path d="M12 20.25c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 0 0 1.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 0 0 1.897 1.384C6.809 19.664 9.315 20.25 12 20.25Z" />
             </svg>
+
             Backups
           </Link>
     )}
