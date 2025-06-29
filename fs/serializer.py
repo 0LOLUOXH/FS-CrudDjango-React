@@ -135,7 +135,7 @@ class detalleventaSerializer(serializers.ModelSerializer):
 class proveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proveedor
-        fields = ('id', 'ruc', 'razon_social', 'respresentante', 'email', 'telefono', 'estado')
+        fields = ('id', 'ruc', 'razon_social', 'representante', 'email', 'telefono', 'estado')
         
 class detalleproveedorSerializer(serializers.ModelSerializer):
     nproducto = serializers.CharField(source='producto.nombre', read_only=True)

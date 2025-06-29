@@ -109,13 +109,13 @@ class ClienteJuridico(models.Model):
 class Proveedor(models.Model):
     ruc   = models.CharField(max_length=50)
     razon_social   = models.CharField(max_length=100)
-    respresentante = models.CharField(max_length=200, blank=True, null=True)
+    representante = models.CharField(max_length=200, blank=True, null=True)
     email = models.CharField(max_length=200, blank=True, null=True)
     telefono = models.CharField(max_length=20)
     estado  = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.nombre} {self.apellido}"
+        return f"{self.razon_social}"
 
 
 # ============================

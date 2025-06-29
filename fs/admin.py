@@ -54,7 +54,7 @@ class DetalleVentaadmin(admin.ModelAdmin):
     
 @admin.register(Proveedor)
 class Proveedoradmin(admin.ModelAdmin):
-    list_display = ('id','ruc', 'razon_social', 'respresentante', 'email', 'telefono', 'estado')
+    list_display = ('id','ruc', 'razon_social', 'representante', 'email', 'telefono', 'estado')
     
 @admin.register(DetalleProveedor)
 class DetalleProveedoradmin(admin.ModelAdmin):
