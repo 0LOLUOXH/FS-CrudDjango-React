@@ -59,10 +59,12 @@ function App() {
                 path={path}
                 element={
                   <>
-                    <Navegation />
-                    <Suspense fallback={<div>Cargando...</div>}>
-                      <Component />
-                    </Suspense>
+                   <Navegation />
+      <div className="ml-[280px] pt-[60px] px-6"> {/* 👈 Contenedor corregido */}
+        <Suspense fallback={<div>Cargando...</div>}>
+          <Component />
+        </Suspense>
+      </div>
                   </>
                 }
               />
