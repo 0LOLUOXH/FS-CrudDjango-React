@@ -84,6 +84,8 @@ class ClienteNatural(models.Model):
     apellido = models.CharField(max_length=100)
     email = models.CharField(max_length=200, blank=True, null=True)
     cedula   = models.CharField(max_length=50)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    estado  = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
@@ -95,6 +97,7 @@ class ClienteJuridico(models.Model):
     email = models.CharField(max_length=200, blank=True, null=True)
     ruc          = models.CharField(max_length=50, blank=True)
     telefono     = models.CharField(max_length=50, blank=True)
+    estado  = models.BooleanField(default=False)
 
     def __str__(self):
         return self.razon_social
@@ -109,6 +112,7 @@ class Proveedor(models.Model):
     respresentante = models.CharField(max_length=200, blank=True, null=True)
     email = models.CharField(max_length=200, blank=True, null=True)
     telefono = models.CharField(max_length=20)
+    estado  = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"

@@ -21,11 +21,11 @@ class Clienteadmin(admin.ModelAdmin):
 
 @admin.register(ClienteJuridico)
 class ClienteJuridicoadmin(admin.ModelAdmin):
-    list_display = ('cliente', 'razon_social', 'ruc', 'respresentante', 'email')
+    list_display = ('cliente', 'razon_social', 'ruc', 'respresentante', 'email', 'estado', 'telefono')
 
 @admin.register(ClienteNatural)
 class ClienteNaturaladmin(admin.ModelAdmin):
-    list_display = ('cliente', 'nombre', 'apellido', 'cedula', 'email')
+    list_display = ('cliente', 'nombre', 'apellido', 'cedula', 'email', 'estado', 'telefono')
     
 @admin.register(Empleado)
 class Empleadoadmin(admin.ModelAdmin):
@@ -54,7 +54,7 @@ class DetalleVentaadmin(admin.ModelAdmin):
     
 @admin.register(Proveedor)
 class Proveedoradmin(admin.ModelAdmin):
-    list_display = ('id','ruc', 'razon_social', 'respresentante', 'email', 'telefono')
+    list_display = ('id','ruc', 'razon_social', 'respresentante', 'email', 'telefono', 'estado')
     
 @admin.register(DetalleProveedor)
 class DetalleProveedoradmin(admin.ModelAdmin):

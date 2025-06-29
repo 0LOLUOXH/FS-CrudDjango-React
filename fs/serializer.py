@@ -84,14 +84,14 @@ class clienteJuridicoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ClienteJuridico
-        fields = ('cliente', 'razon_social', 'respresentante', 'email', 'ruc', 'telefono')
+        fields = ('cliente', 'razon_social', 'respresentante', 'email', 'ruc', 'telefono', 'estado')
         
 class ClienteNaturalSerializer(serializers.ModelSerializer):
     telefono = serializers.CharField(source='cliente.telefono', read_only=True)
 
     class Meta:
         model = ClienteNatural
-        fields = ('cliente', 'nombre', 'apellido', 'cedula', 'telefono', 'email')
+        fields = ('cliente', 'nombre', 'apellido', 'cedula', 'telefono', 'email', 'estado')
         
 class empleadoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -135,7 +135,7 @@ class detalleventaSerializer(serializers.ModelSerializer):
 class proveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proveedor
-        fields = ('id', 'ruc', 'razon_social', 'respresentante', 'email', 'telefono')
+        fields = ('id', 'ruc', 'razon_social', 'respresentante', 'email', 'telefono', 'estado')
         
 class detalleproveedorSerializer(serializers.ModelSerializer):
     nproducto = serializers.CharField(source='producto.nombre', read_only=True)
