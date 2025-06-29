@@ -82,6 +82,7 @@ class ClienteNatural(models.Model):
     cliente  = models.OneToOneField(Cliente, on_delete=models.CASCADE, primary_key=True, related_name='natural')
     nombre   = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
+    email = models.CharField(max_length=200, blank=True, null=True)
     cedula   = models.CharField(max_length=50)
 
     def __str__(self):

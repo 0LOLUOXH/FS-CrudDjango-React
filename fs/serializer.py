@@ -91,7 +91,7 @@ class ClienteNaturalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClienteNatural
-        fields = ('cliente', 'nombre', 'apellido', 'cedula', 'telefono')
+        fields = ('cliente', 'nombre', 'apellido', 'cedula', 'telefono', 'email')
         
 class empleadoSerializer(serializers.ModelSerializer):
     class Meta:
