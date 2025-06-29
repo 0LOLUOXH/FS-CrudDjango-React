@@ -84,7 +84,7 @@ class clienteJuridicoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ClienteJuridico
-        fields = ('cliente', 'razon_social', 'respresentante', 'email', 'ruc', 'telefono', 'estado')
+        fields = ('cliente', 'razon_social', 'representante', 'email', 'ruc', 'telefono', 'estado')
         
 class ClienteNaturalSerializer(serializers.ModelSerializer):
     telefono = serializers.CharField(source='cliente.telefono', read_only=True)

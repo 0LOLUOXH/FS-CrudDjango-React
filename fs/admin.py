@@ -21,7 +21,7 @@ class Clienteadmin(admin.ModelAdmin):
 
 @admin.register(ClienteJuridico)
 class ClienteJuridicoadmin(admin.ModelAdmin):
-    list_display = ('cliente', 'razon_social', 'ruc', 'respresentante', 'email', 'estado', 'telefono')
+    list_display = ('cliente', 'razon_social', 'ruc', 'representante', 'email', 'estado', 'telefono')
 
 @admin.register(ClienteNatural)
 class ClienteNaturaladmin(admin.ModelAdmin):

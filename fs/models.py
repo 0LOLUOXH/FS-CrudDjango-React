@@ -93,7 +93,7 @@ class ClienteNatural(models.Model):
 class ClienteJuridico(models.Model):
     cliente      = models.OneToOneField(Cliente, on_delete=models.CASCADE, primary_key=True, related_name='juridico')
     razon_social = models.CharField(max_length=200)
-    respresentante = models.CharField(max_length=200, blank=True, null=True)
+    representante = models.CharField(max_length=200, blank=True, null=True)
     email = models.CharField(max_length=200, blank=True, null=True)
     ruc          = models.CharField(max_length=50, blank=True)
     telefono     = models.CharField(max_length=50, blank=True)
