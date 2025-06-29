@@ -8,10 +8,12 @@ import PasswordResetPage from './pages/PasswordResetPage';
 import { PrivateRoute } from './auth/PrivateRoute';
 import { AuthProvider } from './auth/AuthContext';
 import './app.css';
+import HelpPage from './pages/HelpPage'; // Importa la nueva página de ayuda
 
 //  IMPORTACIONES PARA TOASTIFY
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { fr } from 'date-fns/locale';
 
 const pages = [
   { path: '/inicio', component: lazy(() => import('./pages/inicio')) },
@@ -28,6 +30,8 @@ const pages = [
   { path: '/historialventa', component: lazy(() => import('./pages/historialventa')) },
   { path: '/historialcompra', component: lazy(() => import('./pages/historialcompra')) },
   { path: '/backups', component: lazy(() => import('./pages/backups')) },
+  { path: '/ayuda', component: HelpPage }, // Ruta para la página de ayuda
+
 ];
 
 function App() {
@@ -42,6 +46,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/reset-password/:token" element={<PasswordResetPage />} />
+          
+          
+
+          
 
           {/* Rutas protegidas (requieren autenticación) */}
           <Route element={<PrivateRoute />}>
