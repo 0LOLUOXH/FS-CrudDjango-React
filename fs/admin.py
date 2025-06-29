@@ -21,7 +21,7 @@ class Clienteadmin(admin.ModelAdmin):
 
 @admin.register(ClienteJuridico)
 class ClienteJuridicoadmin(admin.ModelAdmin):
-    list_display = ('cliente', 'razon_social', 'ruc')
+    list_display = ('cliente', 'razon_social', 'ruc', 'respresentante', 'email')
 
 @admin.register(ClienteNatural)
 class ClienteNaturaladmin(admin.ModelAdmin):
@@ -37,11 +37,8 @@ class Bodegaadmin(admin.ModelAdmin):
     
 @admin.register(Producto)
 class Productoadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'modelo', 'codigobodega', 'descripcion', 'cantidad')
+    list_display = ('id','nombre', 'modelo', 'precio_venta', 'codigobodega', 'descripcion', 'cantidad')
 
-@admin.register(Stock)
-class Stockadmin(admin.ModelAdmin):
-    list_display = ('producto', 'precio_venta')
 
 @admin.register(PrecioProveedorProducto)
 class PrecioProveedorProductoadmin(admin.ModelAdmin):
@@ -57,7 +54,7 @@ class DetalleVentaadmin(admin.ModelAdmin):
     
 @admin.register(Proveedor)
 class Proveedoradmin(admin.ModelAdmin):
-    list_display = ('id','cedula', 'nombre', 'apellido', 'telefono')
+    list_display = ('id','ruc', 'razon_social', 'respresentante', 'email', 'telefono')
     
 @admin.register(DetalleProveedor)
 class DetalleProveedoradmin(admin.ModelAdmin):

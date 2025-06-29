@@ -394,7 +394,7 @@ function Ventas() {
                                     </div>
 
                                     <div className="mt-2 text-sm text-gray-700">
-                                        Subtotal: <span className="font-semibold">${(item.precio * item.cantidad)}</span>
+                                        Subtotal: <span className="font-semibold">C${(item.precio * item.cantidad)}</span>
                                     </div>
                                 </div>
                             ))}
@@ -514,7 +514,7 @@ function Ventas() {
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                         <div className="flex justify-between font-medium text-lg">
                             <span>Subtotal:</span>
-                            <span>${carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0)}</span>
+                            <span>C${carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0)}</span>
                         </div>
                         {instalacion && (
                             <div className="flex justify-between mt-2">
@@ -524,7 +524,7 @@ function Ventas() {
                         )}
                         <div className="flex justify-between mt-2 pt-2 border-t border-gray-200 font-bold text-lg">
                             <span>Total:</span>
-                            <span>${calcularTotal()}</span>
+                            <span>C${calcularTotal()}</span>
                         </div>
                     </div>
 

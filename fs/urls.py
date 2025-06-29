@@ -19,7 +19,6 @@ router.register(r'proveedor', proveedorViewSet)
 router.register(r'detalleproveedor', detalleproveedorViewSet)   
 router.register(r'user', userViewSet)
 router.register(r'clientenatural', clienteNaturalViewSet)
-router.register(r'stock', stockViewSet)
 
 urlpatterns = [
     path('apibd/v1/', include(router.urls)),   

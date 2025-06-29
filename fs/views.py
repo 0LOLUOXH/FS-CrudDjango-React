@@ -34,10 +34,6 @@ class bodegaViewSet(viewsets.ModelViewSet):
 class productoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = productoSerializer
-    
-class stockViewSet(viewsets.ModelViewSet):
-    queryset = Stock.objects.all()
-    serializer_class = stockSerializer
 
 class precioproveedorproductoViewSet(viewsets.ModelViewSet):
     queryset = PrecioProveedorProducto.objects.all()

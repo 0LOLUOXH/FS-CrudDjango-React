@@ -90,7 +90,10 @@ class ClienteNatural(models.Model):
 class ClienteJuridico(models.Model):
     cliente      = models.OneToOneField(Cliente, on_delete=models.CASCADE, primary_key=True, related_name='juridico')
     razon_social = models.CharField(max_length=200)
+    respresentante = models.CharField(max_length=200, blank=True, null=True)
+    email = models.CharField(max_length=200, blank=True, null=True)
     ruc          = models.CharField(max_length=50, blank=True)
+    telefono     = models.CharField(max_length=50, blank=True)
 
     def __str__(self):
         return self.razon_social
@@ -100,9 +103,10 @@ class ClienteJuridico(models.Model):
 # Proveedores
 # ============================
 class Proveedor(models.Model):
-    cedula   = models.CharField(max_length=50)
-    nombre   = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
+    ruc   = models.CharField(max_length=50)
+    razon_social   = models.CharField(max_length=100)
+    respresentante = models.CharField(max_length=200, blank=True, null=True)
+    email = models.CharField(max_length=200, blank=True, null=True)
     telefono = models.CharField(max_length=20)
 
     def __str__(self):
@@ -116,6 +120,7 @@ class Producto(models.Model):
     nombre     = models.CharField(max_length=100)
     descripcion= models.TextField()
     cantidad   = models.IntegerField()
+    precio_venta= models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     modelo     = models.ForeignKey(Modelo, on_delete=models.CASCADE, related_name='productos')
     codigobodega     = models.ForeignKey(Bodega, on_delete=models.CASCADE, related_name='productos')
 
@@ -132,12 +137,6 @@ class PrecioProveedorProducto(models.Model):
     def __str__(self):
         return f"{self.producto.nombre} - {self.proveedor.nombre} @ {self.precio}"
 
-class Stock(models.Model):
-    producto    = models.OneToOneField(Producto, on_delete=models.CASCADE, primary_key=True, related_name='stock')
-    precio_venta= models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.producto.nombre} - {self.precio_venta}"
 # ============================
 # Ventas
 # ============================

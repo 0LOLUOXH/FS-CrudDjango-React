@@ -84,7 +84,7 @@ class clienteJuridicoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ClienteJuridico
-        fields = ('cliente', 'razon_social', 'ruc', 'telefono')
+        fields = ('cliente', 'razon_social', 'respresentante', 'email', 'ruc', 'telefono')
         
 class ClienteNaturalSerializer(serializers.ModelSerializer):
     telefono = serializers.CharField(source='cliente.telefono', read_only=True)
@@ -110,15 +110,8 @@ class productoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Producto
-        fields = ('id', 'nombre', 'modelo', 'bodega', 'codigobodega', 'descripcion', 'cantidad', 'nmodelo', 'nmarca')
+        fields = ('id', 'nombre', 'modelo', 'bodega', 'codigobodega', 'descripcion', 'cantidad', 'precio_venta', 'nmodelo', 'nmarca')
 
-class stockSerializer(serializers.ModelSerializer):
-    cantidad = serializers.IntegerField(source='producto.cantidad', read_only=True, default=0)
-    modelo = serializers.CharField(source='producto.modelo.nombre', read_only=True)
-    marca = serializers.CharField(source='producto.modelo.marca.nombre', read_only=True)
-    class Meta:
-        model = Stock
-        fields = ('cantidad', 'producto', 'precio_venta', 'modelo', 'marca')
 
 class PrecioProveedorProductoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -142,7 +135,7 @@ class detalleventaSerializer(serializers.ModelSerializer):
 class proveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proveedor
-        fields = ('id', 'cedula', 'nombre', 'apellido', 'telefono')
+        fields = ('id', 'ruc', 'razon_social', 'respresentante', 'email', 'telefono')
         
 class detalleproveedorSerializer(serializers.ModelSerializer):
     nproducto = serializers.CharField(source='producto.nombre', read_only=True)

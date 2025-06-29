@@ -66,7 +66,7 @@ const options = {
   selectableRows: 'none',
   rowsPerPage: 10,
   rowsPerPageOptions: [10, 25, 50],
-  print: true,
+  print: false,
   download: false,
   elevation: 0,
   rowHover: true,
@@ -190,12 +190,12 @@ export function TablaCompras({ data }) {
                   <td>${item.fecha}</td>
                   <td>${item.proveedor}</td>
                   <td>${item.productos}</td>
-                  <td>${item.total}</td>
+                  <td>C${item.total}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
                 <td colspan="5">Total General</td>
-                <td>$${datosProcesados.reduce((sum, item) => sum + item.total_a_pagar, 0).toFixed(2)}</td>
+                <td>C$${datosProcesados.reduce((sum, item) => sum + item.total_a_pagar, 0).toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
@@ -230,7 +230,7 @@ export function TablaCompras({ data }) {
     format(comprobante.fecha, 'dd/MM/yyyy'),
     comprobante.nproveedor,
     comprobante.productos.length,
-    `$${comprobante.total_a_pagar.toFixed(2)}`
+    `C$${comprobante.total_a_pagar.toFixed(2)}`
   ]);
   
   // Añadir tabla
@@ -256,7 +256,7 @@ export function TablaCompras({ data }) {
   // Total general
   const totalGeneral = datosProcesados.reduce((sum, item) => sum + item.total_a_pagar, 0).toFixed(2);
   autoTable(doc, {
-    body: [['Total General', '', '', '', '', `$${totalGeneral}`]],
+    body: [['Total General', '', '', '', '', `C$${totalGeneral}`]],
     startY: doc.lastAutoTable.finalY + 5,
     styles: {
       fontSize: 9,
@@ -294,9 +294,9 @@ const handleExportDetallePDF = (comprobante, productos) => {
     producto.id,
     producto.nombre,
     producto.cantidad,
-    `$${producto.precio_unitario.toFixed(2)}`,
-    `$${producto.iva.toFixed(2)}`,
-    `$${producto.total}`
+    `C$${producto.precio_unitario.toFixed(2)}`,
+    `C$${producto.iva.toFixed(2)}`,
+    `C$${producto.total}`
   ]);
   
   // Añadir tabla
@@ -326,7 +326,7 @@ const handleExportDetallePDF = (comprobante, productos) => {
   
   // Total compra
   autoTable(doc, {
-    body: [['Total Compra', '', '', '', '', `$${comprobante.total_a_pagar.toFixed(2)}`]],
+    body: [['Total Compra', '', '', '', '', `C$${comprobante.total_a_pagar.toFixed(2)}`]],
     startY: doc.lastAutoTable.finalY + 5,
     styles: {
       fontSize: 9,
@@ -426,7 +426,7 @@ const handleExportDetallePDF = (comprobante, productos) => {
       options: {
         filter: false,
         sort: false,
-        customBodyRender: (value) => `$${parseFloat(value).toFixed(2)}`
+        customBodyRender: (value) => `C$${parseFloat(value).toFixed(2)}`
       }
     },
   ];
@@ -550,14 +550,14 @@ const handleExportDetallePDF = (comprobante, productos) => {
                               <tr>
                                 <td>${p.nombre}</td>
                                 <td>${p.cantidad}</td>
-                                <td>$${p.precio_unitario.toFixed(2)}</td>
-                                <td>$${p.iva.toFixed(2)}</td>
-                                <td>$${p.total}</td>
+                                <td>C$${p.precio_unitario.toFixed(2)}</td>
+                                <td>C$${p.iva.toFixed(2)}</td>
+                                <td>C$${p.total}</td>
                               </tr>
                             `).join('')}
                             <tr>
                               <td colspan="4"><strong>Total Compra:</strong></td>
-                              <td><strong>$${selectedComprobante?.total_a_pagar?.toFixed(2)}</strong></td>
+                              <td><strong>C$${selectedComprobante?.total_a_pagar?.toFixed(2)}</strong></td>
                             </tr>
                           </table>
                         </body>
@@ -601,9 +601,9 @@ const handleExportDetallePDF = (comprobante, productos) => {
                       <TableCell>{producto.id}</TableCell>
                       <TableCell>{producto.nombre}</TableCell>
                       <TableCell align="right">{producto.cantidad}</TableCell>
-                      <TableCell align="right">${producto.precio_unitario.toFixed(2)}</TableCell>
-                      <TableCell align="right">${producto.iva.toFixed(2)}</TableCell>
-                      <TableCell align="right">${producto.total}</TableCell>
+                      <TableCell align="right">C${producto.precio_unitario.toFixed(2)}</TableCell>
+                      <TableCell align="right">C${producto.iva.toFixed(2)}</TableCell>
+                      <TableCell align="right">C${producto.total}</TableCell>
                     </TableRow>
                   ))}
                   <TableRow>
@@ -611,7 +611,7 @@ const handleExportDetallePDF = (comprobante, productos) => {
                       <strong>Total Compra:</strong>
                     </TableCell>
                     <TableCell align="right">
-                      <strong>${selectedComprobante?.total_a_pagar?.toFixed(2)}</strong>
+                      <strong>C${selectedComprobante?.total_a_pagar?.toFixed(2)}</strong>
                     </TableCell>
                   </TableRow>
                 </TableBody>

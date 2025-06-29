@@ -432,7 +432,7 @@ function Compras() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Total a Pagar</label>
                                 <input
                                     type="text"
-                                    value={`$${calcularTotal().toFixed(2)}`}
+                                    value={`C$${calcularTotal().toFixed(2)}`}
                                     className="w-full border rounded-lg px-4 py-2 bg-gray-100"
                                     readOnly
                                 />

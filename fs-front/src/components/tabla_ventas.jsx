@@ -111,7 +111,7 @@ function TablaVentas({ data }) {
         <td>${venta.nempleado}</td>
         <td>${venta.metodo_de_pago}</td>
         <td>${venta.instalacion ? 'Sí' : 'No'}</td>
-        <td>$${parseFloat(venta.total_a_pagar).toFixed(2)}</td>
+        <td>C$${parseFloat(venta.total_a_pagar).toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -139,7 +139,7 @@ function TablaVentas({ data }) {
             </tr>
           </thead>
           <tbody>${tableRows}
-            <tr><td colspan="6"><strong>Total General</strong></td><td><strong>$${totalGeneral}</strong></td></tr>
+            <tr><td colspan="6"><strong>Total General</strong></td><td><strong>C$${totalGeneral}</strong></td></tr>
           </tbody>
         </table>
       </body></html>
@@ -164,7 +164,7 @@ function TablaVentas({ data }) {
       venta.nempleado,
       venta.metodo_de_pago,
       venta.instalacion ? 'Sí' : 'No',
-      `$${parseFloat(venta.total_a_pagar).toFixed(2)}`
+      `C$${parseFloat(venta.total_a_pagar).toFixed(2)}`
     ]);
 
     autoTable(doc, {
@@ -179,7 +179,7 @@ function TablaVentas({ data }) {
 
     const totalGeneral = datosFiltrados.reduce((sum, v) => sum + parseFloat(v.total_a_pagar), 0).toFixed(2);
     autoTable(doc, {
-      body: [['Total General', '', '', '', '', '', `$${totalGeneral}`]],
+      body: [['Total General', '', '', '', '', '', `C$${totalGeneral}`]],
       startY: doc.lastAutoTable.finalY + 5,
       styles: { fontStyle: 'bold' },
       columnStyles: { 6: { halign: 'right' } }
@@ -194,8 +194,8 @@ function TablaVentas({ data }) {
       <tr>
         <td>${d.nproducto}</td>
         <td>${d.cantidad_por_producto}</td>
-        <td>$${parseFloat(d.preciodelproducto).toFixed(2)}</td>
-        <td>$${(d.cantidad_por_producto * d.preciodelproducto).toFixed(2)}</td>
+        <td>C$${parseFloat(d.preciodelproducto).toFixed(2)}</td>
+        <td>C$${(d.cantidad_por_producto * d.preciodelproducto).toFixed(2)}</td>
       </tr>`).join('');
 
     const printWindow = window.open('', '_blank');
@@ -213,10 +213,10 @@ function TablaVentas({ data }) {
         <p><strong>Fecha:</strong> ${format(new Date(ventaSeleccionada.fecha), 'dd/MM/yyyy')}</p>
         <table>
           <thead>
-            <tr><th>Producto</th><th>Cantidad</th><th>Precio Unitario ($)</th><th>Subtotal ($)</th></tr>
+            <tr><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th></tr>
           </thead>
           <tbody>${productos}
-            <tr><td colspan="3"><strong>Total:</strong></td><td><strong>$${ventaSeleccionada.total_a_pagar}</strong></td></tr>
+            <tr><td colspan="3"><strong>Total:</strong></td><td><strong>C$${ventaSeleccionada.total_a_pagar}</strong></td></tr>
           </tbody>
         </table>
       </body></html>
@@ -251,12 +251,12 @@ function TablaVentas({ data }) {
     const tableData = ventaSeleccionada.detalles.map((detalle) => [
       detalle.nproducto,
       detalle.cantidad_por_producto,
-      `$${parseFloat(detalle.preciodelproducto).toFixed(2)}`,
-      `$${(detalle.cantidad_por_producto * detalle.preciodelproducto).toFixed(2)}`
+      `C$${parseFloat(detalle.preciodelproducto).toFixed(2)}`,
+      `C$${(detalle.cantidad_por_producto * detalle.preciodelproducto).toFixed(2)}`
     ]);
 
     autoTable(doc, {
-      head: [['Producto', 'Cantidad', 'Precio Unitario ($)', 'Subtotal ($)']],
+      head: [['Producto', 'Cantidad', 'Precio Unitario', 'Subtotal']],
       body: tableData,
       startY: 40,
       styles: { fontSize: 9 },
@@ -265,7 +265,7 @@ function TablaVentas({ data }) {
     });
 
     autoTable(doc, {
-      body: [['Total', '', '', `$${ventaSeleccionada.total_a_pagar}`]],
+      body: [['Total', '', '', `C$${ventaSeleccionada.total_a_pagar}`]],
       startY: doc.lastAutoTable.finalY + 5,
       styles: { fontStyle: 'bold' },
       columnStyles: { 3: { halign: 'right' } }
@@ -281,9 +281,9 @@ function TablaVentas({ data }) {
     { name: 'nempleado', label: 'Empleado', options: { filter: true, sort: true } },
     { name: 'metodo_de_pago', label: 'Método de Pago', options: { filter: true, sort: true } },
     { name: 'instalacion', label: 'Instalación', options: { filter: true, sort: true, customBodyRender: val => (val ? 'Sí' : 'No') } },
-    { name: 'precio_instalacion', label: 'Precio Instalación ($)', options: { filter: false, sort: true } },
+    { name: 'precio_instalacion', label: 'Precio Instalación', options: { filter: false, sort: true, customBodyRender: (value) => `C$${parseFloat(value).toFixed(2)}` } },
     { name: 'direccion', label: 'Dirección', options: { filter: false, sort: true } },
-    { name: 'total_a_pagar', label: 'Total ($)', options: { filter: false, sort: true } },
+    { name: 'total_a_pagar', label: 'Total', options: { filter: false, sort: true, customBodyRender: (value) => `C$${parseFloat(value).toFixed(2)}`} },
     {
       name: 'detalles',
       label: 'Carrito de Ventas',
@@ -402,8 +402,8 @@ function TablaVentas({ data }) {
                       <TableRow>
                         <TableCell>Producto</TableCell>
                         <TableCell>Cantidad</TableCell>
-                        <TableCell>Precio Unitario ($)</TableCell>
-                        <TableCell>Subtotal ($)</TableCell>
+                        <TableCell>Precio Unitario</TableCell>
+                        <TableCell>Subtotal</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -411,13 +411,13 @@ function TablaVentas({ data }) {
                         <TableRow key={detalle.id}>
                           <TableCell>{detalle.nproducto}</TableCell>
                           <TableCell>{detalle.cantidad_por_producto}</TableCell>
-                          <TableCell>${parseFloat(detalle.preciodelproducto).toFixed(2)}</TableCell>
-                          <TableCell>${(detalle.cantidad_por_producto * detalle.preciodelproducto).toFixed(2)}</TableCell>
+                          <TableCell>C${parseFloat(detalle.preciodelproducto).toFixed(2)}</TableCell>
+                          <TableCell>C${(detalle.cantidad_por_producto * detalle.preciodelproducto).toFixed(2)}</TableCell>
                         </TableRow>
                       ))}
                       <TableRow>
                         <TableCell colSpan={3} align="right"><strong>Total:</strong></TableCell>
-                        <TableCell><strong>${ventaSeleccionada.total_a_pagar}</strong></TableCell>
+                        <TableCell><strong>C${ventaSeleccionada.total_a_pagar}</strong></TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
