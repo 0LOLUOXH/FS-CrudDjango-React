@@ -95,7 +95,7 @@ export default function Login() {
             </div>
             <div className="w-1/2 flex items-center justify-center">
                 <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded shadow-md w-3/4">
-                    <h2 className="text-2xl mb-4">Iniciar sesión</h2>
+                    <h2 className="text-2xl mb-4">Iniciar sesión - Fusion Solar</h2>
                     <input
                         placeholder="Nombre de usuario"
                         type="text"
