@@ -4,7 +4,7 @@ import { createVenta } from '../api/venta_api';
 import { createDetalleVenta } from '../api/detalleventa_api';
 import { fetchProductos, updateProducto } from '../api/producto_api';
 import { useAuth } from '../auth/AuthContext';
-import { jsPDF } from "jspdf";
+import jsPDF from 'jspdf'
 import { applyPlugin } from 'jspdf-autotable';
 
 // Apply the autoTable plugin to jsPDF
@@ -199,92 +199,140 @@ function Ventas() {
         setIsClienteDropdownOpen(false);
     };
 
-    // Generar proforma en PDF
-    const generarProforma = () => {
-        if (!clienteId) {
-            setError('Seleccione un cliente para generar la proforma');
-            return;
-        }
 
-        if (carrito.length === 0) {
-            setError('Agregue productos al carrito para generar la proforma');
-            return;
-        }
 
-        const cliente = getClienteCompleto(clienteId);
-        if (!cliente) return;
 
-        const doc = new jsPDF();
-        
-        // Logo y encabezado
-        doc.addImage('../public/logo.png', 'PNG', 1, 11, 35, 35);
-        doc.setFontSize(18);
-        doc.text('Fusion Solar', 35, 17);
-        doc.setFontSize(10);
-        doc.text('De frente donde fue la policia nacional, San Benito, Tipitapa, Nicaragua', 35, 23);
-        doc.text('Tel: 7745 1956', 35, 28);
-        doc.text('Email: solarelectricnic@gmail.com', 35, 34);
-        doc.text('RUC: 0011110011046N', 35, 40);
-        
-        // Título
-        doc.setFontSize(16);
-        doc.text('PROFORMA / COTIZACIÓN', 105, 50, { align: 'center' });
-        
-        // Datos del cliente
-        doc.setFontSize(12);
-        doc.text('Cliente:', 14, 60);
-        doc.text(cliente.tipo === 'N' ? `${cliente.nombre} ${cliente.apellido}` : cliente.razon_social, 30, 60);
-        
-        doc.text('Documento:', 14, 66);
-        doc.text(cliente.tipo === 'N' ? cliente.cedula : cliente.ruc || 'No especificado', 40, 66);
-        
-        doc.text('Fecha:', 14, 72);
-        doc.text(new Date().toLocaleDateString(), 30, 72);
-        
-        doc.text('Validez:', 14, 78);
-        const fechaValidez = new Date();
-        fechaValidez.setDate(fechaValidez.getDate() + 7);
-        doc.text(fechaValidez.toLocaleDateString(), 30, 78);
-        
-        // Tabla de productos
-        const tableData = carrito.map(item => [
-            item.producto.nombre,
-            item.cantidad,
-            `C$${item.precio}`,
-            `C$${item.precio * item.cantidad}`
-        ]);
-        
-        if (instalacion) {
-            tableData.push([
-                'Instalación', 
-                '1', 
-                `C$${precioInstalacion}`, 
-                `C$${parseFloat(precioInstalacion)}`
-            ]);
-        }
 
-        doc.autoTable({
-            startY: 85,
-            head: [['Descripción', 'Cantidad', 'Precio Unitario', 'Subtotal']],
-            body: tableData,
-            theme: 'grid',
-            headStyles: {
-                fillColor: [254, 186, 83], // Color naranja
-                textColor: [0, 0, 0]
-            }
-        });
+function generarProforma() {
+  // 0) Validaciones
+  if (!clienteId) {
+    setError("Seleccione un cliente para generar la proforma");
+    return;
+  }
+  if (carrito.length === 0) {
+    setError("Agregue productos al carrito para generar la proforma");
+    return;
+  }
+  const cliente = getClienteCompleto(clienteId);
+  if (!cliente) return;
 
-        // Total
-        const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(7);
-        doc.text('NOTA: Los precios incluyen el 15% de IVA', 14, finalY);
-        doc.setFontSize(14);
-        doc.text('TOTAL:', 140, finalY);
-        doc.text(`C$${calcularTotal().toFixed(2)}`, 170, finalY);
+  // --- formateo de FECHA y NÚMERO de cotización (auto-incremental) ---
+  const lastNum = parseInt(localStorage.getItem("lastCotizacion") || "0", 10);
+  const numeroCot = lastNum + 1;
+  localStorage.setItem("lastCotizacion", String(numeroCot));
 
-        // Guardar el PDF
-        doc.save(`Proforma_${cliente.tipo === 'N' ? cliente.nombre : cliente.razon_social}.pdf`);
-    };
+  const hoy   = new Date();
+  const dia   = String(hoy.getDate()).padStart(2, "0");
+  const mes   = String(hoy.getMonth() + 1).padStart(2, "0");
+  const anio  = hoy.getFullYear();
+  const fechaStr  = `${dia}/${mes}/${anio}`;
+  const numeroStr = String(numeroCot).padStart(4, "0");
+
+  // 1) Crear documento en mm, tamaño carta
+  const doc = new jsPDF({ unit: "mm", format: "letter" });
+  const pageWidth   = doc.internal.pageSize.getWidth();
+  const margin      = 14;
+  const usableWidth = pageWidth - margin * 2;
+
+  // 2) Header: logo + datos empresa
+  doc.addImage("../public/logo.png", "PNG", margin, margin, 24, 24);
+  doc.setFont("helvetica", "bold").setFontSize(14);
+  doc.text("FUSIÓN SOLAR", margin + 30, margin + 4);
+  doc.setFont("helvetica", "normal").setFontSize(8);
+  doc.text(
+    "De frente donde fue la policía nacional, San Benito, Tipitapa, Nicaragua",
+    margin + 30,
+    margin + 8
+  );
+  doc.text(
+    "Tel: 7745 1956   Email: solarelectricnic@gmail.com",
+    margin + 30,
+    margin + 12
+  );
+  doc.text("RUC: 0011110011046N", margin + 30, margin + 16);
+
+  // 3) Título “COTIZACIÓN” + mini-tabla FECHA / NÚMERO
+  doc.setFont("helvetica", "bold").setFontSize(18);
+  doc.text("COTIZACIÓN", pageWidth - margin, margin + 4, { align: "right" });
+  const dateTableY = margin + 20;
+  doc.autoTable({
+    startY: dateTableY,
+    margin: { left: pageWidth - margin - 50, right: margin },
+    tableWidth: 50,
+    theme: "grid",
+    styles: { fontSize: 8, halign: "center", lineColor: 200, lineWidth: 0.3 },
+    head: [["FECHA", "NÚMERO"]],
+    body: [[fechaStr, numeroStr]],
+  });
+
+  // 4) Bloque “Preparado para:” con datos del cliente
+  const yCliente = doc.lastAutoTable.finalY + 8;
+  doc.setFont("helvetica", "bold").setFontSize(10);
+  doc.text("Preparado para:", margin, yCliente + 6);
+  doc.setFont("helvetica", "normal").setFontSize(9);
+  const nombreCliente =
+    cliente.tipo === "N"
+      ? `${cliente.nombre} ${cliente.apellido}`
+      : cliente.razon_social;
+  doc.text(`Cliente: ${nombreCliente}`, margin, yCliente + 12);
+  doc.text(`Teléfono: ${cliente.telefono}`, margin, yCliente + 18);
+  doc.text(`Email: ${cliente.email}`, margin, yCliente + 24);
+  doc.text(`Dirección: ${direccion}`, margin, yCliente + 30);
+
+  // 5) Tabla de ítems (solo TOTAL)
+  const tableData = carrito.map(item => {
+    const total = Number(item.precio) * item.cantidad;
+    return [
+      item.cantidad,
+      item.producto.nombre,
+      `C$${total.toFixed(2)}`
+    ];
+  });
+  if (instalacion) {
+    const pi = Number(precioInstalacion);
+    tableData.push([1, "Instalación", `C$${pi.toFixed(2)}`]);
+  }
+
+  doc.autoTable({
+    startY: yCliente + 30,
+    margin: { left: margin, right: margin },
+    head: [["CANT.", "DESCRIPCIÓN", "TOTAL"]],
+    body: tableData,
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 2, lineColor: 200, lineWidth: 0.2 },
+    headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: "bold" },
+    columnStyles: {
+      0: { cellWidth: usableWidth * 0.10, halign: "center" },
+      1: { cellWidth: usableWidth * 0.70 },
+      2: { cellWidth: usableWidth * 0.20, halign: "right" },
+    },
+  });
+
+  // 6) TOTAL
+  const yTotal = doc.lastAutoTable.finalY + 10;
+  const total = tableData.reduce(
+    (sum, row) => sum + Number(row[2].replace(/[^0-9.-]+/g, "")),
+    0
+  );
+  doc.setFont("helvetica", "bold").setFontSize(14);
+  doc.text("TOTAL:", pageWidth - margin - 40, yTotal, { align: "right" });
+  doc.text(`C$${total.toFixed(2)}`, pageWidth - margin, yTotal, { align: "right" });
+
+  // 7) Términos y firma
+  const firmaY = yTotal + 20;
+  doc.setFontSize(8);
+  doc.text("Esta cotización es válida por 7 días.", margin, firmaY - 10);
+  doc.setLineWidth(0.3);
+  doc.line(margin, firmaY, margin + 46, firmaY);
+  doc.setFontSize(9).text("Recibido:", margin, firmaY + 5);
+  doc.line(pageWidth - margin - 46, firmaY, pageWidth - margin, firmaY);
+  doc.text("Aprobado:", pageWidth - margin - 46, firmaY + 5);
+
+  // 8) Guardar PDF
+  const safeName = nombreCliente.replace(/\s+/g, "_");
+  doc.save(`Cotizacion_${safeName}_${fechaStr.replace(/\//g, "")}.pdf`);
+}
+
 
     // Procesar venta
     const procesarVenta = async () => {

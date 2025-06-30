@@ -59,7 +59,7 @@ function App() {
                 element={
                   <>
                    <Navegation />
-      <div className="ml-[280px] pt-[60px] px-6"> {/* 👈 Contenedor corregido */}
+      <div className="ml-[260px] pt-[80px]"> {/* 👈 Contenedor corregido */}
         <Suspense fallback={<div>Cargando...</div>}>
           <Component />
         </Suspense>

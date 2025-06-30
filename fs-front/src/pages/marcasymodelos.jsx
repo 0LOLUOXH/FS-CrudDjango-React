@@ -133,7 +133,7 @@ function MarcasyModelos() {
   if (error) return <div className="p-6 bg-red-100 text-red-700 rounded">{error}</div>
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen  p-8">
       <div className="mb-6 flex justify-between items-center">
         <div>
           <label className="text-gray-700 font-semibold mr-4">Seleccionar vista:</label>

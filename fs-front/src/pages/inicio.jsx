@@ -1,6 +1,6 @@
 const Inicio = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-slate-200 flex flex-col items-center justify-center px-6 py-12">
+    <div className="min-h-screen via-gray-100 to-slate-200 flex flex-col items-center justify-center px-6 py-12">
       {/* Logo */}
       <img
         src="https://ik.imagekit.io/jfcrjyrcq/fusion_solar_logo.jpg?updatedAt=1747926845910"
