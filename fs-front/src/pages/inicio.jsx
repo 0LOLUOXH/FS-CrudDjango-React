@@ -33,6 +33,7 @@ const cardStyle = {
   borderRadius: "10px",
   boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
   marginBottom: "20px",
+  
 };
 
 const Inicio = () => {
@@ -165,7 +166,7 @@ const Inicio = () => {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f5f6fa" }}>
+    <div style={{ display: "flex", minHeight: "100vh" }}>
       <div
         style={{
           flex: 1,
@@ -218,18 +219,7 @@ const Inicio = () => {
           />
         ) : (
           <>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Card title="Tendencia de Ventas" style={cardStyle}>
-                  {renderChart("line", salesTrend, lineData(salesTrend))}
-                </Card>
-              </Col>
-              <Col span={12}>
-                <Card title="Tendencia de Compras" style={cardStyle}>
-                  {renderChart("line", purchaseTrend, lineData(purchaseTrend))}
-                </Card>
-              </Col>
-            </Row>
+
 
             <Row gutter={16}>
               <Col span={12}>

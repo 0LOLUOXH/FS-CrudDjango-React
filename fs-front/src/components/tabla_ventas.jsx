@@ -196,72 +196,118 @@ function TablaVentas({ data }) {
     setTimeout(() => printWindow.print(), 500);
   };
 
-  const exportarReportePDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text('Historial de Ventas', 105, 15, { align: 'center' });
-    
-    // Información del reporte
-    doc.setFontSize(10);
-    doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
-    
-    // Filtros aplicados
-    let filtersY = 30;
-    doc.text(`Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`, 14, filtersY);
+ // helper para cargar imagen remota y devolver su DataURL
+const loadImageAsDataURL = (url) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';         // importante para esquivar problemas de CORS
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+
+const exportarReportePDF = async () => {
+  // 1) crear doc
+  const doc = new jsPDF();
+  const pageWidth  = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // 2) cargar logo remoto y convertir a DataURL
+  const watermarkUrl = '../public/logo.png';  // <-- tu URL aquí
+  let imgDataUrl;
+  try {
+    imgDataUrl = await loadImageAsDataURL(watermarkUrl);
+  } catch (e) {
+    console.warn('No se pudo cargar la marca de agua:', e);
+  }
+
+  // 3) si lo cargó, dibujar marca de agua
+  if (imgDataUrl) {
+    doc.setGState(new doc.GState({ opacity: 0.1 }));  // baja opacidad
+    const imgProps = doc.getImageProperties(imgDataUrl);
+    const imgWidth  = pageWidth * 0.6;  // 60% del ancho de la página
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    const x = (pageWidth  - imgWidth)  / 2;
+    const y = (pageHeight - imgHeight) / 2;
+    doc.addImage(imgDataUrl, 'PNG', x, y, imgWidth, imgHeight);
+    doc.setGState(new doc.GState({ opacity: 1 }));    // restaurar opacidad
+  }
+
+  // 4) título
+  doc.setFontSize(18);
+  doc.text('Historial de Ventas', pageWidth / 2, 15, { align: 'center' });
+
+  // 5) info y filtros
+  doc.setFontSize(10);
+  doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
+  let filtersY = 30;
+  doc.text(
+    `Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`,
+    14,
+    filtersY
+  );
+  filtersY += 5;
+  if (clienteFilter) {
+    doc.text(`Cliente: ${clienteFilter}`, 14, filtersY);
     filtersY += 5;
-    
-    if (clienteFilter) {
-      doc.text(`Cliente: ${clienteFilter}`, 14, filtersY);
-      filtersY += 5;
-    }
-    
-    if (empleadoFilter) {
-      doc.text(`Empleado: ${empleadoFilter}`, 14, filtersY);
-      filtersY += 5;
-    }
-    
-    if (metodoPagoFilter) {
-      doc.text(`Método de Pago: ${metodoPagoFilter}`, 14, filtersY);
-      filtersY += 5;
-    }
-    
-    if (instalacionFilter !== 'todos') {
-      doc.text(`Instalación: ${instalacionFilter === 'si' ? 'Sí' : 'No'}`, 14, filtersY);
-      filtersY += 5;
-    }
-    
-    doc.text(`Cantidad de ventas: ${datosFiltrados.length}`, 14, filtersY + 5);
+  }
+  if (empleadoFilter) {
+    doc.text(`Empleado: ${empleadoFilter}`, 14, filtersY);
+    filtersY += 5;
+  }
+  if (metodoPagoFilter) {
+    doc.text(`Método de Pago: ${metodoPagoFilter}`, 14, filtersY);
+    filtersY += 5;
+  }
+  if (instalacionFilter !== 'todos') {
+    doc.text(`Instalación: ${instalacionFilter === 'si' ? 'Sí' : 'No'}`, 14, filtersY);
+    filtersY += 5;
+  }
+  doc.text(`Cantidad de ventas: ${datosFiltrados.length}`, 14, filtersY + 5);
 
-    const tableData = datosFiltrados.map(venta => [
-      venta.id,
-      format(new Date(venta.fecha), 'dd/MM/yyyy'),
-      venta.ncliente,
-      venta.nempleado,
-      venta.metodo_de_pago,
-      venta.instalacion ? 'Sí' : 'No',
-      `C$${parseFloat(venta.total_a_pagar).toFixed(2)}`
-    ]);
+  // 6) tabla con autoTable
+  const tableData = datosFiltrados.map(v => [
+    v.id,
+    format(new Date(v.fecha), 'dd/MM/yyyy'),
+    v.ncliente,
+    v.nempleado,
+    v.metodo_de_pago,
+    v.instalacion ? 'Sí' : 'No',
+    `C$${parseFloat(v.total_a_pagar).toFixed(2)}`
+  ]);
 
-    autoTable(doc, {
-      head: [['ID', 'Fecha', 'Cliente', 'Empleado', 'Método de Pago', 'Instalación', 'Total']],
-      body: tableData,
-      startY: filtersY + 15,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [64, 64, 64], textColor: 255 },
-      alternateRowStyles: { fillColor: [240, 240, 240] },
-      margin: { top: 40 }
-    });
+  autoTable(doc, {
+    head: [['ID', 'Fecha', 'Cliente', 'Empleado', 'Método de Pago', 'Instalación', 'Total']],
+    body: tableData,
+    startY: filtersY + 15,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [64, 64, 64], textColor: 255 },
+    alternateRowStyles: { fillColor: [240, 240, 240] },
+    margin: { top: 40 }
+  });
 
-    const totalGeneral = datosFiltrados.reduce((sum, v) => sum + parseFloat(v.total_a_pagar), 0).toFixed(2);
-    autoTable(doc, {
-      body: [['Total General', '', '', '', '', '', `C$${totalGeneral}`]],
-      startY: doc.lastAutoTable.finalY + 5,
-      styles: { fontStyle: 'bold' },
-      columnStyles: { 6: { halign: 'right' } }
-    });
+  // 7) fila de total general
+  const totalGeneral = datosFiltrados
+    .reduce((sum, v) => sum + parseFloat(v.total_a_pagar), 0)
+    .toFixed(2);
 
-    doc.save(`reporte_ventas_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
-  };
+  autoTable(doc, {
+    body: [['Total General', '', '', '', '', '', `C$${totalGeneral}`]],
+    startY: doc.lastAutoTable.finalY + 5,
+    styles: { fontStyle: 'bold' },
+    columnStyles: { 6: { halign: 'right' } }
+  });
+
+  // 8) guardar
+  doc.save(`reporte_ventas_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
+};
+
 
   const exportarExcel = async () => {
   const workbook = new ExcelJS.Workbook();
@@ -358,41 +404,66 @@ function TablaVentas({ data }) {
     }
   });
 
-  const exportarDetalleVentaPDF = () => {
-    if (!ventaSeleccionada) return;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Detalle de Venta: ${ventaSeleccionada.id}`, 105, 15, { align: 'center' });
+  const exportarDetalleVentaPDF = async () => {
+  if (!ventaSeleccionada) return;
 
-    doc.setFontSize(10);
-    doc.text(`Cliente: ${ventaSeleccionada.ncliente}`, 14, 25);
-    doc.text(`Fecha: ${format(new Date(ventaSeleccionada.fecha), 'dd/MM/yyyy')}`, 14, 30);
+  // 1) crear doc
+  const doc = new jsPDF();
+  const pageWidth  = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-    const tableData = ventaSeleccionada.detalles.map((detalle) => [
-      detalle.nproducto,
-      detalle.cantidad_por_producto,
-      `C$${parseFloat(detalle.preciodelproducto).toFixed(2)}`,
-      `C$${(detalle.cantidad_por_producto * detalle.preciodelproducto).toFixed(2)}`
-    ]);
+  // 2) cargar y dibujar la marca de agua
+  const watermarkUrl = '../public/logo.png'; // sustituye por tu URL
+  try {
+    const imgDataUrl = await loadImageAsDataURL(watermarkUrl);
+    doc.setGState(new doc.GState({ opacity: 0.1 }));
+    const imgProps = doc.getImageProperties(imgDataUrl);
+    const imgWidth  = pageWidth * 0.5; // 50% del ancho de la página
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    const x = (pageWidth  - imgWidth)  / 2;
+    const y = (pageHeight - imgHeight) / 2;
+    doc.addImage(imgDataUrl, 'PNG', x, y, imgWidth, imgHeight);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+  } catch (e) {
+    console.warn('No se pudo cargar la marca de agua:', e);
+  }
 
-    autoTable(doc, {
-      head: [['Producto', 'Cantidad', 'Precio Unitario', 'Subtotal']],
-      body: tableData,
-      startY: 40,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [64, 64, 64], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 245, 245] }
-    });
+  // 3) título y cabecera
+  doc.setFontSize(16);
+  doc.text(`Detalle de Venta: ${ventaSeleccionada.id}`, pageWidth / 2, 15, { align: 'center' });
 
-    autoTable(doc, {
-      body: [['Total', '', '', `C$${ventaSeleccionada.total_a_pagar}`]],
-      startY: doc.lastAutoTable.finalY + 5,
-      styles: { fontStyle: 'bold' },
-      columnStyles: { 3: { halign: 'right' } }
-    });
+  doc.setFontSize(10);
+  doc.text(`Cliente: ${ventaSeleccionada.ncliente}`, 14, 25);
+  doc.text(`Fecha: ${format(new Date(ventaSeleccionada.fecha), 'dd/MM/yyyy')}`, 14, 30);
 
-    doc.save(`detalle_venta_${ventaSeleccionada.id}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
-  };
+  // 4) tabla de detalle con autoTable
+  const tableData = ventaSeleccionada.detalles.map(detalle => [
+    detalle.nproducto,
+    detalle.cantidad_por_producto,
+    `C$${parseFloat(detalle.preciodelproducto).toFixed(2)}`,
+    `C$${(detalle.cantidad_por_producto * detalle.preciodelproducto).toFixed(2)}`
+  ]);
+
+  autoTable(doc, {
+    head: [['Producto', 'Cantidad', 'Precio Unitario', 'Subtotal']],
+    body: tableData,
+    startY: 40,
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [64, 64, 64], textColor: 255 },
+    alternateRowStyles: { fillColor: [245, 245, 245] }
+  });
+
+  // 5) total al final
+  autoTable(doc, {
+    body: [['Total', '', '', `C$${ventaSeleccionada.total_a_pagar}`]],
+    startY: doc.lastAutoTable.finalY + 5,
+    styles: { fontStyle: 'bold' },
+    columnStyles: { 3: { halign: 'right' } }
+  });
+
+  // 6) guardar PDF
+  doc.save(`detalle_venta_${ventaSeleccionada.id}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
+};
 
   const columnas = [
     { name: 'id', label: 'ID Venta', options: { filter: false, sort: true } },

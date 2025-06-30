@@ -244,86 +244,110 @@ export function TablaCompras({ data }) {
     setTimeout(() => printWindow.print(), 500);
   };
 
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
-    
-    // Título del reporte
-    doc.setFontSize(18);
-    doc.text('Reporte de Compras', 105, 15, { align: 'center' });
-    
-    // Información del reporte
-    doc.setFontSize(10);
-    doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
-    
-    // Filtros aplicados
-    let filtersY = 30;
-    doc.text(`Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`, 14, filtersY);
+  // helper para cargar imagen remota y devolver su DataURL
+const loadImageAsDataURL = (url) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+
+const handleExportPDF = async () => {
+  const doc = new jsPDF();
+  const pageWidth  = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // 1) Marca de agua
+  try {
+    const watermarkUrl = '../public/logo.png'; // tu URL aquí
+    const imgDataUrl   = await loadImageAsDataURL(watermarkUrl);
+    doc.setGState(new doc.GState({ opacity: 0.1 }));
+    const props = doc.getImageProperties(imgDataUrl);
+    const imgW  = pageWidth * 0.6; // 60% ancho
+    const imgH  = (props.height * imgW) / props.width;
+    const x     = (pageWidth  - imgW)  / 2;
+    const y     = (pageHeight - imgH) / 2;
+    doc.addImage(imgDataUrl, 'PNG', x, y, imgW, imgH);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+  } catch (e) {
+    console.warn('No se pudo cargar la marca de agua:', e);
+  }
+
+  // 2) Título del reporte
+  doc.setFontSize(18);
+  doc.text('Reporte de Compras', pageWidth / 2, 15, { align: 'center' });
+
+  // 3) Información del reporte
+  doc.setFontSize(10);
+  doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
+
+  // 4) Filtros aplicados
+  let filtersY = 30;
+  doc.text(
+    `Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`,
+    14,
+    filtersY
+  );
+  filtersY += 5;
+  if (proveedorFilter) {
+    doc.text(`Proveedor: ${proveedorFilter}`, 14, filtersY);
     filtersY += 5;
-    
-    if (proveedorFilter) {
-      doc.text(`Proveedor: ${proveedorFilter}`, 14, filtersY);
-      filtersY += 5;
-    }
-    
-    if (tipoComprobanteFilter) {
-      doc.text(`Tipo Comprobante: ${tipoComprobanteFilter}`, 14, filtersY);
-      filtersY += 5;
-    }
-    
-    doc.text(`Cantidad de comprobantes: ${datosProcesados.length}`, 14, filtersY + 5);
-    
-    // Datos de la tabla
-    const tableData = datosProcesados.map(comprobante => [
-      comprobante.tipo_comprobante,
-      comprobante.numero_comprobante,
-      format(comprobante.fecha, 'dd/MM/yyyy'),
-      comprobante.nproveedor,
-      comprobante.productos.length,
-      `C$${comprobante.total_a_pagar.toFixed(2)}`
-    ]);
-    
-    // Añadir tabla
-    autoTable(doc, {
-      head: [['Tipo', 'N° Comprobante', 'Fecha', 'Proveedor', 'Productos', 'Total']],
-      body: tableData,
-      startY: filtersY + 15,
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-      },
-      headStyles: {
-        fillColor: [64, 64, 64],
-        textColor: 255,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [240, 240, 240]
-      },
-      margin: { top: 40 }
-    });
-    
-    // Total general
-    const totalGeneral = datosProcesados.reduce((sum, item) => sum + item.total_a_pagar, 0).toFixed(2);
-    autoTable(doc, {
-      body: [['Total General', '', '', '', '', `C$${totalGeneral}`]],
-      startY: doc.lastAutoTable.finalY + 5,
-      styles: {
-        fontSize: 9,
-        fontStyle: 'bold',
-        cellPadding: 3,
-      },
-      columnStyles: {
-        5: { fontStyle: 'bold' }
-      }
-    });
-    
-    // Pie de página
-    doc.setFontSize(8);
-    doc.text('Sistema de Gestión de inventario Fusion Solar', 14, doc.internal.pageSize.height - 10);
-    doc.text(format(new Date(), 'dd/MM/yyyy HH:mm'), 190, doc.internal.pageSize.height - 10, { align: 'right' });
-    
-    doc.save(`reporte_compras_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
-  };
+  }
+  if (tipoComprobanteFilter) {
+    doc.text(`Tipo Comprobante: ${tipoComprobanteFilter}`, 14, filtersY);
+    filtersY += 5;
+  }
+  doc.text(`Cantidad de comprobantes: ${datosProcesados.length}`, 14, filtersY + 5);
+
+  // 5) Tabla de datos
+  const tableData = datosProcesados.map(comprobante => [
+    comprobante.tipo_comprobante,
+    comprobante.numero_comprobante,
+    format(comprobante.fecha, 'dd/MM/yyyy'),
+    comprobante.nproveedor,
+    comprobante.productos.length,
+    `C$${comprobante.total_a_pagar.toFixed(2)}`
+  ]);
+
+  autoTable(doc, {
+    head: [['Tipo', 'N° Comprobante', 'Fecha', 'Proveedor', 'Productos', 'Total']],
+    body: tableData,
+    startY: filtersY + 15,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [64, 64, 64], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [240, 240, 240] },
+    margin: { top: 40 }
+  });
+
+  // 6) Total general
+  const totalGeneral = datosProcesados
+    .reduce((sum, item) => sum + item.total_a_pagar, 0)
+    .toFixed(2);
+
+  autoTable(doc, {
+    body: [['Total General', '', '', '', '', `C$${totalGeneral}`]],
+    startY: doc.lastAutoTable.finalY + 5,
+    styles: { fontSize: 9, fontStyle: 'bold', cellPadding: 3 },
+    columnStyles: { 5: { fontStyle: 'bold' } }
+  });
+
+  // 7) Pie de página
+  doc.setFontSize(8);
+  doc.text('Sistema de Gestión de inventario Fusion Solar', 14, pageHeight - 10);
+  doc.text(format(new Date(), 'dd/MM/yyyy HH:mm'), pageWidth - 14, pageHeight - 10, { align: 'right' });
+
+  // 8) Guardar PDF
+  doc.save(`reporte_compras_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
+};
+
 
   const exportarComprasExcel = async () => {
   const workbook = new ExcelJS.Workbook();

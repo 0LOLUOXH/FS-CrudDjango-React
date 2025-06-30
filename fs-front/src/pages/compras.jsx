@@ -57,33 +57,82 @@ function Compras() {
         : productos;
 
     // Agregar producto al carrito
-    const agregarAlCarrito = (producto) => {
-        console.log('Producto seleccionado:', producto);
-        if (!producto) return;
-        
-        const existeEnCarrito = carrito.find(item => item.producto.id === producto.id);
-        
-        if (existeEnCarrito) {
-            setCarrito(carrito.map(item =>
-                item.producto.id === producto.id
-                    ? { ...item, cantidad: (item.cantidad || 0) + 1 }
-                    : item
-            ));
-        } else {
-            setCarrito([...carrito, {
-                stock: producto.cantidad,
-                producto,
-                cantidad: 0,
-                precio: '',
-                iva: IVA_PORCENTAJE
-            }]);
-        }
-        
-        // Limpiar selección después de agregar
-        setSelectedProduct(null);
-        setSearchTerm('');
+const agregarAlCarrito = (producto) => {
+  if (!producto) return;
+
+  const existe = carrito.find(item => item.producto.id === producto.id);
+
+  if (existe) {
+    setCarrito(carrito.map(item =>
+      item.producto.id === producto.id
+        ? { ...item, cantidad: (item.cantidad || 0) + 1 }
+        : item
+    ));
+  } else {
+    setCarrito([
+      ...carrito,
+      { stock: producto.cantidad, producto, cantidad: 0, precio: '', iva: IVA_PORCENTAJE }
+    ]);
+  }
+
+  // limpiar la búsqueda
+  setSearchTerm('');
+  // cerrar el dropdown
+  setShowProductList(false);
+};
+
+// 2) Bloque JSX de búsqueda y dropdown
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2">
+    Buscar Producto
+  </label>
+  <div className="relative">
+    <input
+      type="text"
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      placeholder="Buscar producto..."
+      value={searchTerm}
+      onChange={e => {
+        setSearchTerm(e.target.value);
         setShowProductList(true);
-    };
+      }}
+      onFocus={() => setShowProductList(true)}
+      onBlur={() => {
+        // le damos un pequeño delay para que el click en la lista se registre
+        setTimeout(() => setShowProductList(false), 100);
+      }}
+    />
+
+    {showProductList && (
+      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        {filteredProductos
+          .filter(p => !carrito.some(c => c.producto.id === p.id))
+          .map(producto => (
+            <div
+              key={producto.id}
+              className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex justify-between items-center"
+              // usamos onMouseDown para que no pierda el foco antes de ejecutar
+              onMouseDown={() => agregarAlCarrito(producto)}
+            >
+              <div>
+                <div className="font-medium">{producto.nombre}</div>
+                <div className="text-sm text-gray-600">
+                  Stock: {producto.cantidad} | Marca: {producto.nmarca} | Modelo: {producto.nmodelo}
+                </div>
+              </div>
+              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Agregar
+              </button>
+            </div>
+          ))
+        }
+        {filteredProductos.filter(p => !carrito.some(c => c.producto.id === p.id)).length === 0 && (
+          <div className="px-4 py-2 text-gray-500">Todos los productos ya están en el carrito</div>
+        )}
+      </div>
+    )}
+  </div>
+</div>
 
     // Actualizar cantidad en carrito
     const actualizarCantidad = (productoId, cantidad) => {

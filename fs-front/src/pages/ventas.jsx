@@ -294,7 +294,7 @@ function generarProforma() {
   }
 
   doc.autoTable({
-    startY: yCliente + 30,
+    startY: yCliente + 36,
     margin: { left: margin, right: margin },
     head: [["CANT.", "DESCRIPCIÓN", "TOTAL"]],
     body: tableData,
