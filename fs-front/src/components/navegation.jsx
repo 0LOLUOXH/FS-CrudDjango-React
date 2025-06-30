@@ -54,7 +54,7 @@ export function Navegation() {
   return (
     <>
       {/* Topbar */}
-      <div className="fixed bg-[#081A2D] top-0 left-60 right-0 py-3 px-4 shadow-md flex items-center justify-between">
+      <div className="fixed bg-[#081A2D] top-0 left-60 right-0 py-4 px-4 shadow-md flex items-center justify-between">
         <div className="flex items-center space-x-4">
       
         </div>
@@ -109,20 +109,23 @@ export function Navegation() {
       <div
         className={"fixed top-0 left-0 h-screen w-60 bg-[#081A2D] "}
       >
-              <div className="flex flex-col items-center mb-5">
-          <img
-          src="https://i.postimg.cc/0yL2WnTP/Chat-GPT-Image-29-jun-2025-02-45-57.png"
-            alt="Logo Fusión Solar"
-            className="w-30 h-30  mt-10"
-          />
-          <h1 className="text-yellow-400 font-bold text-lg">Fusión Solar</h1>
-        </div>
+   <div className="flex items-center mb-5 mt-4 px-4">
+  <img
+    src="https://i.postimg.cc/0yL2WnTP/Chat-GPT-Image-29-jun-2025-02-45-57.png"
+    alt="Logo Fusión Solar"
+    className="w-14 h-14 mr-2 ml-2"
+  />
+  <h1 className="text-yellow-400 font-bold text-lg mb-2 ">
+    Fusión Solar
+  </h1>
+</div>
+
 
         <nav className="mt-10 flex flex-col px-2">
           {/* Inicio */}
           <Link
             to="/inicio"
-            className={`${linkBase} ${
+            className={` flex items-center justify-center w-full ${linkBase} ${
               location.pathname === "/inicio" ? linkActive : linkInactive
             }`}
             onClick={() => setOpen(false)}
