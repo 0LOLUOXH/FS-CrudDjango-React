@@ -28,6 +28,8 @@ export function Navegation() {
     "/historialcompra": "Historial de compras",
     "/stock": "Stock",
     "/backups": "Backups",
+    "/ayuda": "Ayuda",
+    
 
   };
   const currentPage = pageTitles[location.pathname] || "";
@@ -52,33 +54,9 @@ export function Navegation() {
   return (
     <>
       {/* Topbar */}
-      <div className="relative bg-[#081A2D] top-0 left-0 right-0 py-3 px-4 shadow-md flex items-center justify-between">
+      <div className="fixed bg-[#081A2D] top-0 left-60 right-0 py-3 px-4 shadow-md flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          {/* Burger solo en móvil */}
-          <button
-            className="block lg:hidden bg-[#8A5438] p-2 rounded"
-            onClick={() => setOpen(true)}
-            aria-label="Abrir menú"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="#FEBA53"
-              strokeWidth={2}
-              className="h-6 w-6"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <div className="flex items-center space-x-2">
-            <img
-              src="https://ik.imagekit.io/jfcrjyrcq/fusion_solar_logo.jpg?updatedAt=1747926845910"
-              alt="Fusion Solar logo"
-              className="h-8 w-8 rounded-full object-cover border-2 border-[#FEBA53]"
-            />
-            <span className="font-bold text-[#FEBA53]">Fusion Solar</span>
-          </div>
+      
         </div>
 
         {/* Título solo en desktop */}
@@ -123,49 +101,21 @@ export function Navegation() {
         </div>
       </div>
 
-      {/* Overlay */}
-      <div
-        className={`fixed inset-0 z-30 transition-all duration-300 ${
-          open
-            ? "backdrop-blur-sm bg-black/30 pointer-events-auto"
-            : "pointer-events-none bg-transparent"
-        }`}
-        aria-hidden="true"
-      />
 
-      {/* Hover zone desktop */}
-      <div
-        className="fixed top-0 left-0 h-screen w-3 z-50 hidden lg:block"
-        onMouseEnter={handleMouseEnter}
-        style={{ pointerEvents: open ? "none" : "auto" }}
-      />
+
+
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-screen z-40 transition-all duration-300 ${
-          open ? "w-80" : "w-0"
-        } overflow-hidden bg-[#05355D]`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        className={"fixed top-0 left-0 h-screen w-60 bg-[#081A2D] "}
       >
-        {/* Cerrar en móvil */}
-        <div className="ml-4 mt-4 lg:hidden">
-          <button
-            className="text-[#FEBA53]"
-            onClick={() => setOpen(false)}
-            aria-label="Cerrar menú"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="#FEBA53"
-              strokeWidth={2}
-              className="h-6 w-6"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+              <div className="flex flex-col items-center mb-5">
+          <img
+          src="https://i.postimg.cc/0yL2WnTP/Chat-GPT-Image-29-jun-2025-02-45-57.png"
+            alt="Logo Fusión Solar"
+            className="w-30 h-30  mt-10"
+          />
+          <h1 className="text-yellow-400 font-bold text-lg">Fusión Solar</h1>
         </div>
 
         <nav className="mt-10 flex flex-col px-2">
@@ -374,6 +324,28 @@ export function Navegation() {
             Backups
           </Link>
     )}
+      {user?.is_staff && (
+          <Link
+               to="/ayuda"
+               className={`${linkBase} ${
+               location.pathname === "/ayuda" ? linkActive : linkInactive
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5
+                ${
+                  location.pathname === "/ayuda" ? 'text-[#081A2D]' : 'text-[#FEBA53]'
+                }
+              `}>
+              <path d="M10 9a3 3 0 100-6 3 3 0 000 6ZM6 8a2 2 0 11-4 0 2 2 0 014 0ZM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654ZM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654ZM18 8a2 2 0 11-4 0 2 2 0 014 0ZM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81Z" />
+            </svg>
+            ❓Ayuda
+
+          </Link>
+      )}
+
+
+    
         </nav>
       </div>
     </>
