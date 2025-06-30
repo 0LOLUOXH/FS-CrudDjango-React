@@ -1,117 +1,285 @@
-import React, { useState, useEffect } from 'react'
-import { ModeloSelect } from '../components/modelosandmarca'
-import { Tabla } from '../components/tabla'
-import { createProducto } from '../api/producto_api'
-import { fetchBodegas } from '../api/bodega_api'
-import { fetchProductos } from '../api/producto_api'
+import React, { useState, useEffect } from "react";
+import MUIDataTable from "mui-datatables";
+import { 
+  fetchProductos, 
+  createProducto, 
+  updateProducto, 
+  deleteProducto 
+} from "../api/producto_api";
+import { fetchBodegas } from "../api/bodega_api";
+import { ModeloSelect } from "../components/modelosandmarca";
 
-export default function IngresarProducto() {
+const columns = [
+  {
+    name: "id",
+    label: "Código",
+    options: {
+      filter: false,
+      sort: true,
+    }
+  },
+  {
+    name: "nombre",
+    label: "Nombre",
+    options: {
+      filter: true,
+      sort: true,
+    }
+  },
+  {
+    name: "nmodelo",
+    label: "Modelo",
+    options: {
+      filter: true,
+      sort: true,
+    }
+  },
+  {
+    name: "nmarca",
+    label: "Marca",
+    options: {
+      filter: true,
+      sort: true,
+    }
+  },
+  {
+    name: "descripcion",
+    label: "Descripción",
+    options: {
+      filter: false,
+      sort: true,
+    }
+  },
+  {
+    name: "bodega",
+    label: "Bodega",
+    options: {
+      filter: true,
+      sort: true,
+    }
+  },
+  {
+    name: "cantidad",
+    label: "Cantidad",
+    options: {
+      filter: true,
+      sort: true,
+    }
+  },
+  {
+    name: "precio_venta",
+    label: "Precio Venta",
+    options: {
+      filter: true,
+      sort: true,
+      customBodyRender: (value) => `C$${parseFloat(value).toFixed(2)}`
+    }
+  }
+];
 
-  const [bodegas, setBodegas] = useState([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState(null)
-  const [producto, setProducto] = useState({
+const options = {
+  textLabels: { 
+    body: {
+      noMatch: "No se encontraron registros",
+      toolTip: "Ordenar",
+      columnHeaderTooltip: column => `Ordenar por ${column.label}`
+    },
+    pagination: {
+      next: "Siguiente página",
+      previous: "Página anterior",
+      rowsPerPage: "Filas por página",
+      displayRows: "de",
+      jumpToPage: "Ir a página",
+    },
+    toolbar: {
+      search: "Buscar",
+      downloadCsv: "Descargar CSV",
+      print: "Imprimir",
+      viewColumns: "Ver columnas",
+      filterTable: "Filtrar tabla",
+    },
+    filter: {
+      all: "Todos",
+      title: "FILTROS",
+      reset: "Restablecer",
+    },
+    viewColumns: {
+      title: "Mostrar Columnas",
+      titleAria: "Mostrar/Ocultar columnas",
+    },
+    selectedRows: {
+      text: "fila(s) seleccionada(s)",
+      delete: "Eliminar",
+      deleteAria: "Eliminar filas seleccionadas",
+    },
+  },
+  selectableRows: 'none',
+  serverSide: true,
+  download: true,
+  print: true,
+  downloadOptions: {
+    filename: 'productos.csv',
+    separator: ',',
+  },
+  elevation: 0,
+  responsive: 'standard',
+  fixedHeader: true,
+  rowHover: true,
+};
+
+export default function Productos() {
+  const [productos, setProductos] = useState([]);
+  const [bodegas, setBodegas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProducto, setEditingProducto] = useState(null);
+  const [formData, setFormData] = useState({
     nombre: '',
-    modelo: '',
     descripcion: '',
-    cantidad: '',
-    bodega: '',
-  })
-  const [productos, setProductos] = useState([])
-  const [showPopup, setShowPopup] = useState(false) // Estado para controlar el popup
+    precio_venta: '',
+    modelo: '',
+    codigobodega: ''
+  });
 
-  // Carga bodegas
+  // Carga inicial de datos
   useEffect(() => {
-    ;(async () => {
-      try {
-        const res = await fetchBodegas()
-        setBodegas(res)
-      } catch (e) {
-        console.error(e)
-      }
-    })()
-  }, [])
+    loadData();
+  }, []);
 
-  // Carga productos
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetchProductos()
-        setProductos(res)
-      } catch (e) {
-        console.error('Error al cargar productos:', e)
-      }
-    })()
-  }, [])
-
-  const handleChange = e => {
-    const { name, value } = e.target
-    setProducto(p => ({ ...p, [name]: value }))
-  }
-
-  const handleModeloChange = modeloId => {
-    setProducto(p => ({ ...p, modelo: modeloId }))
-  }
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-    if (!producto.modelo) {
-      alert('Por favor seleccione un modelo')
-      return
-    }
-    setIsSubmitting(true)
-    setError(null)
+  const loadData = async () => {
+    setLoading(true);
     try {
-      await createProducto({
-        ...producto,
-        cantidad: Number(producto.cantidad),
-        modeloandmarca: Number(producto.modelo),
-        codigobodega: Number(producto.bodega),
-      })
-      setShowPopup(false) // Cerrar popup después de enviar
-      // Recargar productos después de agregar uno nuevo
-      const res = await fetchProductos()
-      setProductos(res)
-    } catch (e) {
-      console.error(e)
-      setError('Hubo un error al guardar el producto')
+      const [productosRes, bodegasRes] = await Promise.all([
+        fetchProductos(),
+        fetchBodegas()
+      ]);
+      setProductos(productosRes);
+      setBodegas(bodegasRes.filter(b => b.estado));
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError('Error cargando datos');
     } finally {
-      setIsSubmitting(false)
+      setLoading(false);
     }
-  }
+  };
+
+  // Abrir modal para crear o editar
+  const openModal = (producto = null) => {
+    if (producto) {
+      // Modo edición
+      setEditingProducto(producto);
+      setFormData({
+        nombre: producto.nombre,
+        descripcion: producto.descripcion,
+        precio_venta: producto.precio_venta,
+        modelo: producto.modelo,
+        codigobodega: producto.codigobodega
+      });
+    } else {
+      // Modo creación
+      setFormData({
+        nombre: '',
+        descripcion: '',
+        precio_venta: '',
+        modelo: '',
+        codigobodega: ''
+      });
+      setEditingProducto(null);
+    }
+    setIsModalOpen(true);
+  };
+
+  // Manejar cambios en el formulario
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Manejar cambio de modelo
+  const handleModeloChange = modeloId => {
+    setFormData(prev => ({ ...prev, modelo: modeloId }));
+  };
+
+  // Manejar envío del formulario
+  const handleSubmit = async e => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const productoData = {
+        ...formData,
+        precio_venta: parseFloat(formData.precio_venta),
+        modeloandmarca: formData.modelo,
+        cantidad: 0 // Siempre 0 para nuevos productos
+      };
+      const productoData1 = {
+        ...formData,
+        precio_venta: parseFloat(formData.precio_venta),
+        modeloandmarca: formData.modelo,
+      };
+
+      if (editingProducto) {
+        await updateProducto(editingProducto.id, productoData1);
+      } else {
+        await createProducto(productoData);
+      }
+
+      await loadData();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError(`Error: ${err.response?.data?.message || err.message || 'Error al guardar producto'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Configuración adicional para la tabla
+  const tableOptions = {
+    ...options,
+    customToolbar: () => (
+      <button 
+        onClick={() => openModal()} 
+        className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 ml-2"
+      >
+        + Nuevo Producto
+      </button>
+    ),
+    
+    onRowClick: (rowData, rowMeta) => {
+      openModal(productos[rowMeta.dataIndex]);
+    }
+  };
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div className="flex flex-col">
-        {/* Botón para abrir el popup */}
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowPopup(true)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Agregar Producto
-          </button>
+    <div className="w-full p-4">
+      {error && (
+        <div className="bg-red-100 text-red-800 p-3 rounded mb-4">
+          {error}
         </div>
+      )}
+      <p className="text-sm text-center text-gray-500">Haga click en un producto para editarlo</p>
 
-        {/* Tabla centrada */}
-        <div className="w-full mx-auto">
-          <Tabla data={productos} onUpdate={async () => {
-            const res = await fetchProductos();
-            setProductos(res);
-          }} />
-        </div>
-      </div>
+      <MUIDataTable
+        title="Inventario de Productos"
+        data={productos}
+        columns={columns}
+        options={tableOptions}
+      />
 
-      {/* Popup del formulario */}
-      {showPopup && (
+      {/* Modal para crear/editar producto */}
+      {isModalOpen && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800 mb-8">
-                Agregar Producto
+              <h2 className="text-2xl font-bold text-gray-800">
+                {editingProducto ? 'Editar Producto' : 'Nuevo Producto'}
               </h2>
               <button
-                onClick={() => setShowPopup(false)}
+                onClick={() => setIsModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <svg
@@ -131,96 +299,114 @@ export default function IngresarProducto() {
               </button>
             </div>
 
-            {error && (
-              <div className="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
-                {error}
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Nombre */}
               <div className="space-y-1">
-                <label className="block text-gray-700">Nombre</label>
+                <label className="block text-gray-700">Nombre *</label>
                 <input
                   type="text"
                   name="nombre"
-                  value={producto.nombre}
+                  value={formData.nombre}
                   onChange={handleChange}
                   required
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                 />
               </div>
 
-              {/* Cantidad */}
+              {/* Precio Venta */}
               <div className="space-y-1">
-                <label className="block text-gray-700">Cantidad</label>
+                <label className="block text-gray-700">Precio Venta *</label>
                 <input
                   type="number"
-                  name="cantidad"
-                  value={producto.cantidad}
+                  name="precio_venta"
+                  value={formData.precio_venta}
                   onChange={handleChange}
                   required
                   min="0"
+                  step="0.01"
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                 />
               </div>
 
               {/* Modelo / Marca */}
               <div className="space-y-1">
-                <label className="block text-gray-700">Marca / Modelo</label>
-                <div className="border border-gray-300 rounded-lg focus-within:ring-blue-400 p-1">
-                  <ModeloSelect onModeloChange={handleModeloChange} />
-                </div>
+                <label className="block text-gray-700">Modelo/Marca *</label>
+                <ModeloSelect 
+                  onModeloChange={handleModeloChange} 
+                  defaultValue={formData.modelo}
+                  required
+                />
+              </div>
+
+              {/* Bodega */}
+              <div className="space-y-1">
+                <label className="block text-gray-700">Bodega *</label>
+                <select
+                  name="codigobodega"
+                  value={formData.codigobodega}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
+                >
+                  <option value="">Seleccione una bodega</option>
+                  {bodegas.map(bodega => (
+                    <option key={bodega.id} value={bodega.id}>
+                      {bodega.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Descripción */}
               <div className="space-y-1">
-                <label className="block text-gray-700">Descripción</label>
+                <label className="block text-gray-700">Descripción *</label>
                 <textarea
                   name="descripcion"
                   rows="3"
-                  value={producto.descripcion}
+                  value={formData.descripcion}
                   onChange={handleChange}
                   required
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
                 />
               </div>
 
-              {/* Bodega */}
-              <div className="space-y-1">
-                <label className="block text-gray-700">Bodega</label>
-                <select
-                  name="bodega"
-                  value={producto.bodega}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                >
-                  <option value="">Seleccione una bodega</option>
-                  {bodegas.map(b =>
-                    b.estado && (
-                      <option key={b.id} value={b.id}>
-                        {b.nombre}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
+              {/* Cantidad (solo lectura en edición) */}
+              {editingProducto && (
+                <div className="space-y-1">
+                  <label className="block text-gray-700">Cantidad en existencia</label>
+                  <input
+                    type="number"
+                    value={editingProducto.cantidad}
+                    readOnly
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100"
+                  />
+                  <p className="text-sm text-gray-500">La cantidad no puede ser modificada</p>
+                </div>
+              )}
 
-              {/* Botón */}
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Guardando...' : 'Agregar producto'}
-                </button>
+              {/* Botones */}
+              <div className="flex justify-between pt-4">
+                <div className="flex gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  >
+                    {loading ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

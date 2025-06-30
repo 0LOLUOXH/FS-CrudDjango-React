@@ -14,11 +14,16 @@ import {
   IconButton,
   Tooltip,
   Box,
-  TextField
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import MUIDataTable from 'mui-datatables';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PrintIcon from '@mui/icons-material/Print';
@@ -27,6 +32,10 @@ import { format, parseISO } from 'date-fns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+
 
 const options = {
   textLabels: {
@@ -47,7 +56,7 @@ const options = {
   rowsPerPage: 10,
   rowsPerPageOptions: [10, 25, 50],
   downloadOptions: { filename: 'historial_compras.csv', separator: ',' },
-  print: true,
+  print: false,
   download: false,
   elevation: 0,
   rowHover: true,
@@ -58,6 +67,26 @@ function TablaVentas({ data }) {
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [fechaDesde, setFechaDesde] = useState(null);
   const [fechaHasta, setFechaHasta] = useState(null);
+  const [clienteFilter, setClienteFilter] = useState('');
+  const [empleadoFilter, setEmpleadoFilter] = useState('');
+  const [metodoPagoFilter, setMetodoPagoFilter] = useState('');
+  const [instalacionFilter, setInstalacionFilter] = useState('todos');
+  const [clientesOptions, setClientesOptions] = useState([]);
+  const [empleadosOptions, setEmpleadosOptions] = useState([]);
+  const [metodosPagoOptions, setMetodosPagoOptions] = useState([]);
+
+  // Extraer opciones únicas para los filtros
+  useEffect(() => {
+    if (Array.isArray(data)) {
+      const clientesUnicos = [...new Set(data.map(item => item.ncliente))].filter(Boolean);
+      const empleadosUnicos = [...new Set(data.map(item => item.nempleado))].filter(Boolean);
+      const metodosPagoUnicos = [...new Set(data.map(item => item.metodo_de_pago))].filter(Boolean);
+      
+      setClientesOptions(clientesUnicos);
+      setEmpleadosOptions(empleadosUnicos);
+      setMetodosPagoOptions(metodosPagoUnicos);
+    }
+  }, [data]);
 
   const adjustDateToLocal = (dateString) => {
     try {
@@ -74,10 +103,11 @@ function TablaVentas({ data }) {
     }
   };
 
-  const filtrarPorFechas = (rawData) => {
+  const filtrarVentas = (rawData) => {
     if (!Array.isArray(rawData)) return [];
 
     return rawData.filter(item => {
+      // Filtro por fechas
       const fechaItem = adjustDateToLocal(item.fecha);
       const fechaLocal = new Date(fechaItem);
       fechaLocal.setHours(12, 0, 0, 0);
@@ -85,11 +115,20 @@ function TablaVentas({ data }) {
       if (fechaDesde && fechaLocal < new Date(fechaDesde.setHours(0, 0, 0, 0))) return false;
       if (fechaHasta && fechaLocal > new Date(fechaHasta.setHours(23, 59, 59, 999))) return false;
 
+      // Filtros adicionales
+      if (clienteFilter && item.ncliente !== clienteFilter) return false;
+      if (empleadoFilter && item.nempleado !== empleadoFilter) return false;
+      if (metodoPagoFilter && item.metodo_de_pago !== metodoPagoFilter) return false;
+      if (instalacionFilter !== 'todos') {
+        const requiereInstalacion = instalacionFilter === 'si';
+        if (item.instalacion !== requiereInstalacion) return false;
+      }
+
       return true;
     });
   };
 
-  const datosFiltrados = filtrarPorFechas(data);
+  const datosFiltrados = filtrarVentas(data);
 
   const manejarDialogo = (venta) => {
     setVentaSeleccionada(venta);
@@ -124,12 +163,21 @@ function TablaVentas({ data }) {
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ddd; padding: 8px; }
         th { background-color: #f2f2f2; }
+        .filters { background-color: #f9f9f9; padding: 10px; margin-bottom: 15px; border-radius: 5px; }
+        .filter-item { margin-bottom: 5px; }
       </style>
       </head><body>
         <h1>Historial de Ventas</h1>
         <div class="report-info">
           <p><strong>Fecha de generación:</strong> ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-          <p><strong>Período:</strong> ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}</p>
+          <div class="filters">
+            <p><strong>Filtros aplicados:</strong></p>
+            <div class="filter-item"><strong>Período:</strong> ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}</div>
+            ${clienteFilter ? `<div class="filter-item"><strong>Cliente:</strong> ${clienteFilter}</div>` : ''}
+            ${empleadoFilter ? `<div class="filter-item"><strong>Empleado:</strong> ${empleadoFilter}</div>` : ''}
+            ${metodoPagoFilter ? `<div class="filter-item"><strong>Método de Pago:</strong> ${metodoPagoFilter}</div>` : ''}
+            ${instalacionFilter !== 'todos' ? `<div class="filter-item"><strong>Instalación:</strong> ${instalacionFilter === 'si' ? 'Sí' : 'No'}</div>` : ''}
+          </div>
           <p><strong>Cantidad de ventas:</strong> ${datosFiltrados.length}</p>
         </div>
         <table>
@@ -152,10 +200,37 @@ function TablaVentas({ data }) {
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Historial de Ventas', 105, 15, { align: 'center' });
+    
+    // Información del reporte
     doc.setFontSize(10);
     doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
-    doc.text(`Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`, 14, 30);
-    doc.text(`Cantidad de ventas: ${datosFiltrados.length}`, 14, 35);
+    
+    // Filtros aplicados
+    let filtersY = 30;
+    doc.text(`Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`, 14, filtersY);
+    filtersY += 5;
+    
+    if (clienteFilter) {
+      doc.text(`Cliente: ${clienteFilter}`, 14, filtersY);
+      filtersY += 5;
+    }
+    
+    if (empleadoFilter) {
+      doc.text(`Empleado: ${empleadoFilter}`, 14, filtersY);
+      filtersY += 5;
+    }
+    
+    if (metodoPagoFilter) {
+      doc.text(`Método de Pago: ${metodoPagoFilter}`, 14, filtersY);
+      filtersY += 5;
+    }
+    
+    if (instalacionFilter !== 'todos') {
+      doc.text(`Instalación: ${instalacionFilter === 'si' ? 'Sí' : 'No'}`, 14, filtersY);
+      filtersY += 5;
+    }
+    
+    doc.text(`Cantidad de ventas: ${datosFiltrados.length}`, 14, filtersY + 5);
 
     const tableData = datosFiltrados.map(venta => [
       venta.id,
@@ -170,7 +245,7 @@ function TablaVentas({ data }) {
     autoTable(doc, {
       head: [['ID', 'Fecha', 'Cliente', 'Empleado', 'Método de Pago', 'Instalación', 'Total']],
       body: tableData,
-      startY: 40,
+      startY: filtersY + 15,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [64, 64, 64], textColor: 255 },
       alternateRowStyles: { fillColor: [240, 240, 240] },
@@ -187,6 +262,51 @@ function TablaVentas({ data }) {
 
     doc.save(`reporte_ventas_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
   };
+
+  const exportarExcel = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Ventas');
+
+  worksheet.columns = [
+    { header: 'ID Venta', key: 'id', width: 10 },
+    { header: 'Fecha', key: 'fecha', width: 15 },
+    { header: 'Cliente', key: 'cliente', width: 25 },
+    { header: 'Empleado', key: 'empleado', width: 25 },
+    { header: 'Método de Pago', key: 'metodo', width: 20 },
+    { header: 'Instalación', key: 'instalacion', width: 15 },
+    { header: 'Precio Instalación', key: 'precio_instalacion', width: 20 },
+    { header: 'Dirección', key: 'direccion', width: 30 },
+    { header: 'Total a Pagar', key: 'total', width: 18 },
+    { header: 'Productos', key: 'productos', width: 60 }
+  ];
+
+  datosFiltrados.forEach((venta) => {
+    const productos = venta.detalles.map(p => {
+      const nombre = p.nproducto;
+      const cantidad = p.cantidad_por_producto;
+      const precio = parseFloat(p.preciodelproducto).toFixed(2);
+      return `${nombre} x${cantidad} - C$${precio}`;
+    }).join(', ');
+
+    worksheet.addRow({
+      id: venta.id,
+      fecha: format(new Date(venta.fecha), 'dd/MM/yyyy'),
+      cliente: venta.ncliente,
+      empleado: venta.nempleado,
+      metodo: venta.metodo_de_pago,
+      instalacion: venta.instalacion ? 'Sí' : 'No',
+      precio_instalacion: parseFloat(venta.precio_instalacion).toFixed(2),
+      direccion: venta.direccion,
+      total: `C$${parseFloat(venta.total_a_pagar).toFixed(2)}`,
+      productos
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  saveAs(blob, `reporte_ventas_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
+};
+
 
   const imprimirDetalleVenta = () => {
     if (!ventaSeleccionada) return;
@@ -318,7 +438,7 @@ function TablaVentas({ data }) {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Box display="flex" alignItems="center" gap={2}>
+          <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
             <DatePicker
               label="Desde"
               value={fechaDesde}
@@ -357,16 +477,76 @@ function TablaVentas({ data }) {
                 }
               }}
             />
+            
+            <FormControl size="small" style={{ width: 180 }}>
+              <InputLabel>Cliente</InputLabel>
+              <Select
+                value={clienteFilter}
+                onChange={(e) => setClienteFilter(e.target.value)}
+                label="Cliente"
+              >
+                <MenuItem value="">Todos los clientes</MenuItem>
+                {clientesOptions.map((cliente, index) => (
+                  <MenuItem key={index} value={cliente}>{cliente}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl size="small" style={{ width: 180 }}>
+              <InputLabel>Empleado</InputLabel>
+              <Select
+                value={empleadoFilter}
+                onChange={(e) => setEmpleadoFilter(e.target.value)}
+                label="Empleado"
+              >
+                <MenuItem value="">Todos los empleados</MenuItem>
+                {empleadosOptions.map((empleado, index) => (
+                  <MenuItem key={index} value={empleado}>{empleado}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl size="small" style={{ width: 180 }}>
+              <InputLabel>Método de Pago</InputLabel>
+              <Select
+                value={metodoPagoFilter}
+                onChange={(e) => setMetodoPagoFilter(e.target.value)}
+                label="Método de Pago"
+              >
+                <MenuItem value="">Todos los métodos</MenuItem>
+                {metodosPagoOptions.map((metodo, index) => (
+                  <MenuItem key={index} value={metodo}>{metodo}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl size="small" style={{ width: 180 }}>
+              <InputLabel>Instalación</InputLabel>
+              <Select
+                value={instalacionFilter}
+                onChange={(e) => setInstalacionFilter(e.target.value)}
+                label="Instalación"
+              >
+                <MenuItem value="todos">Todos</MenuItem>
+                <MenuItem value="si">Con instalación</MenuItem>
+                <MenuItem value="no">Sin instalación</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
           <Box>
             <Tooltip title="Imprimir reporte completo">
-              <IconButton onClick={imprimirVentas} color="primary" style={{ marginRight: 10 }}>
+              <IconButton onClick={imprimirVentas} color="primary" style={{ marginRight: 5 }}>
                 <PrintIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Exportar a PDF">
               <IconButton onClick={exportarReportePDF} color="secondary">
                 <PictureAsPdfIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Exportar a Excel">
+              <IconButton onClick={exportarExcel} color="success">
+                <FileDownloadIcon />
               </IconButton>
             </Tooltip>
           </Box>

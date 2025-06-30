@@ -1,17 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
-import { fetchStocks } from '../api/stock_api';
 import { fetchClientes, fetchClientesNaturales, fetchClientesJuridicos } from '../api/clientes_api';
 import { createVenta } from '../api/venta_api';
 import { createDetalleVenta } from '../api/detalleventa_api';
 import { fetchProductos, updateProducto } from '../api/producto_api';
 import { useAuth } from '../auth/AuthContext';
+import { jsPDF } from "jspdf";
+import { applyPlugin } from 'jspdf-autotable';
+
+// Apply the autoTable plugin to jsPDF
+applyPlugin(jsPDF);
 
 function Ventas() {
     const { user } = useAuth();
 
     // Estados para datos
     const [productos, setProductos] = useState([]);
-    const [stocks, setStocks] = useState([]);
     const [clientes, setClientes] = useState([]);
     const [clientesNaturales, setClientesNaturales] = useState([]);
     const [clientesJuridicos, setClientesJuridicos] = useState([]);
@@ -39,16 +42,14 @@ function Ventas() {
         async function loadData() {
             setIsLoading(true);
             try {
-                const [productosData, stocksData, clientesData, naturalesData, juridicosData] = await Promise.all([
+                const [productosData, clientesData, naturalesData, juridicosData] = await Promise.all([
                     fetchProductos(),
-                    fetchStocks(),
                     fetchClientes(),
                     fetchClientesNaturales(),
                     fetchClientesJuridicos()
                 ]);
                 
                 setProductos(productosData);
-                setStocks(stocksData);
                 setClientes(clientesData);
                 setClientesNaturales(naturalesData);
                 setClientesJuridicos(juridicosData);
@@ -113,35 +114,17 @@ function Ventas() {
         }
     });
 
-    // Obtener productos con stock disponible
-    const productosDisponibles = productos.filter(producto => {
-        const stockItem = stocks.find(s => s.producto === producto.id);
-        return stockItem && stockItem.cantidad > 0;
-    });
-
-    // Filtrar productos basados en el término de búsqueda
-    const filteredProductos = productosDisponibles.filter(producto =>
-        producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filtrar productos disponibles basados en el término de búsqueda
+    const filteredProductos = productos.filter(producto =>
+        (producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        producto.cantidad > 0
     );
 
-    // Obtener precio de venta de un producto
-    const getPrecioVenta = (productoId) => {
-        const stockItem = stocks.find(s => s.producto === productoId);
-        return stockItem ? stockItem.precio_venta : 0;
-    };
-
-    // Obtener stock disponible de un producto
-    const getStockDisponible = (productoId) => {
-        const stockItem = stocks.find(s => s.producto === productoId);
-        return stockItem ? stockItem.cantidad : 0;
-    };
-
-    // Agregar al carrito con validación
+    // Agregar al carrito con validación de cantidad
     const agregarAlCarrito = (producto) => {
         const existe = carrito.find(item => item.producto.id === producto.id);
-        const precioVenta = getPrecioVenta(producto.id);
-        const stockDisponible = getStockDisponible(producto.id);
+        const stockDisponible = producto.cantidad;
         
         if (existe) {
             if (existe.cantidad >= stockDisponible) {
@@ -161,7 +144,7 @@ function Ventas() {
             setCarrito([...carrito, {
                 producto,
                 cantidad: 1,
-                precio: precioVenta
+                precio: producto.precio_venta
             }]);
         }
         setError(null);
@@ -169,10 +152,13 @@ function Ventas() {
         setIsDropdownOpen(false);
     };
 
-    // Actualizar cantidad en carrito con validación
+    // Actualizar cantidad en carrito con validación de stock
     const actualizarCantidad = (productoId, cantidad) => {
-        const stockDisponible = getStockDisponible(productoId);
+        const producto = productos.find(p => p.id === productoId);
+        if (!producto) return;
+        
         const cantidadNum = parseInt(cantidad) || 0;
+        const stockDisponible = producto.cantidad;
         
         if (cantidadNum < 1) return;
         if (cantidadNum > stockDisponible) {
@@ -213,6 +199,93 @@ function Ventas() {
         setIsClienteDropdownOpen(false);
     };
 
+    // Generar proforma en PDF
+    const generarProforma = () => {
+        if (!clienteId) {
+            setError('Seleccione un cliente para generar la proforma');
+            return;
+        }
+
+        if (carrito.length === 0) {
+            setError('Agregue productos al carrito para generar la proforma');
+            return;
+        }
+
+        const cliente = getClienteCompleto(clienteId);
+        if (!cliente) return;
+
+        const doc = new jsPDF();
+        
+        // Logo y encabezado
+        doc.addImage('../public/logo.png', 'PNG', 1, 11, 35, 35);
+        doc.setFontSize(18);
+        doc.text('Fusion Solar', 35, 17);
+        doc.setFontSize(10);
+        doc.text('De frente donde fue la policia nacional, San Benito, Tipitapa, Nicaragua', 35, 23);
+        doc.text('Tel: 7745 1956', 35, 28);
+        doc.text('Email: solarelectricnic@gmail.com', 35, 34);
+        doc.text('RUC: 0011110011046N', 35, 40);
+        
+        // Título
+        doc.setFontSize(16);
+        doc.text('PROFORMA / COTIZACIÓN', 105, 50, { align: 'center' });
+        
+        // Datos del cliente
+        doc.setFontSize(12);
+        doc.text('Cliente:', 14, 60);
+        doc.text(cliente.tipo === 'N' ? `${cliente.nombre} ${cliente.apellido}` : cliente.razon_social, 30, 60);
+        
+        doc.text('Documento:', 14, 66);
+        doc.text(cliente.tipo === 'N' ? cliente.cedula : cliente.ruc || 'No especificado', 40, 66);
+        
+        doc.text('Fecha:', 14, 72);
+        doc.text(new Date().toLocaleDateString(), 30, 72);
+        
+        doc.text('Validez:', 14, 78);
+        const fechaValidez = new Date();
+        fechaValidez.setDate(fechaValidez.getDate() + 7);
+        doc.text(fechaValidez.toLocaleDateString(), 30, 78);
+        
+        // Tabla de productos
+        const tableData = carrito.map(item => [
+            item.producto.nombre,
+            item.cantidad,
+            `C$${item.precio}`,
+            `C$${item.precio * item.cantidad}`
+        ]);
+        
+        if (instalacion) {
+            tableData.push([
+                'Instalación', 
+                '1', 
+                `C$${precioInstalacion}`, 
+                `C$${parseFloat(precioInstalacion)}`
+            ]);
+        }
+
+        doc.autoTable({
+            startY: 85,
+            head: [['Descripción', 'Cantidad', 'Precio Unitario', 'Subtotal']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [254, 186, 83], // Color naranja
+                textColor: [0, 0, 0]
+            }
+        });
+
+        // Total
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(7);
+        doc.text('NOTA: Los precios incluyen el 15% de IVA', 14, finalY);
+        doc.setFontSize(14);
+        doc.text('TOTAL:', 140, finalY);
+        doc.text(`C$${calcularTotal().toFixed(2)}`, 170, finalY);
+
+        // Guardar el PDF
+        doc.save(`Proforma_${cliente.tipo === 'N' ? cliente.nombre : cliente.razon_social}.pdf`);
+    };
+
     // Procesar venta
     const procesarVenta = async () => {
         if (carrito.length === 0) {
@@ -228,6 +301,20 @@ function Ventas() {
         if (instalacion && (!precioInstalacion || isNaN(precioInstalacion))) {
             setError('Ingrese un precio válido para la instalación');
             return;
+        }
+
+        if (instalacion && !direccion) {
+            setError('Ingrese la dirección de instalación');
+            return;
+        }
+
+        // Validar stock antes de procesar
+        for (const item of carrito) {
+            const producto = productos.find(p => p.id === item.producto.id);
+            if (!producto || producto.cantidad < item.cantidad) {
+                setError(`No hay suficiente stock de ${item.producto.nombre}`);
+                return;
+            }
         }
 
         setIsLoading(true);
@@ -247,7 +334,7 @@ function Ventas() {
 
             const venta = await createVenta(ventaData);
 
-            // 2. Crear detalles de venta y actualizar stock
+            // 2. Crear detalles de venta y actualizar productos
             for (const item of carrito) {
                 // Registrar detalle
                 await createDetalleVenta({
@@ -257,24 +344,20 @@ function Ventas() {
                     preciodelproducto: item.precio
                 });
 
-                // Actualizar stock del producto
-                const stockActual = stocks.find(s => s.producto === item.producto.id);
-                if (stockActual) {
-                    const nuevaCantidad = stockActual.cantidad - item.cantidad;
+                // Actualizar cantidad del producto
+                const productoActual = productos.find(p => p.id === item.producto.id);
+                if (productoActual) {
+                    const nuevaCantidad = productoActual.cantidad - item.cantidad;
                     await updateProducto(item.producto.id, {
                         cantidad: nuevaCantidad
                     });
                 }
             }
-            console.log('detalles creados exitosamente:', carrito);
+
             // 3. Actualizar lista de productos y limpiar formulario
-            const [productosActualizados, stocksActualizados] = await Promise.all([
-                fetchProductos(),
-                fetchStocks()
-            ]);
-            
+            const productosActualizados = await fetchProductos();
             setProductos(productosActualizados);
-            setStocks(stocksActualizados);
+            
             setCarrito([]);
             setClienteId('');
             setClienteSearchTerm('');
@@ -338,8 +421,8 @@ function Ventas() {
                                                 <div>
                                                     <div className="font-medium">{producto.nombre}</div>
                                                     <div className="text-sm text-gray-600">
-                                                        Stock: {getStockDisponible(producto.id)} | 
-                                                        Precio: ${getPrecioVenta(producto.id)}
+                                                        Stock: {producto.cantidad} | 
+                                                        Precio: C${producto.precio_venta}
                                                     </div>
                                                 </div>
                                                 <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -348,7 +431,7 @@ function Ventas() {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="px-4 py-2 text-gray-500">No se encontraron productos</div>
+                                        <div className="px-4 py-2 text-gray-500">No se encontraron productos disponibles</div>
                                     )}
                                 </div>
                             )}
@@ -367,7 +450,7 @@ function Ventas() {
                                         <div>
                                             <h4 className="text-lg font-semibold text-gray-800">{item.producto.nombre}</h4>
                                             <p className="text-sm text-gray-500">
-                                                Precio unitario: <span className="text-gray-700 font-medium">${item.precio}</span>
+                                                Precio unitario: <span className="text-gray-700 font-medium">C${item.precio}</span>
                                             </p>
                                         </div>
                                         <button
@@ -383,18 +466,18 @@ function Ventas() {
                                         <input
                                             type="number"
                                             min="1"
-                                            max={getStockDisponible(item.producto.id) + item.cantidad}
+                                            max={item.producto.cantidad + item.cantidad}
                                             value={item.cantidad}
                                             onChange={(e) => actualizarCantidad(item.producto.id, e.target.value)}
                                             className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                         <span className="text-sm text-gray-500 ml-3">
-                                            (Disponible: {getStockDisponible(item.producto.id)})
+                                            (Disponible: {item.producto.cantidad})
                                         </span>
                                     </div>
 
                                     <div className="mt-2 text-sm text-gray-700">
-                                        Subtotal: <span className="font-semibold">C${(item.precio * item.cantidad)}</span>
+                                        Subtotal: <span className="font-semibold">C${(item.precio * item.cantidad).toFixed(2)}</span>
                                     </div>
                                 </div>
                             ))}
@@ -487,7 +570,7 @@ function Ventas() {
                     {instalacion && (
                         <>
                             <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">Precio Instalación ($)</label>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Precio Instalación (C$)</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -499,13 +582,14 @@ function Ventas() {
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">Dirección de Instalación</label>
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Dirección de Instalación *</label>
                                 <input
                                     type="text"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={direccion}
                                     onChange={(e) => setDireccion(e.target.value)}
                                     placeholder="Dirección completa"
+                                    required
                                 />
                             </div>
                         </>
@@ -514,27 +598,38 @@ function Ventas() {
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                         <div className="flex justify-between font-medium text-lg">
                             <span>Subtotal:</span>
-                            <span>C${carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0)}</span>
+                            <span>C${carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0).toFixed(2)}</span>
                         </div>
                         {instalacion && (
                             <div className="flex justify-between mt-2">
                                 <span className="text-sm">Instalación:</span>
-                                <span className="text-sm">${parseFloat(precioInstalacion)}</span>
+                                <span className="text-sm">C${parseFloat(precioInstalacion).toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between mt-2 pt-2 border-t border-gray-200 font-bold text-lg">
                             <span>Total:</span>
-                            <span>C${calcularTotal()}</span>
+                            <span>C${calcularTotal().toFixed(2)}</span>
                         </div>
+                        <p className="text-xs text-gray-500 mt-2">* Los precios incluyen el 15% de IVA</p>
                     </div>
 
-                    <button
-                        onClick={procesarVenta}
-                        disabled={carrito.length === 0 || isLoading || !clienteId}
-                        className={`w-full px-4 py-2 rounded-lg mt-4 text-white font-medium ${carrito.length === 0 || isLoading || !clienteId ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
-                    >
-                        {isLoading ? 'Procesando...' : 'Finalizar Venta'}
-                    </button>
+                    <div className="flex gap-2 mt-4">
+                        <button
+                            type="button"
+                            onClick={generarProforma}
+                            disabled={carrito.length === 0 || !clienteId}
+                            className={`flex-1 px-4 py-2 rounded-lg text-white font-medium ${carrito.length === 0 || !clienteId ? 'bg-gray-400 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600'}`}
+                        >
+                            Proforma
+                        </button>
+                        <button
+                            onClick={procesarVenta}
+                            disabled={carrito.length === 0 || isLoading || !clienteId || (instalacion && !direccion)}
+                            className={`flex-1 px-4 py-2 rounded-lg text-white font-medium ${carrito.length === 0 || isLoading || !clienteId || (instalacion && !direccion) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                        >
+                            {isLoading ? 'Procesando...' : 'Finalizar Venta'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

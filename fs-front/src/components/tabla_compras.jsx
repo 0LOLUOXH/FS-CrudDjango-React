@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MUIDataTable from 'mui-datatables';
 import {
   Dialog,
@@ -16,7 +16,11 @@ import {
   IconButton,
   Tooltip,
   Box,
-  TextField
+  TextField,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -78,6 +82,21 @@ export function TablaCompras({ data }) {
   const [productosDetalle, setProductosDetalle] = useState([]);
   const [fechaDesde, setFechaDesde] = useState(null);
   const [fechaHasta, setFechaHasta] = useState(null);
+  const [proveedorFilter, setProveedorFilter] = useState('');
+  const [tipoComprobanteFilter, setTipoComprobanteFilter] = useState('');
+  const [proveedoresOptions, setProveedoresOptions] = useState([]);
+  const [tipoComprobanteOptions, setTipoComprobanteOptions] = useState([]);
+
+  // Extraer opciones únicas de proveedores y tipos de comprobante
+  useEffect(() => {
+    if (Array.isArray(data)) {
+      const proveedoresUnicos = [...new Set(data.map(item => item.nproveedor))].filter(Boolean);
+      const tiposUnicos = [...new Set(data.map(item => item.tipo_comprobante))].filter(Boolean);
+      
+      setProveedoresOptions(proveedoresUnicos);
+      setTipoComprobanteOptions(tiposUnicos);
+    }
+  }, [data]);
 
   const adjustDateToLocal = (dateString) => {
     try {
@@ -100,6 +119,10 @@ export function TablaCompras({ data }) {
     const comprobantesUnicos = {};
     
     rawData.forEach(item => {
+      // Aplicar filtros
+      if (proveedorFilter && item.nproveedor !== proveedorFilter) return;
+      if (tipoComprobanteFilter && item.tipo_comprobante !== tipoComprobanteFilter) return;
+      
       const fechaItem = adjustDateToLocal(item.fecha);
       const fechaLocal = new Date(fechaItem);
       fechaLocal.setHours(12, 0, 0, 0);
@@ -145,7 +168,7 @@ export function TablaCompras({ data }) {
       numero: comprobante.numero_comprobante,
       fecha: format(comprobante.fecha, 'dd/MM/yyyy'),
       proveedor: comprobante.nproveedor,
-      total: `$${comprobante.total_a_pagar.toFixed(2)}`,
+      total: `C$${comprobante.total_a_pagar.toFixed(2)}`,
       productos: comprobante.productos.length
     }));
 
@@ -162,13 +185,20 @@ export function TablaCompras({ data }) {
             th { background-color: #f2f2f2; }
             .total-row { font-weight: bold; }
             .footer { margin-top: 30px; font-size: 0.8em; text-align: right; }
+            .filters { background-color: #f9f9f9; padding: 10px; margin-bottom: 15px; border-radius: 5px; }
+            .filter-item { margin-bottom: 5px; }
           </style>
         </head>
         <body>
           <h1>Reporte de Compras</h1>
           <div class="report-info">
             <p><strong>Fecha de generación:</strong> ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-            <p><strong>Período:</strong> ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}</p>
+            <div class="filters">
+              <p><strong>Filtros aplicados:</strong></p>
+              <div class="filter-item"><strong>Período:</strong> ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}</div>
+              ${proveedorFilter ? `<div class="filter-item"><strong>Proveedor:</strong> ${proveedorFilter}</div>` : ''}
+              ${tipoComprobanteFilter ? `<div class="filter-item"><strong>Tipo Comprobante:</strong> ${tipoComprobanteFilter}</div>` : ''}
+            </div>
             <p><strong>Cantidad de comprobantes:</strong> ${tableData.length}</p>
           </div>
           <table>
@@ -190,7 +220,7 @@ export function TablaCompras({ data }) {
                   <td>${item.fecha}</td>
                   <td>${item.proveedor}</td>
                   <td>${item.productos}</td>
-                  <td>C${item.total}</td>
+                  <td>${item.total}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
@@ -211,140 +241,155 @@ export function TablaCompras({ data }) {
   };
 
   const handleExportPDF = () => {
-  const doc = new jsPDF();
-  
-  // Título del reporte
-  doc.setFontSize(18);
-  doc.text('Reporte de Compras', 105, 15, { align: 'center' });
-  
-  // Información del reporte
-  doc.setFontSize(10);
-  doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
-  doc.text(`Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`, 14, 30);
-  doc.text(`Cantidad de comprobantes: ${datosProcesados.length}`, 14, 35);
-  
-  // Datos de la tabla
-  const tableData = datosProcesados.map(comprobante => [
-    comprobante.tipo_comprobante,
-    comprobante.numero_comprobante,
-    format(comprobante.fecha, 'dd/MM/yyyy'),
-    comprobante.nproveedor,
-    comprobante.productos.length,
-    `C$${comprobante.total_a_pagar.toFixed(2)}`
-  ]);
-  
-  // Añadir tabla
-  autoTable(doc, {
-    head: [['Tipo', 'N° Comprobante', 'Fecha', 'Proveedor', 'Productos', 'Total']],
-    body: tableData,
-    startY: 40,
-    styles: {
-      fontSize: 8,
-      cellPadding: 2,
-    },
-    headStyles: {
-      fillColor: [64, 64, 64],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    alternateRowStyles: {
-      fillColor: [240, 240, 240]
-    },
-    margin: { top: 40 }
-  });
-  
-  // Total general
-  const totalGeneral = datosProcesados.reduce((sum, item) => sum + item.total_a_pagar, 0).toFixed(2);
-  autoTable(doc, {
-    body: [['Total General', '', '', '', '', `C$${totalGeneral}`]],
-    startY: doc.lastAutoTable.finalY + 5,
-    styles: {
-      fontSize: 9,
-      fontStyle: 'bold',
-      cellPadding: 3,
-    },
-    columnStyles: {
-      5: { fontStyle: 'bold' }
+    const doc = new jsPDF();
+    
+    // Título del reporte
+    doc.setFontSize(18);
+    doc.text('Reporte de Compras', 105, 15, { align: 'center' });
+    
+    // Información del reporte
+    doc.setFontSize(10);
+    doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 25);
+    
+    // Filtros aplicados
+    let filtersY = 30;
+    doc.text(`Período: ${fechaDesde ? format(fechaDesde, 'dd/MM/yyyy') : 'Todo'} - ${fechaHasta ? format(fechaHasta, 'dd/MM/yyyy') : 'Hoy'}`, 14, filtersY);
+    filtersY += 5;
+    
+    if (proveedorFilter) {
+      doc.text(`Proveedor: ${proveedorFilter}`, 14, filtersY);
+      filtersY += 5;
     }
-  });
-  
-  // Pie de página
-  doc.setFontSize(8);
-  doc.text('Sistema de Gestión de inventario Fusion Solar', 14, doc.internal.pageSize.height - 10);
-  doc.text(format(new Date(), 'dd/MM/yyyy HH:mm'), 190, doc.internal.pageSize.height - 10, { align: 'right' });
-  
-  doc.save(`reporte_compras_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
-};
+    
+    if (tipoComprobanteFilter) {
+      doc.text(`Tipo Comprobante: ${tipoComprobanteFilter}`, 14, filtersY);
+      filtersY += 5;
+    }
+    
+    doc.text(`Cantidad de comprobantes: ${datosProcesados.length}`, 14, filtersY + 5);
+    
+    // Datos de la tabla
+    const tableData = datosProcesados.map(comprobante => [
+      comprobante.tipo_comprobante,
+      comprobante.numero_comprobante,
+      format(comprobante.fecha, 'dd/MM/yyyy'),
+      comprobante.nproveedor,
+      comprobante.productos.length,
+      `C$${comprobante.total_a_pagar.toFixed(2)}`
+    ]);
+    
+    // Añadir tabla
+    autoTable(doc, {
+      head: [['Tipo', 'N° Comprobante', 'Fecha', 'Proveedor', 'Productos', 'Total']],
+      body: tableData,
+      startY: filtersY + 15,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [64, 64, 64],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240]
+      },
+      margin: { top: 40 }
+    });
+    
+    // Total general
+    const totalGeneral = datosProcesados.reduce((sum, item) => sum + item.total_a_pagar, 0).toFixed(2);
+    autoTable(doc, {
+      body: [['Total General', '', '', '', '', `C$${totalGeneral}`]],
+      startY: doc.lastAutoTable.finalY + 5,
+      styles: {
+        fontSize: 9,
+        fontStyle: 'bold',
+        cellPadding: 3,
+      },
+      columnStyles: {
+        5: { fontStyle: 'bold' }
+      }
+    });
+    
+    // Pie de página
+    doc.setFontSize(8);
+    doc.text('Sistema de Gestión de inventario Fusion Solar', 14, doc.internal.pageSize.height - 10);
+    doc.text(format(new Date(), 'dd/MM/yyyy HH:mm'), 190, doc.internal.pageSize.height - 10, { align: 'right' });
+    
+    doc.save(`reporte_compras_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
+  };
 
-const handleExportDetallePDF = (comprobante, productos) => {
-  const doc = new jsPDF();
-  
-  // Título del reporte
-  doc.setFontSize(16);
-  doc.text(`Detalle de Compra: ${comprobante.numero_comprobante}`, 105, 15, { align: 'center' });
-  
-  // Información del comprobante
-  doc.setFontSize(10);
-  doc.text(`Tipo de comprobante: ${comprobante.tipo_comprobante}`, 14, 25);
-  doc.text(`Proveedor: ${comprobante.nproveedor}`, 14, 30);
-  doc.text(`Fecha: ${format(comprobante.fecha, 'dd/MM/yyyy')}`, 14, 35);
-  
-  // Datos de la tabla
-  const tableData = productos.map(producto => [
-    producto.id,
-    producto.nombre,
-    producto.cantidad,
-    `C$${producto.precio_unitario.toFixed(2)}`,
-    `C$${producto.iva.toFixed(2)}`,
-    `C$${producto.total}`
-  ]);
-  
-  // Añadir tabla
-  autoTable(doc, {
-    head: [['ID Producto', 'Nombre', 'Cantidad', 'Precio Unit.', 'IVA', 'Total']],
-    body: tableData,
-    startY: 45,
-    styles: {
-      fontSize: 8,
-      cellPadding: 2,
-    },
-    headStyles: {
-      fillColor: [64, 64, 64],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    columnStyles: {
-      2: { halign: 'right' },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-      5: { halign: 'right' }
-    },
-    alternateRowStyles: {
-      fillColor: [240, 240, 240]
-    }
-  });
-  
-  // Total compra
-  autoTable(doc, {
-    body: [['Total Compra', '', '', '', '', `C$${comprobante.total_a_pagar.toFixed(2)}`]],
-    startY: doc.lastAutoTable.finalY + 5,
-    styles: {
-      fontSize: 9,
-      fontStyle: 'bold',
-      cellPadding: 3,
-    },
-    columnStyles: {
-      5: { halign: 'right', fontStyle: 'bold' }
-    }
-  });
-  
-  // Pie de página
-  doc.setFontSize(8);
-  doc.text('Sistema de Gestión de Inventario Fusion Solar', 14, doc.internal.pageSize.height - 10);
-  doc.text(format(new Date(), 'dd/MM/yyyy HH:mm'), 190, doc.internal.pageSize.height - 10, { align: 'right' });
-  
-  doc.save(`detalle_compra_${comprobante.numero_comprobante}_${format(new Date(), 'yyyyMMdd')}.pdf`);
-};
+  const handleExportDetallePDF = (comprobante, productos) => {
+    const doc = new jsPDF();
+    
+    // Título del reporte
+    doc.setFontSize(16);
+    doc.text(`Detalle de Compra: ${comprobante.numero_comprobante}`, 105, 15, { align: 'center' });
+    
+    // Información del comprobante
+    doc.setFontSize(10);
+    doc.text(`Tipo de comprobante: ${comprobante.tipo_comprobante}`, 14, 25);
+    doc.text(`Proveedor: ${comprobante.nproveedor}`, 14, 30);
+    doc.text(`Fecha: ${format(comprobante.fecha, 'dd/MM/yyyy')}`, 14, 35);
+    
+    // Datos de la tabla
+    const tableData = productos.map(producto => [
+      producto.id,
+      producto.nombre,
+      producto.cantidad,
+      `C$${producto.precio_unitario.toFixed(2)}`,
+      `C$${producto.iva.toFixed(2)}`,
+      `C$${producto.total}`
+    ]);
+    
+    // Añadir tabla
+    autoTable(doc, {
+      head: [['ID Producto', 'Nombre', 'Cantidad', 'Precio Unit.', 'IVA', 'Total']],
+      body: tableData,
+      startY: 45,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [64, 64, 64],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' }
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240]
+      }
+    });
+    
+    // Total compra
+    autoTable(doc, {
+      body: [['Total Compra', '', '', '', '', `C$${comprobante.total_a_pagar.toFixed(2)}`]],
+      startY: doc.lastAutoTable.finalY + 5,
+      styles: {
+        fontSize: 9,
+        fontStyle: 'bold',
+        cellPadding: 3,
+      },
+      columnStyles: {
+        5: { halign: 'right', fontStyle: 'bold' }
+      }
+    });
+    
+    // Pie de página
+    doc.setFontSize(8);
+    doc.text('Sistema de Gestión de Inventario Fusion Solar', 14, doc.internal.pageSize.height - 10);
+    doc.text(format(new Date(), 'dd/MM/yyyy HH:mm'), 190, doc.internal.pageSize.height - 10, { align: 'right' });
+    
+    doc.save(`detalle_compra_${comprobante.numero_comprobante}_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  };
 
   const columns = [
     {
@@ -474,6 +519,34 @@ const handleExportDetallePDF = (comprobante, productos) => {
                 }
               }}
             />
+            
+            <FormControl size="small" style={{ width: 180 }}>
+              <InputLabel>Proveedor</InputLabel>
+              <Select
+                value={proveedorFilter}
+                onChange={(e) => setProveedorFilter(e.target.value)}
+                label="Proveedor"
+              >
+                <MenuItem value="">Todos los proveedores</MenuItem>
+                {proveedoresOptions.map((proveedor, index) => (
+                  <MenuItem key={index} value={proveedor}>{proveedor}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl size="small" style={{ width: 180 }}>
+              <InputLabel>Tipo Comprobante</InputLabel>
+              <Select
+                value={tipoComprobanteFilter}
+                onChange={(e) => setTipoComprobanteFilter(e.target.value)}
+                label="Tipo Comprobante"
+              >
+                <MenuItem value="">Todos los tipos</MenuItem>
+                {tipoComprobanteOptions.map((tipo, index) => (
+                  <MenuItem key={index} value={tipo}>{tipo}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
           <Box>
             <Tooltip title="Imprimir reporte completo">

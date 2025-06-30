@@ -7,7 +7,6 @@ const Empleados = () => {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [formData, setFormData] = useState({
         username: '',
@@ -118,19 +117,6 @@ const Empleados = () => {
         }
     };
 
-    // Manejar eliminación de usuario
-    const handleDelete = async () => {
-        try {
-            await deleteUser(currentUser.id);
-            setUsers(users.filter(user => user.id !== currentUser.id));
-            toast.success('Usuario eliminado correctamente');
-            setIsDeleteModalOpen(false);
-        } catch (error) {
-            console.error('Error deleting user:', error);
-            toast.error('Error al eliminar usuario');
-        }
-    };
-
    return (
     <div className="container mx-auto px-4 py-8">
         <ToastContainer position="top-right" autoClose={3000} />
@@ -142,7 +128,10 @@ const Empleados = () => {
                 onClick={openCreateModal}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-3 rounded-lg transition duration-200 w-full sm:w-auto"
             >
-                Crear usuario
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5 inline-block mr-1 mb-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                Crear Usuario
             </button>
         </div>
 
@@ -183,12 +172,6 @@ const Empleados = () => {
                                             className="text-indigo-600 hover:text-indigo-900"
                                         >
                                             Editar
-                                        </button>
-                                        <button
-                                            onClick={() => openDeleteModal(user)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Eliminar
                                         </button>
                                     </td>
                                 </tr>
@@ -279,34 +262,6 @@ const Empleados = () => {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* Modal de confirmación para eliminar */}
-        {isDeleteModalOpen && (
-            <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-2 sm:mx-0">
-                    <div className="p-4 sm:p-6">
-                        <h2 className="text-lg sm:text-xl font-semibold mb-4">Confirmar Eliminación</h2>
-                        <p className="mb-6">
-                            ¿Estás seguro de que deseas eliminar al usuario "{currentUser?.username}"? Esta acción no se puede deshacer.
-                        </p>
-                        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -217,34 +217,45 @@ function Compras() {
         setCarrito(carrito.filter(item => item.producto.id !== productoId));
     };
 
-    if (isLoading) return <div className="loading">Cargando datos...</div>;
-    if (error) return <div className="error">Error: {error}</div>;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="compras-container">
+        <div className="container mx-auto px-4 py-8">            
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+                    <p>{error}</p>
+                </div>
+            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Sección de búsqueda y carrito */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Sección de búsqueda y productos */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos Disponibles</h2>
                     
                     <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Buscar Producto</label>
                         <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Buscar productos..."
-                                className="w-full border rounded-lg px-4 py-2"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={searchTerm}
                                 onChange={(e) => {
                                     setSearchTerm(e.target.value);
                                     setSelectedProduct(null);
+                                    setShowProductList(true);
                                 }}
                                 onFocus={() => setShowProductList(true)}
-                                onBlur={() => setTimeout(() => setShowProductList(false), 200)}
+                                placeholder="Buscar producto..."
                             />
-
-                            {showProductList && filteredProductos.length > 0 && (
-                                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+                            
+                            {showProductList && (
+                                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                                     {filteredProductos
                                         .filter(producto => !carrito.some(item => item.producto.id === producto.id))
                                         .map(producto => (
@@ -259,75 +270,73 @@ function Compras() {
                                                         Stock: {producto.cantidad} | Marca: {producto.nmarca} | Modelo: {producto.nmodelo}
                                                     </div>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                                >
+                                                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                                     Agregar
                                                 </button>
                                             </div>
                                         ))
                                     }
                                     {filteredProductos.filter(p => !carrito.some(c => c.producto.id === p.id)).length === 0 && (
-                                        <div className="p-3 text-gray-500 text-sm text-center">Todos los productos ya están en el carrito</div>
+                                        <div className="px-4 py-2 text-gray-500">Todos los productos ya están en el carrito</div>
                                     )}
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <h2 className="text-xl font-semibold mb-4">Carrito de Compras</h2>
+                    <h3 className="text-lg font-semibold text-gray-700 mt-6 mb-2">Productos en Carrito</h3>
                     
                     {carrito.length === 0 ? (
-                        <p className="text-gray-500">No hay productos en el carrito</p>
+                        <p className="text-gray-500 text-sm">No hay productos en el carrito</p>
                     ) : (
-                        <div className="carrito-list">
+                        <div className="carrito-list mb-4 max-h-64 overflow-y-auto">
                             {carrito.map(item => (
-                                console.log(item),
-                                <div key={item.producto.id} className="border-b pb-4 mb-4">
+                                <div key={item.producto.id} className="border-b pb-4 mb-4 px-4 bg-white rounded-lg shadow-sm">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-medium">{item.producto.nombre}</h3>
-                                            <p className="text-sm text-gray-600">Cantidad en stock: {item.stock || '0'}</p>
+                                            <h4 className="text-lg font-semibold text-gray-800">{item.producto.nombre}</h4>
+                                            <p className="text-sm text-gray-500">
+                                                Stock actual: <span className="text-gray-700 font-medium">{item.cantidad || '0'}</span>
+                                            </p>
                                         </div>
                                         <button
                                             onClick={() => eliminarDelCarrito(item.producto.id)}
-                                            className="text-red-500 hover:text-red-700"
+                                            className="text-red-500 hover:text-red-700 text-sm font-medium"
                                         >
                                             Eliminar
                                         </button>
                                     </div>
-                                    
-                                    <div className="grid grid-cols-3 gap-2 mt-2">
+
+                                    <div className="grid grid-cols-3 gap-2 mt-3">
                                         <div>
-                                            <label className="block text-sm text-gray-600">Cantidad</label>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Cantidad</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={item.cantidad}
                                                 onChange={(e) => actualizarCantidad(item.producto.id, e.target.value)}
-                                                className="w-full border rounded px-2 py-1 text-sm"
+                                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="0"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-gray-600">Precio</label>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Precio</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 step="0.01"
                                                 value={item.precio}
                                                 onChange={(e) => actualizarPrecio(item.producto.id, e.target.value)}
-                                                className="w-full border rounded px-2 py-1 text-sm"
+                                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="0.00"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-gray-600">IVA (15%)</label>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">IVA (15%)</label>
                                             <input
-                                                type="number"
-                                                value={item.precio === '' ? 0 : (IVA_PORCENTAJE * parseFloat(item.precio)).toFixed(2)}
-                                                className="w-full border rounded px-2 py-1 text-sm bg-gray-100"
+                                                type="text"
+                                                value={item.precio === '' ? '0.00' : (IVA_PORCENTAJE * parseFloat(item.precio)).toFixed(2)}
+                                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm bg-gray-100"
                                                 readOnly
                                             />
                                         </div>
@@ -335,47 +344,41 @@ function Compras() {
                                 </div>
                             ))}
                             
-                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                <div className="flex justify-between font-medium">
-                                    <span>Total:</span>
-                                    <span>${calcularTotal().toFixed(2)}</span>
-                                </div>
-                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Formulario de compra */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Detalles de la Compra</h2>
+                {/* Sección del formulario de compra */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Detalles de Compra</h2>
                     
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Proveedor</label>
+                            <select
+                                name="proveedor"
+                                value={formData.proveedor}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                            >
+                                <option value="">Seleccione un proveedor</option>
+                                {proveedores.map(proveedor => (
+                                    <option key={proveedor.id} value={proveedor.id}>
+                                        {proveedor.razon_social} | Ruc: {proveedor.ruc}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="form-group">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                                <select
-                                    name="proveedor"
-                                    value={formData.proveedor}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-lg px-4 py-2"
-                                    required
-                                >
-                                    <option value="">Seleccione un proveedor</option>
-                                    {proveedores.map(proveedor => (
-                                        <option key={proveedor.id} value={proveedor.id}>
-                                            {proveedor.nombre} {proveedor.apellido}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            <div className="form-group">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Comprobante</label>
+                            <div className="space-y-1">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Tipo de Comprobante</label>
                                 <select
                                     name="tipo_comprobante"
                                     value={formData.tipo_comprobante}
                                     onChange={handleChange}
-                                    className="w-full border rounded-lg px-4 py-2"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 >
                                     <option value="">Seleccione tipo</option>
@@ -386,37 +389,37 @@ function Compras() {
                                 </select>
                             </div>
                             
-                            <div className="form-group">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">N° Comprobante</label>
+                            <div className="space-y-1">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">N° Comprobante</label>
                                 <input
                                     type="text"
                                     name="numero_comprobante"
                                     value={formData.numero_comprobante}
                                     onChange={handleChange}
-                                    className="w-full border rounded-lg px-4 py-2"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
                             
-                            <div className="form-group">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                            <div className="space-y-1">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Fecha</label>
                                 <input
                                     type="date"
                                     name="fecha"
                                     value={formData.fecha}
                                     onChange={handleChange}
-                                    className="w-full border rounded-lg px-4 py-2"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
                             
-                            <div className="form-group">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                            <div className="space-y-1">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Método de Pago</label>
                                 <select
                                     name="metodo_de_pago"
                                     value={formData.metodo_de_pago}
                                     onChange={handleChange}
-                                    className="w-full border rounded-lg px-4 py-2"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 >
                                     <option value="">Seleccione método</option>
@@ -427,27 +430,25 @@ function Compras() {
                                     <option value="Cheque">Cheque</option>
                                 </select>
                             </div>
-                            
-                            <div className="form-group">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Total a Pagar</label>
-                                <input
-                                    type="text"
-                                    value={`C$${calcularTotal().toFixed(2)}`}
-                                    className="w-full border rounded-lg px-4 py-2 bg-gray-100"
-                                    readOnly
-                                />
-                            </div>
                         </div>
-                        
-                        <div className="mt-6">
-                            <button
-                                type="submit"
-                                disabled={isLoading || carrito.length === 0}
-                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-                            >
-                                {isLoading ? 'Procesando...' : 'Registrar Compra'}
-                            </button>
+
+                        <div className="space-y-1">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Total a Pagar</label>
+                            <input
+                                type="text"
+                                value={`C$${calcularTotal().toFixed(2)}`}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                                readOnly
+                            />
                         </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading || carrito.length === 0}
+                            className={`w-full px-4 py-2 rounded-lg mt-6 text-white font-medium ${carrito.length === 0 || isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                            {isLoading ? 'Procesando...' : 'Registrar Compra'}
+                        </button>
                     </form>
                 </div>
             </div>

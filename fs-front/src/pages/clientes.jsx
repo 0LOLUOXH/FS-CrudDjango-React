@@ -4,10 +4,7 @@ import {
   fetchClientesJuridicos,
   updateClienteNatural,
   updateClienteJuridico,
-  deleteClienteNatural,
-  deleteClienteJuridico,
   updateCliente,
-  deleteCliente,
   createCliente,
   createClienteNatural,
   createClienteJuridico
@@ -223,6 +220,7 @@ export default function Clientes() {
       // Refrescar datos
       await loadClientes();
       setIsModalOpen(false);
+      
     } catch (err) {
       console.error('Error completo:', {
         message: err.message,
@@ -249,6 +247,7 @@ export default function Clientes() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+      
       {/* === TABLA === */}
       <div className="bg-white shadow rounded-lg p-6 overflow-x-auto">
         <div className="flex justify-between items-center mb-6">
@@ -257,7 +256,7 @@ export default function Clientes() {
             onClick={() => openModal()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5 inline-block mr-2`}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5 inline-block mr-2 mb-1`}>
               <path d="M10 5a3 3 0 11-6 0 3 3 0 016 0ZM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572ZM16.25 5.75a.75.75 0 10-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2Z" />
             </svg>
             Nuevo Cliente
