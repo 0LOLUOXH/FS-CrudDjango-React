@@ -30,6 +30,10 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { format, parseISO } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+
 
 const options = {
   textLabels: {
@@ -321,6 +325,45 @@ export function TablaCompras({ data }) {
     doc.save(`reporte_compras_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
   };
 
+  const exportarComprasExcel = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Compras');
+
+  worksheet.columns = [
+    { header: 'Tipo Comprobante', key: 'tipo', width: 20 },
+    { header: 'N° Comprobante', key: 'numero', width: 20 },
+    { header: 'Fecha', key: 'fecha', width: 15 },
+    { header: 'Proveedor', key: 'proveedor', width: 25 },
+    { header: 'Productos', key: 'productos', width: 70 },
+    { header: 'Total a Pagar', key: 'total', width: 18 },
+  ];
+
+  datosProcesados.forEach((comprobante) => {
+    const productos = comprobante.productos.map(p => {
+      const nombre = p.nombre;
+      const cantidad = p.cantidad;
+      const precio = parseFloat(p.precio_unitario).toFixed(2);
+      return `${nombre} x${cantidad} - C$${precio}`;
+    }).join(', ');
+
+    worksheet.addRow({
+      tipo: comprobante.tipo_comprobante,
+      numero: comprobante.numero_comprobante,
+      fecha: format(comprobante.fecha, 'dd/MM/yyyy'),
+      proveedor: comprobante.nproveedor,
+      total: `C$${parseFloat(comprobante.total_a_pagar).toFixed(2)}`,
+      productos
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  saveAs(blob, `historial_compras_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
+};
+
+
   const handleExportDetallePDF = (comprobante, productos) => {
     const doc = new jsPDF();
     
@@ -570,9 +613,15 @@ export function TablaCompras({ data }) {
                 </IconButton>
               </span>
             </Tooltip>
+            <Tooltip title="Exportar a Excel">
+              <span>
+                <IconButton onClick={exportarComprasExcel} color="success">
+                  <FileDownloadIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
         </Box>
-
         <MUIDataTable
           title={"Historial de Compras"}
           data={datosProcesados}

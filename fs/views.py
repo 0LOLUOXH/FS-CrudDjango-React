@@ -187,10 +187,8 @@ class userViewSet(viewsets.ModelViewSet):
         return super().get_queryset()
     
 # api/views.py
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.response import Response
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from datetime import datetime
@@ -341,3 +339,229 @@ class DeleteBackupView(APIView):
             return JsonResponse({'status': 'success', 'message': 'Backup eliminado correctamente'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+# views.py
+from django.db.models import Sum, Count, F, Case, When, Value, CharField
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
+from django.utils import timezone
+from datetime import timedelta
+
+class DashboardBaseView(APIView):
+    """
+    Vista base para manejar errores comunes en los endpoints del dashboard
+    """
+    def handle_exception(self, exc):
+        error_data = {
+            'error': str(exc),
+            'success': False,
+            'message': 'Ocurrió un error al procesar la solicitud'
+        }
+        return Response(error_data, status=500)
+
+class DashboardTopProducts(DashboardBaseView):
+    def get(self, request):
+        try:
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            
+            queryset = DetalleVenta.objects.select_related(
+                'venta', 'producto'
+            ).all()
+            
+            if start_date and end_date:
+                queryset = queryset.filter(
+                    venta__fecha__range=[start_date, end_date]
+                )
+            
+            top_products = queryset.values(
+                'producto__nombre'
+            ).annotate(
+                total_vendido=Sum('cantidad_por_producto')
+            ).order_by('-total_vendido')[:10]
+            
+            return Response({
+                'data': list(top_products),
+                'success': True,
+                'message': 'Datos obtenidos correctamente'
+            })
+        
+        except Exception as e:
+            return self.handle_exception(e)
+
+class DashboardTopPurchased(DashboardBaseView):
+    def get(self, request):
+        try:
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            
+            queryset = DetalleProveedor.objects.select_related(
+                'producto'
+            ).all()
+            
+            if start_date and end_date:
+                queryset = queryset.filter(
+                    fecha__range=[start_date, end_date]
+                )
+            
+            top_purchased = queryset.values(
+                'producto__nombre'
+            ).annotate(
+                total_comprado=Sum('cantidad')
+            ).order_by('-total_comprado')[:10]
+            
+            return Response({
+                'data': list(top_purchased),
+                'success': True,
+                'message': 'Datos obtenidos correctamente'
+            })
+            
+        except Exception as e:
+            return self.handle_exception(e)
+
+class DashboardTopClients(DashboardBaseView):
+    def get(self, request):
+        try:
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            
+            queryset = Venta.objects.select_related(
+                'cliente'
+            ).all()
+            
+            if start_date and end_date:
+                queryset = queryset.filter(
+                    fecha__range=[start_date, end_date]
+                )
+            
+            top_clients = queryset.values(
+                'cliente_id'
+            ).annotate(
+                total_gastado=Sum('total_a_pagar'),
+                cliente_nombre=Case(
+                    When(cliente__tipo='N', 
+                         then=F('cliente__natural__nombre') + ' ' + F('cliente__natural__apellido')),
+                    When(cliente__tipo='J', 
+                         then=F('cliente__juridico__razon_social')),
+                    default=Value('Cliente desconocido'),
+                    output_field=CharField()
+                )
+            ).order_by('-total_gastado')[:10]
+            
+            return Response({
+                'data': list(top_clients),
+                'success': True,
+                'message': 'Datos obtenidos correctamente'
+            })
+            
+        except Exception as e:
+            return self.handle_exception(e)
+
+class DashboardTopStock(DashboardBaseView):
+    def get(self, request):
+        try:
+            top_stock = Producto.objects.order_by('-cantidad').values(
+                'nombre', 'cantidad'
+            )[:10]
+            
+            return Response({
+                'data': list(top_stock),
+                'success': True,
+                'message': 'Datos obtenidos correctamente'
+            })
+            
+        except Exception as e:
+            return self.handle_exception(e)
+
+class DashboardSalesTrend(DashboardBaseView):
+    def get(self, request):
+        try:
+            start_date = request.query_params.get('start_date', 
+                (timezone.now() - timedelta(days=30)).strftime('%Y-%m-%d'))
+            end_date = request.query_params.get('end_date', 
+                timezone.now().strftime('%Y-%m-%d'))
+            time_range = request.query_params.get('time_range', 'day')
+            
+            queryset = Venta.objects.filter(
+                fecha__range=[start_date, end_date]
+            )
+            
+            if time_range == 'day':
+                trend = queryset.annotate(
+                    period=TruncDay('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            elif time_range == 'week':
+                trend = queryset.annotate(
+                    period=TruncWeek('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            elif time_range == 'month':
+                trend = queryset.annotate(
+                    period=TruncMonth('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            else:  # year
+                trend = queryset.annotate(
+                    period=TruncYear('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            
+            return Response({
+                'data': list(trend),
+                'success': True,
+                'message': 'Datos obtenidos correctamente'
+            })
+            
+        except Exception as e:
+            return self.handle_exception(e)
+
+class DashboardPurchaseTrend(DashboardBaseView):
+    def get(self, request):
+        try:
+            start_date = request.query_params.get('start_date', 
+                (timezone.now() - timedelta(days=30)).strftime('%Y-%m-%d'))
+            end_date = request.query_params.get('end_date', 
+                timezone.now().strftime('%Y-%m-%d'))
+            time_range = request.query_params.get('time_range', 'day')
+            
+            queryset = DetalleProveedor.objects.filter(
+                fecha__range=[start_date, end_date]
+            )
+            
+            if time_range == 'day':
+                trend = queryset.annotate(
+                    period=TruncDay('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')  # Usamos total_a_pagar en lugar de cantidad * precio
+                ).order_by('period')
+            elif time_range == 'week':
+                trend = queryset.annotate(
+                    period=TruncWeek('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            elif time_range == 'month':
+                trend = queryset.annotate(
+                    period=TruncMonth('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            else:  # year
+                trend = queryset.annotate(
+                    period=TruncYear('fecha')
+                ).values('period').annotate(
+                    total=Sum('total_a_pagar')
+                ).order_by('period')
+            
+            return Response({
+                'data': list(trend),
+                'success': True,
+                'message': 'Datos obtenidos correctamente'
+            })
+            
+        except Exception as e:
+            return self.handle_exception(e)

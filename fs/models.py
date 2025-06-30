@@ -140,7 +140,7 @@ class PrecioProveedorProducto(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='precios_producto')
 
     def __str__(self):
-        return f"{self.producto.nombre} - {self.proveedor.nombre} @ {self.precio}"
+        return f"{self.producto.nombre} - {self.proveedor.razon_social} @ {self.precio}"
 
 # ============================
 # Ventas
@@ -182,7 +182,7 @@ class DetalleProveedor(models.Model):
     producto          = models.ForeignKey(Producto,  on_delete=models.CASCADE, related_name='compras')
 
     def __str__(self):
-        return f"Compra {self.id} - {self.proveedor.nombre}"
+        return f"Compra {self.id} - {self.proveedor.razon_social}"
     
     
 

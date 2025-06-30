@@ -31,4 +31,10 @@ urlpatterns = [
     path('backups/list/', ListBackupsView.as_view(), name='list_backups'),
     path('backups/download/', DownloadBackupView.as_view(), name='download_backup'),
     path('backups/delete/', DeleteBackupView.as_view(), name='delete_backup'),
+    path('dashboard/top-products/', DashboardTopProducts.as_view(), name='dashboard-top-products'),
+    path('dashboard/top-purchased/', DashboardTopPurchased.as_view(), name='dashboard-top-purchased'),
+    path('dashboard/top-clients/', DashboardTopClients.as_view(), name='dashboard-top-clients'),
+    path('dashboard/top-stock/', DashboardTopStock.as_view(), name='dashboard-top-stock'),
+    path('dashboard/sales-trend/', DashboardSalesTrend.as_view(), name='dashboard-sales-trend'),
+    path('dashboard/purchase-trend/', DashboardPurchaseTrend.as_view(), name='dashboard-purchase-trend'),
 ]

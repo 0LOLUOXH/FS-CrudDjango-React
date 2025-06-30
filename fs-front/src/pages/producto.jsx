@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import MUIDataTable from "mui-datatables";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { 
   fetchProductos, 
   createProducto, 
@@ -141,11 +143,20 @@ export default function Productos() {
     modelo: '',
     codigobodega: ''
   });
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [notificationShown, setNotificationShown] = useState(false);
 
   // Carga inicial de datos
   useEffect(() => {
     loadData();
   }, []);
+
+  // Verificar stock bajo cuando se actualizan los productos
+  useEffect(() => {
+    if (productos.length > 0) {
+      checkLowStock();
+    }
+  }, [productos]);
 
   const loadData = async () => {
     setLoading(true);
@@ -163,6 +174,50 @@ export default function Productos() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkLowStock = () => {
+    const lowStock = productos.filter(p => p.cantidad < 10);
+    setLowStockProducts(lowStock);
+    
+    if (lowStock.length > 0 && !notificationShown) {
+      showLowStockNotification(lowStock);
+      setNotificationShown(true);
+    }
+  };
+
+  const showLowStockNotification = (products) => {
+    toast.warn(
+      <div>
+        <strong>¡Atención! Productos con stock bajo:</strong>
+        <div style={{ 
+          marginTop: '10px',
+          maxHeight: '200px',
+          overflowY: 'auto',
+          paddingRight: '10px'
+        }}>
+          {products.map(p => (
+            <div key={p.id} style={{ marginBottom: '5px' }}>
+              <span style={{ fontWeight: 'bold' }}>{p.nombre}</span> - 
+              <span style={{ color: p.cantidad < 5 ? '#ef4444' : '#f59e0b' }}>
+                {` ${p.cantidad} unidades`}
+              </span>
+              {p.bodega && ` (${p.bodega})`}
+            </div>
+          ))}
+        </div>
+      </div>,
+      {
+        position: "top-right",
+        autoClose: 15000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        style: { width: '400px' },
+      }
+    );
   };
 
   // Abrir modal para crear o editar
@@ -229,6 +284,7 @@ export default function Productos() {
 
       await loadData();
       setIsModalOpen(false);
+      setNotificationShown(false); // Permitir nueva notificación si hay cambios
     } catch (err) {
       console.error(err);
       setError(`Error: ${err.response?.data?.message || err.message || 'Error al guardar producto'}`);
@@ -256,6 +312,18 @@ export default function Productos() {
 
   return (
     <div className="w-full p-4">
+      <ToastContainer 
+        position="top-right"
+        autoClose={15000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      
       {error && (
         <div className="bg-red-100 text-red-800 p-3 rounded mb-4">
           {error}
@@ -378,9 +446,15 @@ export default function Productos() {
                     type="number"
                     value={editingProducto.cantidad}
                     readOnly
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100"
+                    className={`w-full border border-gray-300 rounded-lg px-4 py-2 ${
+                      editingProducto.cantidad < 10 ? 'bg-yellow-100' : 'bg-gray-100'
+                    }`}
                   />
-                  <p className="text-sm text-gray-500">La cantidad no puede ser modificada</p>
+                  {editingProducto.cantidad < 10 && (
+                    <p className="text-sm text-yellow-700">
+                      ¡Stock bajo! Este producto tiene menos de 10 unidades
+                    </p>
+                  )}
                 </div>
               )}
 
