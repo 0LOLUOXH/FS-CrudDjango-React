@@ -1,62 +1,87 @@
 from django.contrib import admin
 from .models import *
 
-# Register your models here.
 @admin.register(User)
-class useradminn(admin.ModelAdmin):
+class UserAdmin(admin.ModelAdmin):
     list_display = ('id', 'username', 'email', 'date_joined')
     list_filter = ('date_joined',)
-    
-@admin.register(Marca)
-class Marcaadmin(admin.ModelAdmin):
-    list_display = ('id','nombre')
-    
-@admin.register(Modelo)
-class Modeloadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'marca')
-    
-@admin.register(Cliente)
-class Clienteadmin(admin.ModelAdmin):
-    list_display = ('id','tipo', 'telefono')
 
-@admin.register(ClienteJuridico)
-class ClienteJuridicoadmin(admin.ModelAdmin):
-    list_display = ('cliente', 'razon_social', 'ruc', 'representante', 'email', 'estado', 'telefono')
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'action', 'table_name', 'timestamp')
 
-@admin.register(ClienteNatural)
-class ClienteNaturaladmin(admin.ModelAdmin):
-    list_display = ('cliente', 'nombre', 'apellido', 'cedula', 'email', 'estado', 'telefono')
-    
-@admin.register(Empleado)
-class Empleadoadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'apellido', 'telefono', 'cargo')
-    
-@admin.register(Bodega)
-class Bodegaadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'estado', 'capacidad', 'empleado')
-    
-@admin.register(Producto)
-class Productoadmin(admin.ModelAdmin):
-    list_display = ('id','nombre', 'modelo', 'precio_venta', 'codigobodega', 'descripcion', 'cantidad')
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'customer_type', 'phone')
 
+@admin.register(IndividualCustomer)
+class IndividualCustomerAdmin(admin.ModelAdmin):
+    list_display = ('customer', 'first_name', 'last_name', 'identity_card', 'email', 'is_active')
 
-@admin.register(PrecioProveedorProducto)
-class PrecioProveedorProductoadmin(admin.ModelAdmin):
-    list_display = ('id','producto', 'proveedor', 'precio', 'iva', 'numero_comprobante')
-    
-@admin.register(Venta)
-class Ventadmin(admin.ModelAdmin):
-    list_display = ('id','fecha', 'cliente', 'empleado', 'total_a_pagar', 'metodo_de_pago', 'instalacion', 'precio_instalacion', 'direccion')
-    
-@admin.register(DetalleVenta)
-class DetalleVentaadmin(admin.ModelAdmin):
-    list_display = ('id','venta', 'producto', 'cantidad_por_producto', 'preciodelproducto')
-    
-@admin.register(Proveedor)
-class Proveedoradmin(admin.ModelAdmin):
-    list_display = ('id','ruc', 'razon_social', 'representante', 'email', 'telefono', 'estado')
-    
-@admin.register(DetalleProveedor)
-class DetalleProveedoradmin(admin.ModelAdmin):
-    list_display = ('id','proveedor', 'producto', 'fecha', 'total_a_pagar', 'tipo_comprobante', 'metodo_de_pago', 'numero_comprobante', 'cantidad')
-    
+@admin.register(CorporateCustomer)
+class CorporateCustomerAdmin(admin.ModelAdmin):
+    list_display = ('customer', 'company_name', 'tax_id', 'representative', 'email', 'is_active')
+
+@admin.register(Supplier)
+class SupplierAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tax_id', 'company_name', 'email', 'phone', 'is_active')
+
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+
+@admin.register(ProductModel)
+class ProductModelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'brand')
+
+@admin.register(Warehouse)
+class WarehouseAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'is_active', 'capacity', 'manager')
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'product_model', 'base_price_usd', 'stock_quantity')
+
+@admin.register(KitComponent)
+class KitComponentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'parent_kit', 'component_product', 'quantity_required')
+
+@admin.register(SerialNumber)
+class SerialNumberAdmin(admin.ModelAdmin):
+    list_display = ('id', 'product', 'serial_code', 'is_sold')
+
+@admin.register(InventoryAdjustment)
+class InventoryAdjustmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'product', 'adjustment_type', 'quantity', 'adjusted_by', 'date')
+
+@admin.register(Quote)
+class QuoteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'customer', 'created_by', 'total_amount')
+
+@admin.register(QuoteDetail)
+class QuoteDetailAdmin(admin.ModelAdmin):
+    list_display = ('id', 'quote', 'product', 'quantity', 'unit_price')
+
+@admin.register(Sale)
+class SaleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'customer', 'seller', 'total_amount', 'status')
+
+@admin.register(SaleDetail)
+class SaleDetailAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sale', 'product', 'quantity', 'unit_price')
+
+@admin.register(SaleReturn)
+class SaleReturnAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sale', 'processed_by', 'return_date', 'stock_restored')
+
+@admin.register(InstallationService)
+class InstallationServiceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sale', 'scheduled_date', 'cost', 'is_completed')
+
+@admin.register(PurchaseOrder)
+class PurchaseOrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'supplier', 'total_amount')
+
+@admin.register(PurchaseDetail)
+class PurchaseDetailAdmin(admin.ModelAdmin):
+    list_display = ('id', 'purchase_order', 'product', 'quantity', 'unit_price')

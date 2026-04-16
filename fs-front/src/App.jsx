@@ -1,79 +1,75 @@
-import React from 'react';
-import { lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Navegation } from './components/navegation';
-import Login from './pages/login';
-import ResetPassword from './pages/resetPassword';
-import PasswordResetPage from './pages/PasswordResetPage';
+import { MainNavigation } from './components/MainNavigation';
+import Login from './features/auth/pages/LoginPage';
+import ResetPassword from './features/auth/pages/ResetPasswordPage';
+import PasswordResetPage from './features/auth/pages/PasswordResetPage';
 import { PrivateRoute } from './auth/PrivateRoute';
-import { AuthProvider } from './auth/AuthContext';
+import { UserProvider } from './contexts/UserContext';
 import './app.css';
-import HelpPage from './pages/HelpPage'; // Importa la nueva página de ayuda
+import HelpPage from './features/config/pages/HelpPage'; 
+
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 //  IMPORTACIONES PARA TOASTIFY
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { fr } from 'date-fns/locale';
 
-const pages = [
-  { path: '/inicio', component: lazy(() => import('./pages/inicio')) },
-  { path: '/compras', component: lazy(() => import('./pages/compras')) },
-  { path: '/ventas', component: lazy(() => import('./pages/ventas')) },
-  { path: '/producto', component: lazy(() => import('./pages/producto')) },
-  { path: '/marcasymodelos', component: lazy(() => import('./pages/marcasymodelos')) },
-  { path: '/clientes', component: lazy(() => import('./pages/clientes')) },
-  { path: '/bodega', component: lazy(() => import('./pages/bodega')) },
-  { path: '/proveedores', component: lazy(() => import('./pages/proveedores')) },
-  { path: '/empleados', component: lazy(() => import('./pages/empleados')) },
-  { path: '/stock', component: lazy(() => import('./pages/stock')) },
-  { path: '/historialventa', component: lazy(() => import('./pages/historialventa')) },
-  { path: '/historialcompra', component: lazy(() => import('./pages/historialcompra')) },
-  { path: '/backups', component: lazy(() => import('./pages/backups')) },
-  { path: '/ayuda', component: HelpPage }, // Ruta para la página de ayuda
+// Lazy loaded components
+const DashboardHomePage = lazy(() => import('./features/dashboard/pages/DashboardHomePage'));
+const PurchaseOrderPage = lazy(() => import('./features/purchases/pages/PurchaseOrderPage'));
+const PointOfSalePage = lazy(() => import('./features/sales/pages/PointOfSalePage'));
+const ProductCatalogPage = lazy(() => import('./features/inventory/pages/ProductCatalogPage'));
+const BrandModelManagementPage = lazy(() => import('./features/inventory/pages/BrandModelManagementPage'));
+const CustomerManagementPage = lazy(() => import('./features/customers/pages/CustomerManagementPage'));
+const WarehouseManagementPage = lazy(() => import('./features/inventory/pages/WarehouseManagementPage'));
+const SupplierManagementPage = lazy(() => import('./features/suppliers/pages/SupplierManagementPage'));
+const InventoryStockPage = lazy(() => import('./features/inventory/pages/InventoryStockPage'));
+const SalesLedgerPage = lazy(() => import('./features/sales/pages/SalesLedgerPage'));
+const PurchaseLedgerPage = lazy(() => import('./features/purchases/pages/PurchaseLedgerPage'));
+const BackupsPage = lazy(() => import('./features/config/pages/BackupsPage'));
 
-];
+const Layout = ({ children }) => (
+  <>
+    <MainNavigation />
+    <div className="ml-0 lg:ml-60 mt-20 px-4 transition-all duration-300">
+      <ErrorBoundary>
+        <Suspense fallback={<div>Cargando...</div>}>
+          {children}
+        </Suspense>
+      </ErrorBoundary>
+    </div>
+  </>
+);
 
 function App() {
   return (
-    <AuthProvider>
+    <UserProvider>
       <BrowserRouter>
         <Routes>
-          {/* Redirigir `/` a `/login` */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-
-          {/* Rutas públicas (sin autenticación) */}
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/reset-password/:token" element={<PasswordResetPage />} />
-          
-          
-
-          
-
-          {/* Rutas protegidas (requieren autenticación) */}
           <Route element={<PrivateRoute />}>
-            {pages.map(({ path, component: Component }) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <>
-                   <Navegation />
-<div className="ml-0 lg:ml-60 mt-20 px-4 transition-all duration-300">{/* 👈 Contenedor corregido */}
-        <Suspense fallback={<div>Cargando...</div>}>
-          <Component />
-        </Suspense>
-      </div>
-                  </>
-                }
-              />
-            ))}
+            <Route path="/home" element={<Layout><DashboardHomePage /></Layout>} />
+            <Route path="/purchases" element={<Layout><PurchaseOrderPage /></Layout>} />
+            <Route path="/sales" element={<Layout><PointOfSalePage /></Layout>} />
+            <Route path="/products" element={<Layout><ProductCatalogPage /></Layout>} />
+            <Route path="/brands-models" element={<Layout><BrandModelManagementPage /></Layout>} />
+            <Route path="/customers" element={<Layout><CustomerManagementPage /></Layout>} />
+            <Route path="/warehouse" element={<Layout><WarehouseManagementPage /></Layout>} />
+            <Route path="/suppliers" element={<Layout><SupplierManagementPage /></Layout>} />
+            <Route path="/stock" element={<Layout><InventoryStockPage /></Layout>} />
+            <Route path="/sales-history" element={<Layout><SalesLedgerPage /></Layout>} />
+            <Route path="/purchases-history" element={<Layout><PurchaseLedgerPage /></Layout>} />
+            <Route path="/backups" element={<Layout><BackupsPage /></Layout>} />
+            <Route path="/help" element={<Layout><HelpPage /></Layout>} />
           </Route>
         </Routes>
-        {/*  TOAST CONTAINER ACTIVO PARA TODA LA APP */}
         <ToastContainer position="top-right" autoClose={5000} pauseOnHover theme="colored" />
       </BrowserRouter>
-    </AuthProvider>
+    </UserProvider>
   );
 }
 
