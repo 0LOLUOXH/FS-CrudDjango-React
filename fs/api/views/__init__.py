@@ -5,7 +5,8 @@ from .crud_views import (
     ProductViewSet, KitComponentViewSet, SerialNumberViewSet,
     InventoryAdjustmentViewSet, QuoteViewSet, QuoteDetailViewSet,
     SaleViewSet, SaleDetailViewSet, SaleReturnViewSet,
-    InstallationServiceViewSet, PurchaseOrderViewSet, PurchaseDetailViewSet
+    InstallationServiceViewSet, PurchaseOrderViewSet, PurchaseDetailViewSet,
+    ProcessSaleView
 )
 from .backup_views import CreateBackupView, RestoreBackupView, ListBackupsView, DownloadBackupView, DeleteBackupView
 from .dashboard_views import (

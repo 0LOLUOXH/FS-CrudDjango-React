@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllCustomers, getAllIndividualCustomers, getAllCorporateCustomers } from '../../../api/customers_api';
-import { createSale, createSaleDetail, createInstallationService } from '../../../api/sales_api';
-import { getAllProducts, partialUpdateProduct } from '../../../api/inventory_api';
+import { api } from "../../../api/axiosInstance";
+import { getAllProducts } from '../../../api/inventory_api';
 import { useUser } from '../../../contexts/UserContext';
 import jsPDF from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 
-// Apply the autoTable plugin to jsPDF
+
 applyPlugin(jsPDF);
 
 function PointOfSalePage() {
@@ -48,7 +48,7 @@ function PointOfSalePage() {
                     getAllIndividualCustomers(),
                     getAllCorporateCustomers()
                 ]);
-                
+
                 setProducts(productsData.data);
                 setCustomers(customersData.data);
                 setIndividualCustomers(individualData.data);
@@ -85,7 +85,7 @@ function PointOfSalePage() {
         const customer = customers.find(c => c.id === id);
         if (!customer) return null;
 
-        if (customer.customer_type === 'INDIVIDUAL') {
+        if (customer.customer_type === 'I') {
             const natural = individualCustomers.find(n => n.customer === id);
             return { ...customer, ...natural };
         } else {
@@ -96,13 +96,13 @@ function PointOfSalePage() {
 
     // Filter Customers
     const filteredCustomers = customers.filter(customer => {
-        if (customer.customer_type === 'INDIVIDUAL') {
+        if (customer.customer_type === 'I') {
             const natural = individualCustomers.find(n => n.customer === customer.id);
             if (!natural) return false;
             return (
                 natural.first_name?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
                 natural.last_name?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                natural.identification_number?.toLowerCase().includes(customerSearchTerm.toLowerCase())
+                natural.identity_card?.toLowerCase().includes(customerSearchTerm.toLowerCase())
             );
         } else {
             const corporate = corporateCustomers.find(j => j.customer === customer.id);
@@ -117,7 +117,7 @@ function PointOfSalePage() {
     // Filter Products
     const filteredProducts = products.filter(product =>
         (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+            product.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
         product.stock_quantity > 0
     );
 
@@ -125,7 +125,7 @@ function PointOfSalePage() {
     const addToCart = (product) => {
         const exists = cart.find(item => item.product.id === product.id);
         const availableStock = product.stock_quantity;
-        
+
         if (exists) {
             if (exists.quantity >= availableStock) {
                 setError(`No hay suficiente stock de ${product.name}`);
@@ -156,10 +156,10 @@ function PointOfSalePage() {
     const updateQuantity = (productId, quantityStr) => {
         const product = products.find(p => p.id === productId);
         if (!product) return;
-        
+
         const quantity = parseInt(quantityStr) || 0;
         const availableStock = product.stock_quantity;
-        
+
         if (quantity < 1) return;
         if (quantity > availableStock) {
             setError(`No hay suficiente stock (disponible: ${availableStock})`);
@@ -184,7 +184,7 @@ function PointOfSalePage() {
         const subtotal = cart.reduce((total, item) => {
             return total + (item.price * item.quantity);
         }, 0);
-        
+
         return subtotal + (requiresInstallation ? parseFloat(installationPrice) || 0 : 0);
     };
 
@@ -192,138 +192,139 @@ function PointOfSalePage() {
     const selectCustomer = (customer) => {
         setCustomerId(customer.id);
         setCustomerSearchTerm(
-            customer.customer_type === 'INDIVIDUAL' ? 
-            `${customer.first_name} ${customer.last_name}` : 
-            customer.company_name
+            customer.customer_type === 'I' ?
+                `${customer.first_name} ${customer.last_name}` :
+                customer.company_name
         );
         setIsCustomerDropdownOpen(false);
     };
 
 
     function generateProforma() {
-      if (!customerId) {
-        setError("Seleccione un cliente para generar la proforma");
-        return;
-      }
-      if (cart.length === 0) {
-        setError("Agregue productos al carrito para generar la proforma");
-        return;
-      }
-      const customer = getFullCustomer(customerId);
-      if (!customer) return;
+        if (!customerId) {
+            setError("Seleccione un cliente para generar la proforma");
+            return;
+        }
+        if (cart.length === 0) {
+            setError("Agregue productos al carrito para generar la proforma");
+            return;
+        }
+        const customer = getFullCustomer(customerId);
+        if (!customer) return;
 
-      const lastNum = parseInt(localStorage.getItem("lastCotizacion") || "0", 10);
-      const numeroCot = lastNum + 1;
-      localStorage.setItem("lastCotizacion", String(numeroCot));
+        const lastNum = parseInt(localStorage.getItem("lastCotizacion") || "0", 10);
+        const numeroCot = lastNum + 1;
+        localStorage.setItem("lastCotizacion", String(numeroCot));
 
-      const hoy   = new Date();
-      const dia   = String(hoy.getDate()).padStart(2, "0");
-      const mes   = String(hoy.getMonth() + 1).padStart(2, "0");
-      const anio  = hoy.getFullYear();
-      const fechaStr  = `${dia}/${mes}/${anio}`;
-      const numeroStr = String(numeroCot).padStart(4, "0");
+        const hoy = new Date();
+        const dia = String(hoy.getDate()).padStart(2, "0");
+        const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+        const anio = hoy.getFullYear();
+        const fechaStr = `${dia}/${mes}/${anio}`;
+        const numeroStr = String(numeroCot).padStart(4, "0");
 
-      const doc = new jsPDF({ unit: "mm", format: "letter" });
-      const pageWidth   = doc.internal.pageSize.getWidth();
-      const margin      = 14;
-      const usableWidth = pageWidth - margin * 2;
+        const doc = new jsPDF({ unit: "mm", format: "letter" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 14;
+        const usableWidth = pageWidth - margin * 2;
 
-      try {
-           doc.addImage("../public/logo.png", "PNG", margin, margin, 24, 24);
-      } catch (e) {
-          console.warn("Logo not found or could not be loaded", e);
-      }
-      doc.setFont("helvetica", "bold").setFontSize(14);
-      doc.text("FUSIÓN SOLAR", margin + 30, margin + 4);
-      doc.setFont("helvetica", "normal").setFontSize(8);
-      doc.text(
-        "De frente donde fue la policía nacional, San Benito, Tipitapa, Nicaragua",
-        margin + 30,
-        margin + 8
-      );
-      doc.text(
-        "Tel: 7745 1956   Email: solarelectricnic@gmail.com",
-        margin + 30,
-        margin + 12
-      );
-      doc.text("RUC: 0011110011046N", margin + 30, margin + 16);
+        try {
+            doc.addImage("../public/logo.png", "PNG", margin, margin, 24, 24);
+        } catch (e) {
+            console.warn("Logo not found or could not be loaded", e);
+        }
+        doc.setFont("helvetica", "bold").setFontSize(14);
+        doc.text("FUSIÓN SOLAR", margin + 30, margin + 4);
+        doc.setFont("helvetica", "normal").setFontSize(8);
+        doc.text(
+            "De frente donde fue la policía nacional, San Benito, Tipitapa, Nicaragua",
+            margin + 30,
+            margin + 8
+        );
+        doc.text(
+            "Tel: 7745 1956   Email: solarelectricnic@gmail.com",
+            margin + 30,
+            margin + 12
+        );
+        doc.text("RUC: 0011110011046N", margin + 30, margin + 16);
 
-      doc.setFont("helvetica", "bold").setFontSize(18);
-      doc.text("COTIZACIÓN", pageWidth - margin, margin + 4, { align: "right" });
-      const dateTableY = margin + 20;
-      doc.autoTable({
-        startY: dateTableY,
-        margin: { left: pageWidth - margin - 50, right: margin },
-        tableWidth: 50,
-        theme: "grid",
-        styles: { fontSize: 8, halign: "center", lineColor: 200, lineWidth: 0.3 },
-        head: [["FECHA", "NÚMERO"]],
-        body: [[fechaStr, numeroStr]],
-      });
+        doc.setFont("helvetica", "bold").setFontSize(18);
+        doc.text("COTIZACIÓN", pageWidth - margin, margin + 4, { align: "right" });
+        const dateTableY = margin + 20;
+        doc.autoTable({
+            startY: dateTableY,
+            margin: { left: pageWidth - margin - 50, right: margin },
+            tableWidth: 50,
+            theme: "grid",
+            styles: { fontSize: 8, halign: "center", lineColor: 200, lineWidth: 0.3 },
+            head: [["FECHA", "NÚMERO"]],
+            body: [[fechaStr, numeroStr]],
+        });
 
-      const yCliente = doc.lastAutoTable.finalY + 8;
-      doc.setFont("helvetica", "bold").setFontSize(10);
-      doc.text("Preparado para:", margin, yCliente + 6);
-      doc.setFont("helvetica", "normal").setFontSize(9);
-      const customerName =
-        customer.customer_type === "INDIVIDUAL"
-          ? `${customer.first_name} ${customer.last_name}`
-          : customer.company_name;
-      doc.text(`Cliente: ${customerName}`, margin, yCliente + 12);
-      doc.text(`Teléfono: ${customer.phone || 'N/A'}`, margin, yCliente + 18);
-      doc.text(`Email: ${customer.email || 'N/A'}`, margin, yCliente + 24);
-      doc.text(`Dirección: ${customer.address || installationAddress || ''}`, margin, yCliente + 30);
+        const yCliente = doc.lastAutoTable.finalY + 8;
+        doc.setFont("helvetica", "bold").setFontSize(10);
+        doc.text("Preparado para:", margin, yCliente + 6);
+        doc.setFont("helvetica", "normal").setFontSize(9);
+        const customerName =
+            customer.customer_type === "I"
+                ? `${customer.first_name} ${customer.last_name}`
+                : customer.company_name;
+        doc.text(`Cliente: ${customerName}`, margin, yCliente + 12);
+        doc.text(`Teléfono: ${customer.phone || 'N/A'}`, margin, yCliente + 18);
+        doc.text(`Email: ${customer.email || 'N/A'}`, margin, yCliente + 24);
+        doc.text(`Dirección: ${customer.address || installationAddress || ''}`, margin, yCliente + 30);
 
-      const tableData = cart.map(item => {
-        const total = Number(item.price) * item.quantity;
-        return [
-          item.quantity,
-          item.product.name,
-          `$${total.toFixed(2)}`
-        ];
-      });
-      if (requiresInstallation) {
-        const pi = Number(installationPrice);
-        tableData.push([1, "Instalación", `$${pi.toFixed(2)}`]);
-      }
+        const tableData = cart.map(item => {
+            const total = Number(item.price) * item.quantity;
+            return [
+                item.quantity,
+                item.product.name,
+                `$${total.toFixed(2)}`
+            ];
+        });
+        if (requiresInstallation) {
+            const pi = Number(installationPrice);
+            tableData.push([1, "Instalación", `$${pi.toFixed(2)}`]);
+        }
 
-      doc.autoTable({
-        startY: yCliente + 36,
-        margin: { left: margin, right: margin },
-        head: [["CANT.", "DESCRIPCIÓN", "TOTAL"]],
-        body: tableData,
-        theme: "grid",
-        styles: { fontSize: 9, cellPadding: 2, lineColor: 200, lineWidth: 0.2 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: "bold" },
-        columnStyles: {
-          0: { cellWidth: usableWidth * 0.10, halign: "center" },
-          1: { cellWidth: usableWidth * 0.70 },
-          2: { cellWidth: usableWidth * 0.20, halign: "right" },
-        },
-      });
+        doc.autoTable({
+            startY: yCliente + 36,
+            margin: { left: margin, right: margin },
+            head: [["CANT.", "DESCRIPCIÓN", "TOTAL"]],
+            body: tableData,
+            theme: "grid",
+            styles: { fontSize: 9, cellPadding: 2, lineColor: 200, lineWidth: 0.2 },
+            headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: "bold" },
+            columnStyles: {
+                0: { cellWidth: usableWidth * 0.10, halign: "center" },
+                1: { cellWidth: usableWidth * 0.70 },
+                2: { cellWidth: usableWidth * 0.20, halign: "right" },
+            },
+        });
 
-      const yTotal = doc.lastAutoTable.finalY + 10;
-      const total = tableData.reduce(
-        (sum, row) => sum + Number(row[2].replace(/[^0-9.-]+/g, "")),
-        0
-      );
-      doc.setFont("helvetica", "bold").setFontSize(14);
-      doc.text("TOTAL:", pageWidth - margin - 40, yTotal, { align: "right" });
-      doc.text(`$${total.toFixed(2)}`, pageWidth - margin, yTotal, { align: "right" });
+        const yTotal = doc.lastAutoTable.finalY + 10;
+        const total = tableData.reduce(
+            (sum, row) => sum + Number(row[2].replace(/[^0-9.-]+/g, "")),
+            0
+        );
+        doc.setFont("helvetica", "bold").setFontSize(14);
+        doc.text("TOTAL:", pageWidth - margin - 40, yTotal, { align: "right" });
+        doc.text(`$${total.toFixed(2)}`, pageWidth - margin, yTotal, { align: "right" });
 
-      const firmaY = yTotal + 20;
-      doc.setFontSize(8);
-      doc.text("Esta cotización es válida por 7 días.", margin, firmaY - 10);
-      doc.setLineWidth(0.3);
-      doc.line(margin, firmaY, margin + 46, firmaY);
-      doc.setFontSize(9).text("Recibido:", margin, firmaY + 5);
-      doc.line(pageWidth - margin - 46, firmaY, pageWidth - margin, firmaY);
-      doc.text("Aprobado:", pageWidth - margin - 46, firmaY + 5);
+        const firmaY = yTotal + 20;
+        doc.setFontSize(8);
+        doc.text("Esta cotización es válida por 7 días.", margin, firmaY - 10);
+        doc.setLineWidth(0.3);
+        doc.line(margin, firmaY, margin + 46, firmaY);
+        doc.setFontSize(9).text("Recibido:", margin, firmaY + 5);
+        doc.line(pageWidth - margin - 46, firmaY, pageWidth - margin, firmaY);
+        doc.text("Aprobado:", pageWidth - margin - 46, firmaY + 5);
 
-      const safeName = customerName.replace(/\s+/g, "_");
-      doc.save(`Cotizacion_${safeName}_${fechaStr.replace(/\//g, "")}.pdf`);
+        const safeName = customerName.replace(/\s+/g, "_");
+        doc.save(`Cotizacion_${safeName}_${fechaStr.replace(/\//g, "")}.pdf`);
     }
 
+    // Process Sale
     // Process Sale
     const processSale = async () => {
         if (cart.length === 0) {
@@ -346,7 +347,6 @@ function PointOfSalePage() {
             return;
         }
 
-        // Validate stock before proceeding
         for (const item of cart) {
             const product = products.find(p => p.id === item.product.id);
             if (!product || product.stock_quantity < item.quantity) {
@@ -359,54 +359,28 @@ function PointOfSalePage() {
         setError(null);
 
         try {
-            // 1. Create main Sale
-            const saleData = {
-                customer: customerId,
-                seller: user?.user_id || 1, // Assuming user_id exists in UserContext
+            const payload = {
+                customer_id: customerId,
                 currency: 'USD',
-                exchange_rate: 1.0,
-                discount_amount: 0.0,
-                total_amount: calculateTotal(),
+                exchange_rate: '1.0000',
                 payment_method: paymentMethod,
-                status: 'COMPLETED'
+                discount_amount: '0.00',
+                requires_installation: requiresInstallation,
+                installation_price: requiresInstallation ? String(parseFloat(installationPrice || 0).toFixed(2)) : null,
+                installation_address: requiresInstallation ? installationAddress : '',
+                scheduled_date: requiresInstallation ? scheduledDate : null,
+                items: cart.map(item => ({
+                    product_id: item.product.id,
+                    quantity: item.quantity,
+                    price: String(parseFloat(item.price).toFixed(2))
+                }))
             };
 
-            const saleResponse = await createSale(saleData);
-            const sale = saleResponse.data;
+            const response = await api.post("/process_sale/", payload);
 
-            // 2. Create Sale Details & Update Stock
-            for (const item of cart) {
-                await createSaleDetail({
-                    sale: sale.id,
-                    product: item.product.id,
-                    quantity: item.quantity,
-                    unit_price: item.price
-                });
-
-                const currentProduct = products.find(p => p.id === item.product.id);
-                if (currentProduct) {
-                    const newStock = currentProduct.stock_quantity - item.quantity;
-                    await partialUpdateProduct(item.product.id, {
-                        stock_quantity: newStock
-                    });
-                }
-            }
-
-            // 3. Create Installation Service if required
-            if (requiresInstallation) {
-               await createInstallationService({
-                   sale: sale.id,
-                   scheduled_date: scheduledDate,
-                   address: installationAddress,
-                   cost: parseFloat(installationPrice),
-                   is_completed: false
-               });
-            }
-
-            // Refresh state
             const updatedProducts = await getAllProducts();
             setProducts(updatedProducts.data);
-            
+
             setCart([]);
             setCustomerId('');
             setCustomerSearchTerm('');
@@ -415,9 +389,14 @@ function PointOfSalePage() {
             setScheduledDate('');
             setRequiresInstallation(false);
 
-            alert('Venta registrada exitosamente!');
+            alert(`Venta registrada exitosamente. ID: ${response.data.sale_id}`);
         } catch (error) {
-            setError('Error al procesar la venta: ' + (error.response?.data?.message || error.message));
+            const backendError =
+                error.response?.data?.error ||
+                error.response?.data?.detail ||
+                'Error al procesar la venta';
+
+            setError(backendError);
             console.error(error);
         } finally {
             setIsLoading(false);
@@ -433,7 +412,7 @@ function PointOfSalePage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">            
+        <div className="container mx-auto px-4 py-8">
             {error && (
                 <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
                     <p>{error}</p>
@@ -444,7 +423,7 @@ function PointOfSalePage() {
                 {/* Search & Products */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos Disponibles</h2>
-                    
+
                     <div className="mb-4 relative" ref={productDropdownRef}>
                         <label className="block text-gray-700 text-sm font-bold mb-2">Buscar Producto</label>
                         <div className="relative">
@@ -471,7 +450,7 @@ function PointOfSalePage() {
                                                 <div>
                                                     <div className="font-medium">{product.name}</div>
                                                     <div className="text-sm text-gray-600">
-                                                        Stock: {product.stock_quantity} | 
+                                                        Stock: {product.stock_quantity} |
                                                         Precio: ${product.base_price_usd}
                                                     </div>
                                                 </div>
@@ -489,7 +468,7 @@ function PointOfSalePage() {
                     </div>
 
                     <h3 className="text-lg font-semibold text-gray-700 mt-6 mb-2">Productos en Carrito</h3>
-                    
+
                     {cart.length === 0 ? (
                         <p className="text-gray-500 text-sm">No hay productos en el carrito</p>
                     ) : (
@@ -538,7 +517,7 @@ function PointOfSalePage() {
                 {/* Cart & Sale Details */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-2xl font-bold text-gray-800 mb-8">Detalles de Venta</h2>
-                    
+
                     <div className="mb-4 relative" ref={customerDropdownRef}>
                         <label className="block text-gray-700 text-sm font-bold mb-2">Cliente</label>
                         <div className="relative">
@@ -560,22 +539,22 @@ function PointOfSalePage() {
                                         filteredCustomers.map(customer => {
                                             const fullCustomer = getFullCustomer(customer.id);
                                             if (!fullCustomer) return null;
-                                            
+
                                             return (
                                                 <div
                                                     key={customer.id}
                                                     className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
                                                     onClick={() => selectCustomer(fullCustomer)}
                                                 >
-                                                    {customer.customer_type === 'INDIVIDUAL' ? (
+                                                    {customer.customer_type === 'I' ? (
                                                         <div>
-                                                            <div className="text-sm text-gray-600">Tipo: Natural</div> 
+                                                            <div className="text-sm text-gray-600">Tipo: Natural</div>
                                                             <div className="font-medium">{fullCustomer.first_name} {fullCustomer.last_name}</div>
-                                                            <div className="text-sm text-gray-600">Cédula: {fullCustomer.identification_number}</div>
+                                                            <div className="text-sm text-gray-600">Cédula: {fullCustomer.identity_card}</div>
                                                         </div>
                                                     ) : (
                                                         <div>
-                                                            <div className="text-sm text-gray-600">Tipo: Juridico</div> 
+                                                            <div className="text-sm text-gray-600">Tipo: Juridico</div>
                                                             <div className="font-medium">{fullCustomer.company_name}</div>
                                                             <div className="text-sm text-gray-600">RUC: {fullCustomer.tax_id || 'No especificado'}</div>
                                                         </div>
@@ -653,7 +632,7 @@ function PointOfSalePage() {
                                 />
                             </div>
                         </>
-                    )}       
+                    )}
 
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                         <div className="flex justify-between font-medium text-lg">

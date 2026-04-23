@@ -27,6 +27,7 @@ router.register(r'user', userViewSet)
 
 urlpatterns = [
     path('apibd/v1/', include(router.urls)),   
+    path('apibd/v1/process_sale/', ProcessSaleView.as_view(), name='process_sale'),
     path('docs/', include_docs_urls(title='API BD', description='Documentación de la API BD')),
     path('login/', LoginView.as_view(), name='api_login'),
     path('reset-password/', PasswordResetView.as_view(), name='password_reset'),  

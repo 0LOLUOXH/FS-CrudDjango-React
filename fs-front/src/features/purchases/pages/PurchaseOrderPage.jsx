@@ -24,7 +24,7 @@ function PurchaseOrderPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showProductList, setShowProductList] = useState(false);
-    
+
     const productDropdownRef = useRef(null);
 
     // Click outside handler
@@ -76,11 +76,11 @@ function PurchaseOrderPage() {
         return b ? b.name : '—';
     };
 
-    const filteredProducts = searchTerm 
+    const filteredProducts = searchTerm
         ? products.filter(product =>
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
-          )
+        )
         : products;
 
     const addToCart = (product) => {
@@ -139,18 +139,18 @@ function PurchaseOrderPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!formData.supplier) {
             setError('Seleccione un proveedor');
             return;
         }
-        
+
         if (cart.length === 0) {
             setError('Agregue productos al carrito');
             return;
         }
 
-        const invalidItems = cart.some(item => 
+        const invalidItems = cart.some(item =>
             item.quantity === '' || isNaN(item.quantity) || item.quantity <= 0 ||
             item.price === '' || isNaN(item.price) || item.price <= 0
         );
@@ -231,7 +231,7 @@ function PurchaseOrderPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">            
+        <div className="container mx-auto px-4 py-8">
             {error && (
                 <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
                     <p>{error}</p>
@@ -242,7 +242,7 @@ function PurchaseOrderPage() {
                 {/* Search & Products */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-2xl font-bold text-gray-800 mb-8">Productos Disponibles</h2>
-                    
+
                     <div className="mb-4 relative" ref={productDropdownRef}>
                         <label className="block text-gray-700 text-sm font-bold mb-2">Buscar Producto</label>
                         <div className="relative">
@@ -289,7 +289,7 @@ function PurchaseOrderPage() {
                     </div>
 
                     <h3 className="text-lg font-semibold text-gray-700 mt-6 mb-2">Productos en Carrito</h3>
-                    
+
                     {cart.length === 0 ? (
                         <p className="text-gray-500 text-sm">No hay productos en el carrito</p>
                     ) : (
@@ -350,7 +350,7 @@ function PurchaseOrderPage() {
                                     </div>
                                 </div>
                             ))}
-                            
+
                         </div>
                     )}
                 </div>
@@ -358,7 +358,7 @@ function PurchaseOrderPage() {
                 {/* Purchase Form Details */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-2xl font-bold text-gray-800 mb-8">Detalles de Compra</h2>
-                    
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-1">
                             <label className="block text-gray-700 text-sm font-bold mb-2">Proveedor</label>
@@ -390,7 +390,7 @@ function PurchaseOrderPage() {
                                     required
                                 />
                             </div>
-                            
+
                             <div className="space-y-1">
                                 <label className="block text-gray-700 text-sm font-bold mb-2">Fecha</label>
                                 <input
@@ -402,7 +402,7 @@ function PurchaseOrderPage() {
                                     required
                                 />
                             </div>
-                            
+
                             <div className="space-y-1">
                                 <label className="block text-gray-700 text-sm font-bold mb-2">Método de Pago</label>
                                 <select
