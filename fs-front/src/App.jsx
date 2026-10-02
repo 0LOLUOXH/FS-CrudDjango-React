@@ -6,7 +6,7 @@ import ResetPassword from './features/auth/pages/ResetPasswordPage';
 import PasswordResetPage from './features/auth/pages/PasswordResetPage';
 import { PrivateRoute } from './auth/PrivateRoute';
 import { UserProvider } from './contexts/UserContext';
-import './app.css';
+import './App.css';
 import HelpPage from './features/config/pages/HelpPage'; 
 
 import { ErrorBoundary } from './components/ErrorBoundary';

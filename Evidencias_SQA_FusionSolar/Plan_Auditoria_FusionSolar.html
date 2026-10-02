@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Plan de Auditoría Informática — Fusión Solar</title>
+<style>
+  @page { size: A4; margin: 2cm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: #1a1a1a; line-height: 1.6; max-width: 1100px;
+    margin: 0 auto; padding: 30px; background: #fff; font-size: 13.5px;
+  }
+  h1 { font-size: 26px; color: #081A2D; border-bottom: 3px solid #FEBA53; padding-bottom: 8px; }
+  h2 { font-size: 20px; color: #081A2D; margin-top: 35px; border-left: 5px solid #FEBA53; padding-left: 10px; page-break-after: avoid; }
+  h3 { font-size: 16px; color: #15608B; margin-top: 22px; page-break-after: avoid; }
+  h4 { font-size: 14px; color: #333; margin-top: 15px; }
+  p, li { text-align: justify; }
+
+  /* PORTADA */
+  .portada {
+    page-break-after: always; text-align: center;
+    padding: 60px 20px; border: 3px double #081A2D; margin-bottom: 40px;
+  }
+  .portada .logo { font-size: 55px; margin-bottom: 15px; }
+  .portada h1 { font-size: 30px; border: none; margin: 15px 0; }
+  .portada .subtitle { font-size: 19px; color: #15608B; margin-bottom: 30px; }
+  .portada .meta { font-size: 14px; line-height: 2; text-align: left; display: inline-block; margin-top: 25px; }
+  .portada .meta strong { color: #081A2D; }
+
+  /* TABLAS */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; page-break-inside: avoid; }
+  th { background: #081A2D; color: #FEBA53; padding: 8px; text-align: left; }
+  td { padding: 7px 9px; border-bottom: 1px solid #ddd; vertical-align: top; }
+  tr:nth-child(even) td { background: #f9f9f9; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10.5px; font-weight: bold; color: #fff; text-transform: uppercase;
+  }
+  .badge-bajo { background: #2e7d32; }
+  .badge-medio { background: #f9a825; color: #000; }
+  .badge-alto { background: #c62828; }
+  .badge-critico { background: #b71c1c; }
+
+  /* CALLOUTS */
+  .callout { padding: 12px 18px; margin: 15px 0; border-radius: 6px; border-left: 5px solid; page-break-inside: avoid; }
+  .callout-info { background: #e3f2fd; border-color: #15608B; }
+  .callout-warn { background: #fff3e0; border-color: #e65100; }
+  .callout-crit { background: #ffebee; border-color: #b71c1c; }
+  .callout-ok { background: #e8f5e9; border-color: #2e7d32; }
+
+  /* MÓDULOS */
+  .modulo {
+    border: 2px solid #15608B; border-radius: 8px;
+    margin: 22px 0; page-break-inside: avoid; overflow: hidden;
+  }
+  .modulo-header {
+    background: linear-gradient(135deg, #081A2D, #15608B); color: #fff;
+    padding: 12px 18px; font-weight: bold;
+  }
+  .modulo-header .id { color: #FEBA53; }
+  .modulo-body { padding: 18px; }
+  .modulo-body h4 { margin-top: 5px; color: #15608B; }
+  .paso {
+    background: #f4f6f8; border-left: 4px solid #FEBA53;
+    padding: 10px 14px; margin: 10px 0; border-radius: 4px;
+  }
+  .paso .titulo-paso { font-weight: bold; color: #081A2D; }
+
+  /* CRONOGRAMA */
+  .gantt { font-family: monospace; font-size: 12px; }
+  .gantt td { padding: 4px; }
+
+  /* MISC */
+  .metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+  .metrica {
+    text-align: center; padding: 15px; border-radius: 8px;
+    background: #f4f6f8; border: 2px solid #081A2D;
+  }
+  .metrica .num { font-size: 26px; font-weight: bold; color: #15608B; }
+  .metrica .lbl { font-size: 11.5px; color: #555; margin-top: 5px; }
+
+  .page-break { page-break-before: always; }
+  footer { text-align: center; font-size: 11px; color: #888; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ PORTADA ═══════════ -->
+<section class="portada">
+  <div class="logo">🔒</div>
+  <h1>PLAN DE AUDITORÍA INFORMÁTICA</h1>
+  <div class="subtitle">Sistema Web Comercial "Fusión Solar"</div>
+
+  <div class="meta">
+    <strong>Organización / Cliente:</strong> Fusión Solar S.A.<br>
+    <strong>Área / Sistema Auditado:</strong> Sistema Web de Gestión Comercial (POS + Inventario)<br>
+    <strong>Sede:</strong> Módulo principal, Altamira, Managua, Nicaragua<br>
+    <strong>Período de Evaluación:</strong> 5 de octubre al 6 de noviembre de 2026<br>
+    <strong>Auditor Líder:</strong> Br. Russell Ali Pavon Solis<br>
+    <strong>Equipo Auditor:</strong> Br. Brayan Josue Portocarrero Vega · Ing. Jorge Prado<br>
+    <strong>Estándares de Referencia:</strong> ISO/IEC 27001 · NIST SP 800-53 · OWASP Top 10<br>
+    <strong>Clasificación:</strong> Confidencial<br>
+    <strong>Versión:</strong> 1.0
+  </div>
+</section>
+
+<!-- ═══════════ 1. OBJETIVOS ═══════════ -->
+<section>
+  <h2>1. Objetivos de la Auditoría</h2>
+
+  <h3>1.1 Objetivo General</h3>
+  <p>
+    Evaluar la efectividad, seguridad y alineación de los controles de tecnología de la información
+    implementados en el sistema web comercial de <strong>Fusión Solar</strong>, con el fin de garantizar la
+    <strong>confidencialidad, integridad y disponibilidad</strong> de la información transaccional (ventas,
+    inventario, clientes y respaldos), así como el cumplimiento de las buenas prácticas de seguridad y de los
+    estándares internacionales aplicables a una PyME del sector energético nicaragüense.
+  </p>
+
+  <h3>1.2 Objetivos Específicos</h3>
+  <ol>
+    <li>Verificar el cumplimiento de las políticas internas de seguridad y de la normativa vigente en Nicaragua en materia de protección de datos personales y facturación electrónica.</li>
+    <li>Evaluar los controles de acceso lógico implementados en la API (Django REST Framework) y en el frontend (React), prestando especial atención a la gestión de tokens, roles y privilegios administrativos.</li>
+    <li>Revisar la eficacia del motor de respaldos <em>en caliente</em> y del protocolo <code>pre_restore</code> como mecanismo de recuperación ante desastres (DRP/BCP).</li>
+    <li>Analizar la integridad y consistencia transaccional del Punto de Venta (POS), incluyendo el control de concurrencia mediante bloqueos pesimistas a nivel de base de datos.</li>
+    <li>Verificar la trazabilidad de las operaciones críticas a través del módulo de auditoría global (<code>AuditLog</code>) implementado con Django Signals.</li>
+    <li>Identificar vulnerabilidades técnicas, operativas y de infraestructura física en el módulo comercial de Altamira y en el servidor que aloja el sistema.</li>
+    <li>Evaluar la continuidad operativa del sistema frente a fallos del stack tecnológico (Python, Django, base de datos).</li>
+    <li>Emitir recomendaciones priorizadas que permitan a la gerencia de Fusión Solar tomar decisiones informadas y ejecutar un plan de acción correctiva a corto y mediano plazo.</li>
+  </ol>
+</section>
+
+<!-- ═══════════ 2. ALCANCE ═══════════ -->
+<section class="page-break">
+  <h2>2. Alcance</h2>
+  <p>
+    La auditoría abarcará los siguientes componentes dentro del período comprendido entre el
+    <strong>5 de octubre</strong> y el <strong>6 de noviembre de 2026</strong>:
+  </p>
+
+  <h3>2.1 Sistemas y Aplicaciones</h3>
+  <ul>
+    <li><strong>Backend:</strong> API REST desarrollada en <em>Django REST Framework</em> (endpoints de productos, clientes, ventas, compras, usuarios, respaldos y dashboard analítico).</li>
+    <li><strong>Frontend:</strong> Aplicación web SPA desarrollada en <em>React + Vite</em>.</li>
+    <li><strong>Base de Datos:</strong> SQLite en entorno de desarrollo (evaluación de factibilidad de migración a PostgreSQL).</li>
+    <li><strong>Motor de Auditoría:</strong> Módulo <code>AuditLog</code> con Django Signals.</li>
+    <li><strong>Módulo de Respaldos:</strong> Vistas <code>/backups/create/</code>, <code>/backups/restore/</code> y protocolo <code>pre_restore</code>.</li>
+  </ul>
+
+  <h3>2.2 Infraestructura</h3>
+  <ul>
+    <li>Servidor(es) donde se aloja el sistema web (módulo Altamira).</li>
+    <li>Red local (LAN) del módulo comercial y conectividad a internet.</li>
+    <li>Equipos de punto de venta utilizados por los vendedores.</li>
+    <li>Dispositivos de almacenamiento de respaldos.</li>
+  </ul>
+
+  <h3>2.3 Procesos</h3>
+  <ul>
+    <li>Gestión de usuarios, roles y privilegios (IAM).</li>
+    <li>Administración de contraseñas y políticas de autenticación.</li>
+    <li>Gestión de cambios y despliegues en el sistema.</li>
+    <li>Copias de seguridad y procedimientos de restauración.</li>
+    <li>Registro y monitoreo de operaciones críticas (auditoría).</li>
+    <li>Manejo de información sensible de clientes (PII).</li>
+  </ul>
+
+  <h3>2.4 Exclusiones</h3>
+  <p>Quedan fuera del alcance de esta auditoría:</p>
+  <ul>
+    <li>Los equipos de instalación solar en campo (área técnica-operativa, no informática).</li>
+    <li>Los sistemas contables externos contratados a terceros.</li>
+    <li>La infraestructura de servicios en la nube de terceros (correo electrónico corporativo, si aplica).</li>
+    <li>Auditoría forense de incidentes previos no documentados.</li>
+  </ul>
+</section>
+
+<!-- ═══════════ 3. CRITERIOS ═══════════ -->
+<section>
+  <h2>3. Criterios y Marcos de Referencia</h2>
+  <p>La evaluación se fundamentará en los siguientes estándares de la industria y buenas prácticas:</p>
+
+  <table>
+    <thead>
+      <tr><th>Marco / Estándar</th><th>Aplicación en esta Auditoría</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ISO/IEC 27001:2022</strong></td>
+        <td>Sistema de Gestión de Seguridad de la Información (SGSI). Control de accesos (A.5.15–A.5.18), criptografía (A.8.24), seguridad de operaciones (A.8.15–A.8.16), continuidad (A.5.29–A.5.30).</td>
+      </tr>
+      <tr>
+        <td><strong>NIST SP 800-53 Rev.5</strong></td>
+        <td>Controles de seguridad y privacidad: AC-2 (gestión de cuentas), AC-6 (mínimo privilegio), SC-13 (criptografía), AU-2 (registro de auditoría), CP-9 (respaldos).</td>
+      </tr>
+      <tr>
+        <td><strong>OWASP Top 10 — 2021</strong></td>
+        <td>Especial énfasis en A01:2021 (Broken Access Control), A02:2021 (Cryptographic Failures), A03:2021 (Injection) y A07:2021 (Identification and Authentication Failures).</td>
+      </tr>
+      <tr>
+        <td><strong>COBIT 2019</strong></td>
+        <td>Gobernanza y gestión de TI (dominios DSS05 Seguridad y APO13 Gestión de Seguridad).</td>
+      </tr>
+      <tr>
+        <td><strong>Ley 787 — Protección de Datos Personales (Nicaragua)</strong></td>
+        <td>Manejo de información personal de clientes (PII) del sistema comercial.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════ 4. EQUIPO ═══════════ -->
+<section>
+  <h2>4. Equipo Auditor y Roles</h2>
+
+  <table>
+    <thead>
+      <tr><th style="width:28%">Nombre</th><th style="width:22%">Rol</th><th>Responsabilidades Primarias</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Br. Russell Ali Pavon Solis</td>
+        <td>Auditor Líder</td>
+        <td>Coordinación general del plan, relación con la gerencia de Fusión Solar, consolidación del informe final y firma del dictamen.</td>
+      </tr>
+      <tr>
+        <td>Br. Brayan Josue Portocarrero Vega</td>
+        <td>Auditor de Seguridad</td>
+        <td>Pruebas técnicas sobre la API y el frontend, revisión de controles de acceso, análisis de vulnerabilidades con OWASP ZAP y pruebas de autenticación.</td>
+      </tr>
+      <tr>
+        <td>Ing. Jorge Prado</td>
+        <td>Auditor de Infraestructura y Supervisor</td>
+        <td>Evaluación del módulo físico en Altamira, revisión del servidor, respaldos, continuidad operativa y supervisión metodológica.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <strong>Nota:</strong> Dado que Fusión Solar es una PyME con recursos limitados, el equipo auditor
+    operará bajo un modelo mixto (presencial + remoto) para optimizar costos y tiempos.
+  </div>
+</section>
+
+<!-- ═══════════ 5. CRONOGRAMA ═══════════ -->
+<section class="page-break">
+  <h2>5. Cronograma de Actividades</h2>
+  <p>La auditoría se ejecutará en <strong>5 semanas</strong> (del 5 de octubre al 6 de noviembre de 2026), distribuidas en 4 fases metodológicas:</p>
+
+  <table class="gantt">
+    <thead>
+      <tr>
+        <th>Fase</th><th>Semana 1</th><th>Semana 2</th><th>Semana 3</th><th>Semana 4</th><th>Semana 5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Fase 1:</strong> Planificación</td><td>███</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td><strong>Fase 2:</strong> Ejecución y Pruebas</td><td></td><td>██████</td><td>██████</td><td></td><td></td></tr>
+      <tr><td><strong>Fase 3:</strong> Análisis y Redacción</td><td></td><td></td><td></td><td>██████</td><td></td></tr>
+      <tr><td><strong>Fase 4:</strong> Cierre y Entrega</td><td></td><td></td><td></td><td></td><td>██████</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Fase 1: Planificación y Toma de Contacto — Semana 1 (5 al 9 de octubre)</h3>
+  <ul>
+    <li>Reunión de apertura con la gerencia de Fusión Solar y responsables del sistema.</li>
+    <li>Solicitud de documentación preliminar: políticas internas, manual de usuario, diagramas de arquitectura, inventario de activos de TI.</li>
+    <li>Definición detallada de la muestra a auditar (usuarios, ventas y transacciones del último trimestre).</li>
+    <li>Firma del acta de confidencialidad y del acuerdo de alcance.</li>
+  </ul>
+
+  <h3>Fase 2: Ejecución y Pruebas de Campo — Semanas 2 y 3 (12 al 23 de octubre)</h3>
+  <ul>
+    <li>Entrevistas con el personal clave: vendedores, administrador del sistema y gerente.</li>
+    <li>Pruebas sustantivas y de cumplimiento sobre la API REST, la interfaz web y la base de datos.</li>
+    <li>Ejecución de análisis de vulnerabilidades con OWASP ZAP (frontend y backend).</li>
+    <li>Inspección física del módulo comercial de Altamira (equipos POS, conectividad, respaldos locales).</li>
+    <li>Verificación del ciclo completo de respaldo y restauración (incluyendo el protocolo <code>pre_restore</code>).</li>
+    <li>Revisión de logs de auditoría generados por <code>AuditLog</code>.</li>
+  </ul>
+
+  <h3>Fase 3: Análisis y Redacción del Informe — Semana 4 (26 al 30 de octubre)</h3>
+  <ul>
+    <li>Consolidación de hallazgos e identificación de brechas de control.</li>
+    <li>Clasificación de riesgos según su impacto y probabilidad (matriz P × I).</li>
+    <li>Elaboración del borrador del informe técnico detallado.</li>
+    <li>Redacción del informe ejecutivo dirigido a la gerencia.</li>
+  </ul>
+
+  <h3>Fase 4: Cierre y Entrega de Resultados — Semana 5 (2 al 6 de noviembre)</h3>
+  <ul>
+    <li>Reunión de discusión de hallazgos con los responsables auditados (vendedores, administrador).</li>
+    <li>Emisión e integración del Plan de Acción Correctiva (matriz de recomendaciones).</li>
+    <li>Presentación del Informe Ejecutivo Final a la gerencia de Fusión Solar.</li>
+    <li>Firma del acta de cierre de la auditoría.</li>
+  </ul>
+</section>
+
+<!-- ═══════════ 6. RECURSOS ═══════════ -->
+<section class="page-break">
+  <h2>6. Recursos Requeridos</h2>
+
+  <h3>6.1 Herramientas de Software</h3>
+  <table>
+    <thead>
+      <tr><th>Herramienta</th><th>Uso</th><th>Licencia / Costo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>OWASP ZAP</td><td>Análisis de vulnerabilidades web</td><td>Open Source (gratuito)</td></tr>
+      <tr><td>k6</td><td>Pruebas de carga sobre el Dashboard</td><td>Open Source (gratuito)</td></tr>
+      <tr><td>Django TestCase + pytest</td><td>Pruebas automatizadas de la API</td><td>Open Source (gratuito)</td></tr>
+      <tr><td>Wireshark</td><td>Análisis de tráfico de red en el módulo de Altamira</td><td>Open Source (gratuito)</td></tr>
+      <tr><td>Nmap</td><td>Escaneo de puertos del servidor</td><td>Open Source (gratuito)</td></tr>
+      <tr><td>LibreOffice Calc</td><td>Análisis de exportaciones y matrices</td><td>Open Source (gratuito)</td></tr>
+      <tr><td>Nessus Essentials (opcional)</td><td>Escaneo de vulnerabilidades del servidor</td><td>Gratuito para uso limitado (hasta 16 IPs)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 Accesos Requeridos</h3>
+  <ul>
+    <li>Cuenta de lectura temporal en el sistema de Fusión Solar con perfil de auditoría.</li>
+    <li>Acceso de solo lectura a la base de datos de producción (o copia de la misma).</li>
+    <li>Acceso físico al módulo comercial de Altamira durante la fase de campo.</li>
+    <li>Credenciales de lectura para revisar logs del servidor (nginx/apache, Django).</li>
+    <li>Autorización formal de la gerencia para entrevistar al personal clave.</li>
+  </ul>
+
+  <h3>6.3 Presupuesto Estimado</h3>
+  <div class="callout callout-info">
+    <strong>Contexto:</strong> Fusión Solar es una <strong>pequeña empresa nicaragüense</strong> con un módulo
+    comercial en Altamira (Managua) y equipo reducido. El presupuesto se calcula en función del salario promedio
+    de un profesional de TI en Nicaragua (C$18,000–25,000/mes), la duración de 5 semanas y la modalidad mixta
+    (presencial + remoto) que reduce costos de viáticos.
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Concepto</th><th>Detalle</th><th>Monto (C$)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Honorarios del equipo auditor</strong></td>
+        <td>3 auditores × 5 semanas × tiempo parcial (~25% dedicación)</td>
+        <td>C$ 22,000.00</td>
+      </tr>
+      <tr>
+        <td><strong>Viáticos y transporte</strong></td>
+        <td>Visitas al módulo de Altamira (4 visitas programadas)</td>
+        <td>C$ 4,000.00</td>
+      </tr>
+      <tr>
+        <td><strong>Herramientas y licencias</strong></td>
+        <td>Nessus Essentials (gratuito) + herramientas open source</td>
+        <td>C$ 0.00</td>
+      </tr>
+      <tr>
+        <td><strong>Servicios en la nube (opcional)</strong></td>
+        <td>VPS temporal para pruebas de carga (5 semanas)</td>
+        <td>C$ 2,500.00</td>
+      </tr>
+      <tr>
+        <td><strong>Materiales y papelería</strong></td>
+        <td>Impresión de informes, formularios y actas</td>
+        <td>C$ 1,500.00</td>
+      </tr>
+      <tr>
+        <td><strong>Capacitación al personal</strong></td>
+        <td>Taller de concientización en seguridad informática (2 horas)</td>
+        <td>C$ 3,000.00</td>
+      </tr>
+      <tr>
+        <td><strong>Imprevistos (10%)</strong></td>
+        <td>Contingencia operativa</td>
+        <td>C$ 3,300.00</td>
+      </tr>
+      <tr style="background:#081A2D; color:#FEBA53;">
+        <td colspan="2"><strong>TOTAL PRESUPUESTADO</strong></td>
+        <td><strong>C$ 36,300.00</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px; color:#666;">
+    * Equivalente aproximado en USD: $1,000 (tipo de cambio referencial C$36.50 por USD, septiembre 2026).<br>
+    * Este presupuesto NO incluye el costo de las correcciones técnicas que se deriven del plan de acción.
+  </p>
+</section>
+
+<!-- ═══════════ 7. MATRIZ DE RIESGOS ═══════════ -->
+<section class="page-break">
+  <h2>7. Matriz de Evaluación de Riesgos</h2>
+
+  <h3>7.1 Escalas de Calificación (1 a 3)</h3>
+  <table>
+    <thead>
+      <tr><th>Nivel</th><th>Probabilidad (P)</th><th>Impacto (I)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1 — Bajo</strong></td>
+        <td>Evento poco frecuente; controles existentes sólidos.</td>
+        <td>Pérdidas operativas o financieras insignificantes.</td>
+      </tr>
+      <tr>
+        <td><strong>2 — Medio</strong></td>
+        <td>Puede ocurrir eventualmente; controles parciales.</td>
+        <td>Interrupción temporal sin afectación grave al negocio.</td>
+      </tr>
+      <tr>
+        <td><strong>3 — Alto</strong></td>
+        <td>Ocurrencia frecuente o ausencia total de controles.</td>
+        <td>Pérdida crítica de datos, sanción legal o caída sostenida del servicio.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Riesgo Inherente / Residual = P × I</strong></p>
+  <ul>
+    <li><span class="badge badge-bajo">1 – 2 Bajo</span> (Verde)</li>
+    <li><span class="badge badge-medio">3 – 4 Medio</span> (Amarillo)</li>
+    <li><span class="badge badge-alto">6 – 9 Alto</span> (Rojo)</li>
+  </ul>
+
+  <h3>7.2 Matriz de Evaluación de Riesgos (Fusión Solar)</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Activo / Proceso</th>
+        <th>Amenaza / Vulnerabilidad</th>
+        <th>P</th>
+        <th>I</th>
+        <th>Riesgo Inherente</th>
+        <th>Controles Existentes</th>
+        <th>Riesgo Residual</th>
+        <th>Plan de Acción Recomendado</th>
+        <th>Responsable</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>R-01</td>
+        <td>API REST — Endpoints CRUD</td>
+        <td>ViewSets sin control de permisos: acceso anónimo a productos, clientes y ventas (DEF-002).</td>
+        <td>3</td>
+        <td>3</td>
+        <td><span class="badge badge-alto">9 (Alto)</span></td>
+        <td>Token de autenticación DRF en endpoints personalizados.</td>
+        <td><span class="badge badge-alto">9 (Alto)</span></td>
+        <td>Añadir <code>permission_classes = [IsAuthenticated]</code> en todos los ViewSets y configurar <code>DEFAULT_PERMISSION_CLASSES</code> en <code>settings.py</code>.</td>
+        <td>Líder Técnico</td>
+      </tr>
+      <tr>
+        <td>R-02</td>
+        <td>Módulo de Usuarios (IAM)</td>
+        <td>Escalada de privilegios: un usuario vendedor puede crear administradores (DEF-005).</td>
+        <td>3</td>
+        <td>3</td>
+        <td><span class="badge badge-alto">9 (Alto)</span></td>
+        <td>Solo el frontend oculta botones a usuarios no-staff.</td>
+        <td><span class="badge badge-alto">9 (Alto)</span></td>
+        <td>Aplicar <code>IsAdminUser</code> al <code>userViewSet</code> y a las vistas de backup; bloquear asignación de <code>is_staff=True</code> desde la API pública.</td>
+        <td>Admin. de Sistemas</td>
+      </tr>
+      <tr>
+        <td>R-03</td>
+        <td>Autenticación — Reset de contraseña</td>
+        <td>El backend no valida fortaleza de contraseña (DEF-004); acepta contraseñas débiles como "a".</td>
+        <td>3</td>
+        <td>2</td>
+        <td><span class="badge badge-alto">6 (Alto)</span></td>
+        <td>Validación de regex solo en el frontend (React).</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Mover la validación al backend usando <code>AUTH_PASSWORD_VALIDATORS</code> de Django o un <code>validate_password()</code> en el serializer.</td>
+        <td>Líder Técnico</td>
+      </tr>
+      <tr>
+        <td>R-04</td>
+        <td>Base de datos SQLite</td>
+        <td>No soporta concurrencia real; <code>select_for_update()</code> sin efecto (HAL-001).</td>
+        <td>2</td>
+        <td>3</td>
+        <td><span class="badge badge-alto">6 (Alto)</span></td>
+        <td>Transacciones atómicas con <code>transaction.atomic()</code>.</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Migrar a PostgreSQL 15+ para producción y habilitar <code>select_for_update()</code> real.</td>
+        <td>Líder Técnico</td>
+      </tr>
+      <tr>
+        <td>R-05</td>
+        <td>Motor de respaldos</td>
+        <td>Archivos <code>.meta</code> corruptos que impiden recuperar metadatos de respaldos antiguos (DEF-006).</td>
+        <td>2</td>
+        <td>2</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Protocolo <code>pre_restore</code> funcionando y respaldos en caliente.</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Sanear rutas antes de serializar a JSON y agregar validación de integridad del archivo <code>.meta</code> antes de guardarlo.</td>
+        <td>Admin. de Sistemas</td>
+      </tr>
+      <tr>
+        <td>R-06</td>
+        <td>Stack tecnológico</td>
+        <td>Django 5.0.7 es incompatible con Python 3.14; fallos en el motor de templates (HAL-002).</td>
+        <td>3</td>
+        <td>2</td>
+        <td><span class="badge badge-alto">6 (Alto)</span></td>
+        <td>Entorno virtual aislado con Python 3.14 en producción.</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Actualizar a Django 5.2 LTS (soporta Python 3.14) o degradar a Python 3.12 LTS.</td>
+        <td>Líder Técnico</td>
+      </tr>
+      <tr>
+        <td>R-07</td>
+        <td>Integridad transaccional — POS</td>
+        <td>Validaciones incompletas: se permiten ventas con carrito vacío (DEF-001) y compras duplicadas (DEF-008).</td>
+        <td>2</td>
+        <td>2</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Cálculo de totales correcto y control de stock.</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Añadir <code>allow_empty=False</code> al campo <code>items</code> y <code>UniqueConstraint</code> en <code>PurchaseOrder(invoice_number, supplier)</code>.</td>
+        <td>Líder Técnico</td>
+      </tr>
+      <tr>
+        <td>R-08</td>
+        <td>Servidor y cabeceras HTTP</td>
+        <td>Ausencia de cabeceras de seguridad (CSP, X-Frame-Options, Permissions-Policy) — HAL-003.</td>
+        <td>2</td>
+        <td>2</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>OWASP ZAP confirmó 0 vulnerabilidades críticas.</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Configurar Nginx o Caddy con las cabeceras recomendadas; añadir <code>django-csp</code> al backend.</td>
+        <td>Especialista de Redes</td>
+      </tr>
+      <tr>
+        <td>R-09</td>
+        <td>Infraestructura física — Módulo Altamira</td>
+        <td>Módulo comercial sin respaldo eléctrico (UPS) ni control de acceso físico al servidor.</td>
+        <td>2</td>
+        <td>2</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Ubicación del servidor en oficina administrativa.</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Instalar UPS de 1000 VA mínimo para el servidor y el router; habilitar gabinete con llave.</td>
+        <td>Jefe de Infraestructura</td>
+      </tr>
+      <tr>
+        <td>R-10</td>
+        <td>Gestión de identidades</td>
+        <td>No existe política formal de bajas ni revisión periódica de cuentas inactivas.</td>
+        <td>2</td>
+        <td>2</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Middleware de captura de usuario (<code>CurrentUserMiddleware</code>).</td>
+        <td><span class="badge badge-medio">4 (Medio)</span></td>
+        <td>Implementar política de desactivación de cuentas tras 30 días de inactividad y revisión trimestral.</td>
+        <td>Admin. de Sistemas</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════ 8. PROGRAMA DE TRABAJO ═══════════ -->
+<section class="page-break">
+  <h2>8. Programa de Trabajo de Auditoría Detallado</h2>
+  <p>
+    El programa de trabajo establece los procedimientos de prueba, técnicas de muestreo e inspección de
+    evidencias necesarias para verificar la efectividad de los controles asociados a los riesgos identificados.
+    Se estructura en <strong>6 módulos</strong> de trabajo alineados con los estándares ISO/IEC 27001 y NIST SP 800-53.
+  </p>
+
+  <!-- MÓDULO 1 -->
+  <div class="modulo">
+    <div class="modulo-header">
+      <span class="id">MÓDULO 1</span> — Control de Acceso Lógico y Gestión de Identidades (IAM)
+      <div style="font-size:11.5px; color:#FEBA53; margin-top:4px;">Riesgos: R-01, R-02, R-10 · Estándares: ISO 27001 A.5.15–A.5.18 · NIST AC-2, AC-6</div>
+    </div>
+    <div class="modulo-body">
+      <p><strong>Objetivo:</strong> Evaluar la efectividad de los controles de acceso implementados en la API y verificar la correcta segregación de roles entre vendedores, administradores y usuarios inactivos.</p>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 1 — Inventario de endpoints y matriz de permisos</div>
+        <p><strong>Procedimiento:</strong> Solicitar al Líder Técnico el listado completo de endpoints de la API REST (<code>urls.py</code>) e identificar para cada uno qué tipo de autenticación requiere.</p>
+        <p><strong>Evidencia a recolectar:</strong> Copia del archivo <code>urls.py</code>, matriz de endpoints vs. permisos, capturas de las clases <code>ViewSet</code> y <code>APIView</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> El 100% de los endpoints que exponen datos sensibles debe requerir token de autenticación (<code>IsAuthenticated</code>) o privilegios de administrador (<code>IsAdminUser</code>).</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 2 — Pruebas de acceso anónimo (sin token)</div>
+        <p><strong>Procedimiento:</strong> Ejecutar peticiones HTTP GET/POST a cada endpoint crítico sin enviar el header <code>Authorization</code>. Registrar el código de respuesta.</p>
+        <p><strong>Evidencia a recolectar:</strong> Reporte del escáner OWASP ZAP, capturas de Postman/curl con las respuestas HTTP.</p>
+        <p><strong>Criterio de aceptación:</strong> Todos los endpoints deben devolver HTTP 401 (Unauthorized) o 403 (Forbidden).</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 3 — Pruebas de escalada de privilegios</div>
+        <p><strong>Procedimiento:</strong> Autenticarse con un usuario con <code>is_staff=False</code> e intentar: (a) listar todos los usuarios, (b) crear un usuario con <code>is_staff=True</code>, (c) acceder a la lista de respaldos.</p>
+        <p><strong>Evidencia a recolectar:</strong> Capturas de las peticiones y respuestas HTTP, logs del servidor, reporte del test automatizado <code>RoleBasedAccessControlTest</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> Todas las acciones administrativas deben devolver HTTP 403 (Forbidden).</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 4 — Revisión del inventario de usuarios activos</div>
+        <p><strong>Procedimiento:</strong> Extraer el listado completo de usuarios del sistema con campos <code>username</code>, <code>is_staff</code>, <code>is_active</code>, <code>last_login</code> y <code>date_joined</code>.</p>
+        <p><strong>Evidencia a recolectar:</strong> Exportación en CSV del modelo <code>User</code>, capturas de la vista <code>/employees</code> del frontend.</p>
+        <p><strong>Criterio de aceptación:</strong> No deben existir cuentas activas con más de 30 días sin inicio de sesión; solo cuentas con justificación de negocio deben tener <code>is_staff=True</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÓDULO 2 -->
+  <div class="modulo">
+    <div class="modulo-header">
+      <span class="id">MÓDULO 2</span> — Integridad Transaccional y Validación de Datos
+      <div style="font-size:11.5px; color:#FEBA53; margin-top:4px;">Riesgos: R-07 · Estándares: ISO 27001 A.8.15–A.8.16 · NIST SI-10</div>
+    </div>
+    <div class="modulo-body">
+      <p><strong>Objetivo:</strong> Verificar la consistencia contable del POS y la robustez de los serializers frente a payloads maliciosos o erróneos.</p>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 1 — Pruebas de validación de serializers</div>
+        <p><strong>Procedimiento:</strong> Enviar payloads inválidos a los endpoints de creación (productos, compras, ventas): campos faltantes, tipos incorrectos, valores negativos.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida de la suite <code>BackendSerializerValidationTest</code> con Django TestCase.</p>
+        <p><strong>Criterio de aceptación:</strong> El 100% de los payloads inválidos debe devolver HTTP 400 (Bad Request).</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 2 — Verificación de unicidad de comprobantes</div>
+        <p><strong>Procedimiento:</strong> Intentar registrar la misma compra (mismo <code>invoice_number</code> + mismo proveedor) dos veces consecutivas.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida del test <code>DuplicatePurchaseRegressionTest</code>, capturas de Postman.</p>
+        <p><strong>Criterio de aceptación:</strong> El segundo intento debe devolver HTTP 400 con mensaje de factura duplicada.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 3 — Verificación de integridad contable</div>
+        <p><strong>Procedimiento:</strong> Registrar una venta con múltiples ítems y verificar que <code>Sale.total_amount</code> coincida exactamente con la suma de los <code>SaleDetail</code>.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida del test <code>SaleIntegrityRegressionTest</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> Diferencia entre ambos valores debe ser 0.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÓDULO 3 -->
+  <div class="modulo">
+    <div class="modulo-header">
+      <span class="id">MÓDULO 3</span> — Protección de Datos Sensibles y Respaldos
+      <div style="font-size:11.5px; color:#FEBA53; margin-top:4px;">Riesgos: R-03, R-05 · Estándares: ISO 27001 A.8.24, A.5.29 · NIST SC-13, CP-9</div>
+    </div>
+    <div class="modulo-body">
+      <p><strong>Objetivo:</strong> Verificar la protección de contraseñas, datos personales de clientes (PII) y el ciclo completo de respaldo/restauración.</p>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 1 — Verificación de fortaleza de contraseñas</div>
+        <p><strong>Procedimiento:</strong> Intentar cambiar la contraseña a valores débiles ("a", "123", "password") vía POST directo al endpoint de reset.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida del test <code>PasswordStrengthValidationTest</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> El backend debe rechazar contraseñas que no cumplan el regex (8+ caracteres, 1 mayúscula, 1 minúscula, 1 número).</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 2 — Verificación del ciclo de respaldos</div>
+        <p><strong>Procedimiento:</strong> Ejecutar el ciclo completo: crear backup → listar → descargar → restaurar (verificar pre_restore) → eliminar.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida del test <code>BackupLifecycleTest</code>, capturas de la interfaz web (<code>/backups</code>), inspección del sistema de archivos.</p>
+        <p><strong>Criterio de aceptación:</strong> Cada operación debe completarse sin errores, y el archivo <code>pre_restore_*.db</code> debe generarse automáticamente antes de cada restauración.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 3 — Revisión de cifrado en reposo (si aplica)</div>
+        <p><strong>Procedimiento:</strong> Verificar si la base de datos SQLite y los archivos de respaldo están cifrados en disco.</p>
+        <p><strong>Evidencia a recolectar:</strong> Inspección del sistema de archivos del servidor, salida de <code>file</code> sobre los archivos <code>.db</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> Los archivos deben estar cifrados con AES-256 o equivalente, o bien encontrarse en una ubicación física protegida.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÓDULO 4 -->
+  <div class="modulo">
+    <div class="modulo-header">
+      <span class="id">MÓDULO 4</span> — Continuidad Operativa y Stack Tecnológico
+      <div style="font-size:11.5px; color:#FEBA53; margin-top:4px;">Riesgos: R-04, R-06, R-09 · Estándares: ISO 27001 A.5.29–A.5.30 · NIST CP-2, CP-9</div>
+    </div>
+    <div class="modulo-body">
+      <p><strong>Objetivo:</strong> Evaluar la resiliencia del sistema frente a fallos técnicos, cortes eléctricos y cambios del stack.</p>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 1 — Evaluación de compatibilidad del stack</div>
+        <p><strong>Procedimiento:</strong> Verificar las versiones de Python, Django, Node.js y React instaladas; contrastar contra la matriz de compatibilidad oficial.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida de <code>python --version</code>, <code>pip freeze</code>, <code>node --version</code>, <code>package.json</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> Todas las versiones deben pertenecer al rango oficialmente soportado.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 2 — Prueba de concurrencia en base de datos</div>
+        <p><strong>Procedimiento:</strong> Simular dos ventas simultáneas del último artículo en stock. Verificar que solo una tenga éxito.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida del test <code>ConcurrencySaleTest</code>, consultas SQL de bloqueo.</p>
+        <p><strong>Criterio de aceptación:</strong> El sistema debe impedir la sobreventa (1 venta con HTTP 201, 1 con HTTP 400).</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 3 — Inspección física del módulo Altamira</div>
+        <p><strong>Procedimiento:</strong> Visitar el módulo, verificar el estado del servidor, UPS, router, cableado y control de acceso físico.</p>
+        <p><strong>Evidencia a recolectar:</strong> Fotografías del espacio físico, checklist firmado, inventario de hardware.</p>
+        <p><strong>Criterio de aceptación:</strong> El servidor debe estar en un gabinete con llave, protegido por UPS y en un espacio con control de acceso.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÓDULO 5 -->
+  <div class="modulo">
+    <div class="modulo-header">
+      <span class="id">MÓDULO 5</span> — Trazabilidad y Registro de Auditoría (Logs)
+      <div style="font-size:11.5px; color:#FEBA53; margin-top:4px;">Estándares: ISO 27001 A.8.15 · NIST AU-2, AU-3, AU-6</div>
+    </div>
+    <div class="modulo-body">
+      <p><strong>Objetivo:</strong> Verificar la efectividad del módulo <code>AuditLog</code> implementado con Django Signals.</p>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 1 — Cobertura de eventos auditados</div>
+        <p><strong>Procedimiento:</strong> Revisar el archivo <code>signals.py</code> e identificar qué modelos generan registros de auditoría (CREATE, UPDATE, DELETE).</p>
+        <p><strong>Evidencia a recolectar:</strong> Copia de <code>signals.py</code>, matriz de modelos vs. eventos auditados.</p>
+        <p><strong>Criterio de aceptación:</strong> Todos los modelos sensibles (Product, Customer, Sale, PurchaseOrder, User) deben generar AuditLog.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 2 — Captura del usuario ejecutor</div>
+        <p><strong>Procedimiento:</strong> Verificar que los registros de <code>AuditLog</code> contengan el usuario autenticado (vía <code>CurrentUserMiddleware</code>).</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida del test <code>AuditLogSignalTest</code>, consultas SQL a la tabla <code>AuditLog</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> El campo <code>user</code> debe estar poblado con el usuario real, no NULL.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 3 — Retención y protección de logs</div>
+        <p><strong>Procedimiento:</strong> Verificar que los logs no puedan ser modificados ni eliminados por usuarios no autorizados.</p>
+        <p><strong>Evidencia a recolectar:</strong> Permisos de la tabla en la base de datos, endpoints de acceso.</p>
+        <p><strong>Criterio de aceptación:</strong> Solo usuarios con <code>is_staff=True</code> deben poder consultar la tabla de auditoría; nadie debe poder editarla.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÓDULO 6 -->
+  <div class="modulo">
+    <div class="modulo-header">
+      <span class="id">MÓDULO 6</span> — Seguridad de la Aplicación Web (Frontend + API)
+      <div style="font-size:11.5px; color:#FEBA53; margin-top:4px;">Estándares: OWASP Top 10 2021 · NIST SA-11</div>
+    </div>
+    <div class="modulo-body">
+      <p><strong>Objetivo:</strong> Verificar la ausencia de vulnerabilidades explotables en la aplicación web.</p>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 1 — Análisis de vulnerabilidades con OWASP ZAP</div>
+        <p><strong>Procedimiento:</strong> Ejecutar escaneo pasivo y activo sobre el frontend (localhost:5173) y el backend (localhost:8000).</p>
+        <p><strong>Evidencia a recolectar:</strong> Reportes HTML generados por ZAP, capturas de las alertas.</p>
+        <p><strong>Criterio de aceptación:</strong> Cero (0) alertas de severidad Alta o Crítica.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 2 — Pruebas de carga y rendimiento</div>
+        <p><strong>Procedimiento:</strong> Ejecutar pruebas con k6 simulando 50 usuarios concurrentes sobre el Dashboard.</p>
+        <p><strong>Evidencia a recolectar:</strong> Salida de k6, gráficos de tiempos de respuesta.</p>
+        <p><strong>Criterio de aceptación:</strong> El p(90) de tiempo de respuesta debe ser inferior a 1500 ms.</p>
+      </div>
+
+      <div class="paso">
+        <div class="titulo-paso">Paso 3 — Revisión de cabeceras HTTP de seguridad</div>
+        <p><strong>Procedimiento:</strong> Inspeccionar las cabeceras de respuesta del servidor y verificar presencia de: CSP, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, Cross-Origin-*-Policy.</p>
+        <p><strong>Evidencia a recolectar:</strong> Capturas del reporte ZAP, salida de <code>curl -I</code>.</p>
+        <p><strong>Criterio de aceptación:</strong> Todas las cabeceras deben estar presentes con valores seguros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 9. CRITERIOS DE RESPUESTA ═══════════ -->
+<section class="page-break">
+  <h2>9. Criterios de Respuesta al Riesgo</h2>
+
+  <table>
+    <thead>
+      <tr><th>Estrategia</th><th>Aplicación</th><th>Plazo</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Mitigar</strong> (Riesgo Alto)</td>
+        <td>Implementar controles técnicos o procedimentales inmediatos. Aplica para R-01, R-02, R-03, R-04, R-06.</td>
+        <td>Máximo 30 días</td>
+      </tr>
+      <tr>
+        <td><strong>Aceptar</strong> (Riesgo Bajo)</td>
+        <td>Monitorear el riesgo sin invertir recursos adicionales de forma urgente. Aplica a riesgos residuales de bajo impacto.</td>
+        <td>Revisión semestral</td>
+      </tr>
+      <tr>
+        <td><strong>Transferir</strong></td>
+        <td>Contratar pólizas de ciberseguro o delegar la operación a un tercero con SLAs garantizados. Evaluar para el hosting del servidor.</td>
+        <td>Anual</td>
+      </tr>
+      <tr>
+        <td><strong>Evitar</strong></td>
+        <td>Eliminar la actividad o tecnología que genera el riesgo. Aplica si se determina que SQLite ya no es viable.</td>
+        <td>Según decisión gerencial</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════ 10. PRODUCTOS ENTREGABLES ═══════════ -->
+<section>
+  <h2>10. Productos Entregables</h2>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Entregable</th><th>Descripción</th><th>Fase</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><strong>Informe de Hallazgos Preliminares</strong></td>
+        <td>Resumen técnico para discusión con los responsables auditados.</td>
+        <td>Fase 3</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>Informe Ejecutivo Final</strong></td>
+        <td>Documento de alto nivel dirigido a la gerencia con nivel de riesgo global y conclusiones.</td>
+        <td>Fase 4</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>Informe Técnico Detallado</strong></td>
+        <td>Lista pormenorizada de vulnerabilidades, evidencias y recomendaciones técnicas.</td>
+        <td>Fase 4</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><strong>Matriz de Recomendaciones y Plan de Acción</strong></td>
+        <td>Cuadro de seguimiento con responsables, plazos y estado de subsanación.</td>
+        <td>Fase 4</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><strong>Acta de Cierre</strong></td>
+        <td>Documento firmado por la gerencia de Fusión Solar y el Auditor Líder.</td>
+        <td>Fase 4</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><strong>Presentación Ejecutiva</strong></td>
+        <td>Slides para la reunión de cierre con la junta directiva de la empresa.</td>
+        <td>Fase 4</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-ok">
+    <strong>Beneficio esperado:</strong> Esta auditoría permitirá a Fusión Solar cerrar las brechas de seguridad
+    identificadas durante el ciclo SQA reciente, migrar a una arquitectura más robusta (PostgreSQL, Django 5.2+),
+    formalizar sus políticas de acceso y respaldo, y establecer las bases de un SGSI alineado con ISO/IEC 27001
+    adaptado a la realidad de una PyME nicaragüense.
+  </div>
+</section>
+
+<footer>
+  Plan de Auditoría Informática — Sistema Fusión Solar · v1.0<br>
+  Elaborado por el equipo auditor · Octubre 2026 · Managua, Nicaragua
+</footer>
+
+</body>
+</html>
