@@ -1,29 +1,30 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   getAllSuppliers,
   createSupplier,
-  updateSupplier
-} from '../../../api/suppliers_api';
+  updateSupplier,
+} from "../../../api/suppliers_api";
+import { Badge } from "../../../components/ui/Badge";
+import { Modal } from "../../../components/ui/Modal";
 
 export default function SupplierManagementPage() {
-  // Estados
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [formData, setFormData] = useState({
-    ruc: '',
-    company_name: '',
-    representative: '',
-    email: '',
-    phone: '',
-    is_active: true
+    ruc: "",
+    company_name: "",
+    representative: "",
+    email: "",
+    phone: "",
+    is_active: true,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Carga inicial
   useEffect(() => {
     loadSuppliers();
   }, []);
@@ -32,39 +33,36 @@ export default function SupplierManagementPage() {
     setIsLoading(true);
     try {
       const res = await getAllSuppliers();
-      setSuppliers(res.data);
+      setSuppliers(res.data || []);
       setError(null);
     } catch (err) {
-      setError('Error cargando proveedores');
+      setError("Error cargando proveedores");
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   }
 
-  // Abrir modal para crear o editar
   const openModal = (supplier = null) => {
     if (supplier) {
-      // Modo edición
       setEditingSupplier(supplier);
       setFormData({
         id: supplier.id,
         ruc: supplier.tax_id,
         company_name: supplier.company_name,
-        representative: supplier.representative || '',
-        email: supplier.email || '',
-        phone: supplier.phone,
-        is_active: supplier.is_active
+        representative: supplier.representative || "",
+        email: supplier.email || "",
+        phone: supplier.phone || "",
+        is_active: supplier.is_active,
       });
     } else {
-      // Modo creación
       setFormData({
-        ruc: '',
-        company_name: '',
-        representative: '',
-        email: '',
-        phone: '',
-        is_active: true
+        ruc: "",
+        company_name: "",
+        representative: "",
+        email: "",
+        phone: "",
+        is_active: true,
       });
       setEditingSupplier(null);
     }
@@ -72,17 +70,15 @@ export default function SupplierManagementPage() {
     setIsModalOpen(true);
   };
 
-  // Handlers del formulario
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // Crear o actualizar
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -94,7 +90,7 @@ export default function SupplierManagementPage() {
         representative: formData.representative,
         email: formData.email,
         phone: formData.phone,
-        is_active: formData.is_active
+        is_active: formData.is_active,
       };
 
       if (editingSupplier) {
@@ -106,102 +102,189 @@ export default function SupplierManagementPage() {
       await loadSuppliers();
       setIsModalOpen(false);
     } catch (err) {
-      console.error('Error:', err);
-      setError(`Error: ${err.response?.data?.message || err.message || 'Error al guardar proveedor'}`);
+      console.error("Error:", err);
+      setError(
+        `Error: ${
+          err.response?.data?.message || err.message || "Error al guardar proveedor"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Filtrar proveedores
-  const filteredSuppliers = suppliers.filter(p =>
-    p.company_name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.tax_id?.includes(search) ||
-    (p.representative?.toLowerCase().includes(search.toLowerCase())) ||
-    p.phone?.includes(search))
-    .sort((a, b) => a.company_name.localeCompare(b.company_name));          
-  
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-        </svg>
-      </div>
-    );
-  }
+  const filteredSuppliers = suppliers
+    .filter((p) => {
+      if (statusFilter === "active") return p.is_active;
+      if (statusFilter === "inactive") return !p.is_active;
+      return true;
+    })
+    .filter(
+      (p) =>
+        p.company_name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.tax_id?.includes(search) ||
+        p.representative?.toLowerCase().includes(search.toLowerCase()) ||
+        p.phone?.includes(search) ||
+        p.email?.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => a.company_name.localeCompare(b.company_name));
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-      {/* === TABLA === */}
-      <div className="bg-white shadow rounded-lg p-6 overflow-x-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Proveedores</h2>
-          <button
-            onClick={() => openModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5 inline-block mr-2 mb-2`}>
-              <path d="M6.5 3c-1.051 0-2.093.04-3.125.117A1.49 1.49 0 002 4.607V10.5h9V4.606c0-.771-.59-1.43-1.375-1.489A41.568 41.568 0 006.5 3ZM2 12v2.5A1.5 1.5 0 0 013.5 16h.041a3 3 0 015.918 0h.791a.75.75 0 00.75-.75V12H2Z" />
-              <path d="M6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3ZM13.25 5a.75.75 0 00-.75.75v8.514a3.001 3.001 0 004.893 1.44c.37-.275.61-.719.595-1.227a24.905 24.905 0 00-1.784-8.549A1.486 1.486 0 0014.823 5H13.25ZM14.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3Z" />
-            </svg>
-            Nuevo Proveedor
-          </button>
+    <div className="space-y-6 animate-[fadeUp_0.4s_var(--ease-bounce)]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+            <i className="fa-solid fa-truck text-[var(--primary)]"></i>
+            Gestión de Proveedores
+          </h1>
+          <p className="text-sm text-[var(--text-sec)] mt-1">
+            Directorio y administración de proveedores de componentes y suministros solares.
+          </p>
         </div>
-        
-        <div className="mb-4">
+
+        <button onClick={() => openModal()} className="btn btn-primary">
+          <i className="fa-solid fa-plus"></i>
+          <span>Nuevo Proveedor</span>
+        </button>
+      </div>
+
+      {/* Control Bar */}
+      <div className="glass-card p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        {/* Search Input */}
+        <div className="float-group max-w-md !mb-0">
           <input
             type="text"
-            placeholder="Buscar por razón social, RUC, representante o teléfono..."
+            id="search-supplier"
+            placeholder=" "
             value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
+            onChange={(e) => setSearch(e.target.value)}
+            className="has-val"
           />
+          <label htmlFor="search-supplier">
+            <i className="fa-solid fa-magnifying-glass mr-2"></i>
+            Buscar por razón social, RUC, contacto o teléfono...
+          </label>
         </div>
-        
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+
+        {/* Status Filters */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={`btn text-xs py-1.5 px-3 rounded-lg ${
+              statusFilter === "all" ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            Todos ({suppliers.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("active")}
+            className={`btn text-xs py-1.5 px-3 rounded-lg ${
+              statusFilter === "active" ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            Activos ({suppliers.filter((s) => s.is_active).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("inactive")}
+            className={`btn text-xs py-1.5 px-3 rounded-lg ${
+              statusFilter === "inactive" ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            Inactivos ({suppliers.filter((s) => !s.is_active).length})
+          </button>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="table-responsive glass-card !p-0 overflow-hidden">
+        <table className="table-custom">
+          <thead>
             <tr>
-              {['ID', 'RUC', 'Razón Social', 'Representante', 'Teléfono', 'Email', 'Estado', 'Acciones'].map(h => (
-                <th
-                  key={h}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {h}
-                </th>
-              ))}
+              <th>ID</th>
+              <th>RUC / Identificación</th>
+              <th>Proveedor (Razón Social)</th>
+              <th>Contacto / Representante</th>
+              <th>Teléfono</th>
+              <th>Correo Electrónico</th>
+              <th>Estado</th>
+              <th className="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredSuppliers.map(p => (
-              <tr key={p.id} className={!p.is_active ? 'bg-gray-100' : ''}>
-                <td className="px-6 py-4 text-sm text-gray-700">{p.id}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{p.tax_id}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{p.company_name}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{p.representative || '-'}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{p.phone}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{p.email || '-'}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  <span className={`px-2 py-1 rounded-full text-xs ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {p.is_active ? 'Activo' : 'Inactivo'}
+          <tbody>
+            {filteredSuppliers.map((p) => (
+              <tr
+                key={p.id}
+                className={p.is_active ? "state-completed" : "state-pending"}
+              >
+                <td>
+                  <strong>#{p.id}</strong>
+                </td>
+                <td>
+                  <span className="font-mono text-xs bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(255,255,255,0.05)] px-2 py-1 rounded">
+                    {p.tax_id}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
+                <td>
+                  <span className="font-semibold text-[var(--text-main)]">
+                    {p.company_name}
+                  </span>
+                </td>
+                <td>
+                  <span className="text-sm text-[var(--text-sec)]">
+                    {p.representative || "—"}
+                  </span>
+                </td>
+                <td>
+                  <span className="text-sm text-[var(--text-main)] flex items-center gap-1.5">
+                    <i className="fa-solid fa-phone text-xs text-[var(--text-sec)]"></i>
+                    {p.phone}
+                  </span>
+                </td>
+                <td>
+                  {p.email ? (
+                    <span className="text-sm text-[var(--text-main)] flex items-center gap-1.5">
+                      <i className="fa-regular fa-envelope text-[var(--primary)] text-xs"></i>
+                      {p.email}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-[var(--text-sec)]">—</span>
+                  )}
+                </td>
+                <td>
+                  {p.is_active ? (
+                    <Badge color="green">
+                      <i className="fa-solid fa-circle-check text-xs mr-1"></i>
+                      Activo
+                    </Badge>
+                  ) : (
+                    <Badge color="red">
+                      <i className="fa-solid fa-circle-xmark text-xs mr-1"></i>
+                      Inactivo
+                    </Badge>
+                  )}
+                </td>
+                <td className="text-right">
                   <button
                     onClick={() => openModal(p)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    className="btn-icon"
+                    title="Editar proveedor"
+                    aria-label={`Editar proveedor ${p.company_name}`}
                   >
-                    Editar
+                    <i className="fa-solid fa-pen-to-square"></i>
                   </button>
                 </td>
               </tr>
             ))}
-            {filteredSuppliers.length === 0 && (
+
+            {filteredSuppliers.length === 0 && !isLoading && (
               <tr>
-                <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
-                  No se encontraron resultados
+                <td colSpan="8" className="py-12 text-center text-[var(--text-sec)]">
+                  <i className="fa-solid fa-truck-ramp-box text-3xl mb-3 block opacity-40"></i>
+                  No se encontraron proveedores que coincidan con la búsqueda.
                 </td>
               </tr>
             )}
@@ -209,107 +292,135 @@ export default function SupplierManagementPage() {
         </table>
       </div>
 
-      {/* === MODAL DE CREACIÓN/EDICIÓN === */}
-      {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              {editingSupplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-            </h3>
-            {error && (
-              <div className="bg-red-100 text-red-800 p-2 rounded mb-4">
-                {error}
-              </div>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-gray-700">RUC</label>
-                <input
-                  name="ruc"
-                  value={formData.ruc}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Razón Social</label>
-                <input
-                  name="company_name"
-                  value={formData.company_name}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Representante</label>
-                <input
-                  name="representative"
-                  value={formData.representative}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Teléfono</label>
-                <input
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_active" className="block text-gray-700">
-                  Proveedor Activo
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Guardando...' : 'Guardar'}
-                </button>
-              </div>
-            </form>
+      {/* Modal Crear / Editar */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingSupplier ? "Editar Proveedor" : "Registrar Nuevo Proveedor"}
+        maxWidth="520px"
+      >
+        {error && (
+          <div className="p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs flex items-center gap-2">
+            <i className="fa-solid fa-circle-exclamation text-sm"></i>
+            <span>{error}</span>
           </div>
-        </div>
-      )}
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="float-group">
+              <input
+                type="text"
+                id="field-ruc"
+                name="ruc"
+                placeholder=" "
+                value={formData.ruc}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="field-ruc">RUC / Identificación Fiscal</label>
+            </div>
+
+            <div className="float-group">
+              <input
+                type="text"
+                id="field-company-name"
+                name="company_name"
+                placeholder=" "
+                value={formData.company_name}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="field-company-name">Razón Social</label>
+            </div>
+          </div>
+
+          <div className="float-group">
+            <input
+              type="text"
+              id="field-representative"
+              name="representative"
+              placeholder=" "
+              value={formData.representative}
+              onChange={handleChange}
+            />
+            <label htmlFor="field-representative">Contacto / Representante</label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="float-group">
+              <input
+                type="tel"
+                id="field-supplier-phone"
+                name="phone"
+                placeholder=" "
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="field-supplier-phone">Teléfono</label>
+            </div>
+
+            <div className="float-group">
+              <input
+                type="email"
+                id="field-supplier-email"
+                name="email"
+                placeholder=" "
+                value={formData.email}
+                onChange={handleChange}
+              />
+              <label htmlFor="field-supplier-email">Correo Electrónico</label>
+            </div>
+          </div>
+
+          {/* Estado Activo */}
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-main)]">
+            <input
+              type="checkbox"
+              id="field-supplier-isactive"
+              name="is_active"
+              checked={formData.is_active}
+              onChange={handleChange}
+              className="w-4 h-4 text-[var(--primary)] rounded focus:ring-[var(--primary)] accent-[var(--primary)] cursor-pointer"
+            />
+            <label
+              htmlFor="field-supplier-isactive"
+              className="text-sm font-medium text-[var(--text-main)] cursor-pointer"
+            >
+              Proveedor Activo para Compras
+            </label>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="flex justify-end items-center gap-3 pt-3 border-t border-[var(--border)]">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="btn btn-outline"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin"></i>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-check"></i>
+                  <span>Guardar Proveedor</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

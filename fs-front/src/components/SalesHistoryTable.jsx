@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import MUIDataTable from 'mui-datatables';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useTheme } from '../contexts/ThemeContext';
 import { useState, useEffect, useCallback } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -361,17 +362,45 @@ export function SalesHistoryTable({ data }) {
     setTimeout(() => printWindow.print(), 500);
   };
 
+  const { isDark } = useTheme();
+
   const theme = createTheme({
+    palette: {
+      mode: isDark ? 'dark' : 'light',
+      primary: { main: '#F28C28' },
+      secondary: { main: '#3B82F6' },
+      background: {
+        default: isDark ? '#22262B' : '#FFFFFF',
+        paper: isDark ? '#22262B' : '#FFFFFF',
+      },
+      text: {
+        primary: isDark ? '#E8EDF2' : '#1E1E24',
+        secondary: isDark ? '#9AA6B2' : '#6B7280',
+      },
+    },
+    typography: {
+      fontFamily: 'Inter, system-ui, sans-serif',
+    },
     components: {
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundColor: isDark ? '#22262B' : '#FFFFFF',
+            backgroundImage: 'none',
+          },
+        },
+      },
       MuiTableCell: {
         styleOverrides: {
           root: {
-            padding: '7px 10px',
+            padding: '8px 12px',
             fontSize: '0.85rem',
-          }
-        }
-      }
-    }
+            borderColor: isDark ? '#3A4048' : '#E5E7EB',
+            color: isDark ? '#E8EDF2' : '#1E1E24',
+          },
+        },
+      },
+    },
   });
 
   const exportSaleDetailPDF = async () => {

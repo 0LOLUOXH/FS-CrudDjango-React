@@ -66,12 +66,24 @@ function SalesLedgerPage() {
     }, [])
 
     return (
-    <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
-        <Box width="90%" minWidth="300px">
-            <SalesHistoryTable data={salesWithDetails} />
-        </Box>
-    </Box>
-    )
+        <div className="space-y-6 animate-[fadeUp_0.4s_var(--ease-bounce)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+                        <i className="fa-solid fa-receipt text-[var(--primary)]"></i>
+                        Historial de Ventas
+                    </h1>
+                    <p className="text-sm text-[var(--text-sec)] mt-1">
+                        Libro de facturación, emisión de comprobantes, proformas y exportación PDF/Excel.
+                    </p>
+                </div>
+            </div>
+
+            <div className="glass-card !p-6">
+                <SalesHistoryTable data={salesWithDetails} />
+            </div>
+        </div>
+    );
 }
 
 export default SalesLedgerPage

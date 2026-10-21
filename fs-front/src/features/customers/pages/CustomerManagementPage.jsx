@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   getAllIndividualCustomers,
   getAllCorporateCustomers,
@@ -7,24 +7,27 @@ import {
   updateCustomer,
   createCustomer,
   createIndividualCustomer,
-  createCorporateCustomer
-} from '../../../api/customers_api';
+  createCorporateCustomer,
+} from "../../../api/customers_api";
+import { Badge } from "../../../components/ui/Badge";
+import { Modal } from "../../../components/ui/Modal";
 
 export default function CustomerManagementPage() {
   const [individuals, setIndividuals] = useState([]);
   const [corporates, setCorporates] = useState([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("all");
   const [formData, setFormData] = useState({
-    type: 'Individual',
-    first_name: '',
-    last_name: '',
-    identity_card: '',
-    phone: '',
-    email: '',
+    type: "Individual",
+    first_name: "",
+    last_name: "",
+    identity_card: "",
+    phone: "",
+    email: "",
     is_active: true,
-    company_name: '',
-    tax_id: '',
-    representative: ''
+    company_name: "",
+    tax_id: "",
+    representative: "",
   });
   const [editing, setEditing] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,87 +44,97 @@ export default function CustomerManagementPage() {
     try {
       const [indRes, corpRes] = await Promise.all([
         getAllIndividualCustomers(),
-        getAllCorporateCustomers()
+        getAllCorporateCustomers(),
       ]);
-      setIndividuals(indRes.data);
-      setCorporates(corpRes.data);
+      setIndividuals(indRes.data || []);
+      setCorporates(corpRes.data || []);
     } catch (err) {
       console.error(err);
-      setError('Error al cargar clientes');
+      setError("Error al cargar clientes");
     } finally {
       setIsLoading(false);
     }
   };
 
   const allClients = [
-    ...individuals.map(c => ({
-      type: 'Individual',
+    ...individuals.map((c) => ({
+      type: "Individual",
       id: c.customer,
       name: c.first_name,
       lastName: c.last_name,
       document: c.identity_card,
       email: c.email,
+      phone: c.phone || "",
       is_active: c.is_active,
-      representative: ''
+      representative: "",
     })),
-    ...corporates.map(c => ({
-      type: 'Corporate',
+    ...corporates.map((c) => ({
+      type: "Corporate",
       id: c.customer,
       name: c.company_name,
       document: c.tax_id,
       email: c.email,
+      phone: c.phone || "",
       is_active: c.is_active,
-      representative: c.representative
-    }))
-  ].filter(c =>
-    (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (c.document || '').includes(search) ||
-    (c.representative && c.representative.toLowerCase().includes(search.toLowerCase()))
-  );
+      representative: c.representative,
+    })),
+  ]
+    .filter((c) => {
+      if (filterType === "all") return true;
+      return c.type === filterType;
+    })
+    .filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.document || "").includes(search) ||
+        (c.representative &&
+          c.representative.toLowerCase().includes(search.toLowerCase())) ||
+        (c.email && c.email.toLowerCase().includes(search.toLowerCase()))
+    );
 
   const openModal = (customer = null) => {
     if (customer) {
       setEditing(customer);
-      if (customer.type === 'Individual') {
+      if (customer.type === "Individual") {
         setFormData({
-          type: 'Individual',
-          first_name: customer.name,
-          last_name: customer.lastName,
-          identity_card: customer.document,
-          phone: '',
-          email: customer.email || '',
+          type: "Individual",
+          first_name: customer.name || "",
+          last_name: customer.lastName || "",
+          identity_card: customer.document || "",
+          phone: customer.phone || "",
+          email: customer.email || "",
           is_active: customer.is_active,
-          company_name: '',
-          tax_id: '',
-          representative: ''
+          company_name: "",
+          tax_id: "",
+          representative: "",
         });
       } else {
         setFormData({
-          type: 'Corporate',
-          first_name: '',
-          last_name: '',
-          identity_card: '',
-          phone: '',
-          email: customer.email || '',
+          type: "Corporate",
+          first_name: "",
+          last_name: "",
+          identity_card: "",
+          phone: customer.phone || "",
+          email: customer.email || "",
           is_active: customer.is_active,
-          company_name: customer.name,
-          tax_id: customer.document,
-          representative: customer.representative
+          company_name: customer.name || "",
+          tax_id: customer.document || "",
+          representative: customer.representative || "",
         });
       }
       setIsCreating(false);
     } else {
       setFormData({
-        type: 'Individual',
-        first_name: '',
-        last_name: '',
-        identity_card: '',
-        phone: '',
-        email: '',
+        type: "Individual",
+        first_name: "",
+        last_name: "",
+        identity_card: "",
+        phone: "",
+        email: "",
         is_active: true,
-        company_name: '',
-        tax_id: '',
-        representative: ''
+        company_name: "",
+        tax_id: "",
+        representative: "",
       });
       setEditing(null);
       setIsCreating(true);
@@ -130,34 +143,34 @@ export default function CustomerManagementPage() {
     setIsModalOpen(true);
   };
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(d => ({ 
-      ...d, 
-      [name]: type === 'checkbox' ? checked : value 
+    setFormData((d) => ({
+      ...d,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     try {
       if (isCreating) {
         const customerRes = await createCustomer({
           phone: formData.phone,
-          customer_type: formData.type === 'Individual' ? 'I' : 'C'
+          customer_type: formData.type === "Individual" ? "I" : "C",
         });
 
-        if (formData.type === 'Individual') {
+        if (formData.type === "Individual") {
           await createIndividualCustomer({
             first_name: formData.first_name,
             last_name: formData.last_name,
             identity_card: formData.identity_card,
             customer: customerRes.data.id,
             email: formData.email,
-            is_active: formData.is_active
+            is_active: formData.is_active,
           });
         } else {
           await createCorporateCustomer({
@@ -166,140 +179,233 @@ export default function CustomerManagementPage() {
             customer: customerRes.data.id,
             email: formData.email,
             is_active: formData.is_active,
-            representative: formData.representative
+            representative: formData.representative,
           });
         }
       } else {
-        if (formData.type === 'Individual') {
+        if (formData.type === "Individual") {
           await updateCustomer(editing.id, {
             phone: formData.phone,
-            customer_type: 'I'
+            customer_type: "I",
           });
-          
+
           await updateIndividualCustomer(editing.id, {
             first_name: formData.first_name,
             last_name: formData.last_name,
             identity_card: formData.identity_card,
             customer: editing.id,
             email: formData.email,
-            is_active: formData.is_active
+            is_active: formData.is_active,
           });
         } else {
           await updateCustomer(editing.id, {
             phone: formData.phone,
-            customer_type: 'C'
+            customer_type: "C",
           });
-          
+
           await updateCorporateCustomer(editing.id, {
             company_name: formData.company_name,
             tax_id: formData.tax_id,
             customer: editing.id,
             email: formData.email,
             is_active: formData.is_active,
-            representative: formData.representative
+            representative: formData.representative,
           });
         }
       }
-      
+
       await loadCustomers();
       setIsModalOpen(false);
-      
     } catch (err) {
-      console.error('Error completo:', {
+      console.error("Error completo:", {
         message: err.message,
         response: err.response,
         request: err.request,
-        config: err.config
+        config: err.config,
       });
-      setError(`Error: ${err.response?.data?.message || err.message || 'Verifica los datos'}`);
+      setError(
+        `Error: ${
+          err.response?.data?.message || err.message || "Verifica los datos"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-      
-      <div className="bg-white shadow rounded-lg p-6 overflow-x-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Clientes</h2>
-          <button
-            onClick={() => openModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-5 w-5 inline-block mr-2 mb-1`}>
-              <path d="M10 5a3 3 0 11-6 0 3 3 0 016 0ZM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572ZM16.25 5.75a.75.75 0 10-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2Z" />
-            </svg>
-            Nuevo Cliente
-          </button>
+    <div className="space-y-6 animate-[fadeUp_0.4s_var(--ease-bounce)]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+            <i className="fa-solid fa-users text-[var(--primary)]"></i>
+            Gestión de Clientes
+          </h1>
+          <p className="text-sm text-[var(--text-sec)] mt-1">
+            Directorio y administración de clientes naturales y jurídicos (B2B).
+          </p>
         </div>
-        
-        <div className="mb-4">
+
+        <button onClick={() => openModal()} className="btn btn-primary">
+          <i className="fa-solid fa-user-plus"></i>
+          <span>Nuevo Cliente</span>
+        </button>
+      </div>
+
+      {/* Control Bar: Search & Filter Tabs */}
+      <div className="glass-card p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        {/* Search Input with floating label */}
+        <div className="float-group max-w-md !mb-0">
           <input
             type="text"
-            placeholder="Buscar cliente por nombre, documento o representante..."
+            id="search-client"
+            placeholder=" "
             value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
+            onChange={(e) => setSearch(e.target.value)}
+            className="has-val"
           />
+          <label htmlFor="search-client">
+            <i className="fa-solid fa-magnifying-glass mr-2"></i>
+            Buscar por nombre, documento, correo o representante...
+          </label>
         </div>
-        
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setFilterType("all")}
+            className={`btn text-xs py-1.5 px-3 rounded-lg ${
+              filterType === "all" ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            Todos ({individuals.length + corporates.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterType("Individual")}
+            className={`btn text-xs py-1.5 px-3 rounded-lg ${
+              filterType === "Individual" ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            Naturales ({individuals.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterType("Corporate")}
+            className={`btn text-xs py-1.5 px-3 rounded-lg ${
+              filterType === "Corporate" ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            Jurídicos ({corporates.length})
+          </button>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="table-responsive glass-card !p-0 overflow-hidden">
+        <table className="table-custom">
+          <thead>
             <tr>
-              {['ID', 'Tipo', 'Nombre/Razón', 'Documento', 'Email', 'Representante', 'Estado', 'Acciones'].map(h => (
-                <th
-                  key={h}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {h}
-                </th>
-              ))}
+              <th>ID</th>
+              <th>Tipo</th>
+              <th>Nombre / Razón Social</th>
+              <th>Identificación</th>
+              <th>Contacto</th>
+              <th>Representante</th>
+              <th>Estado</th>
+              <th className="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {allClients.map(c => (
-              <tr key={`${c.type}-${c.id}`} className={!c.is_active ? 'bg-gray-100' : ''}>
-                <td className="px-6 py-4 text-sm text-gray-700">{c.id}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{c.type === 'Individual' ? 'Natural' : 'Jurídico'}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  {c.type === 'Individual' ? `${c.name} ${c.lastName || ''}` : c.name}
+          <tbody>
+            {allClients.map((c) => (
+              <tr
+                key={`${c.type}-${c.id}`}
+                className={c.is_active ? "state-completed" : "state-pending"}
+              >
+                <td>
+                  <strong>#{c.id}</strong>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-700">{c.document}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{c.email}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  {c.type === 'Corporate' ? c.representative : '-'}
+                <td>
+                  {c.type === "Individual" ? (
+                    <Badge color="orange">
+                      <i className="fa-solid fa-user text-xs mr-1"></i>
+                      Natural
+                    </Badge>
+                  ) : (
+                    <Badge color="yellow">
+                      <i className="fa-solid fa-building text-xs mr-1"></i>
+                      Jurídico
+                    </Badge>
+                  )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  <span className={`px-2 py-1 rounded-full text-xs ${c.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {c.is_active ? 'Activo' : 'Inactivo'}
+                <td>
+                  <span className="font-semibold text-[var(--text-main)]">
+                    {c.type === "Individual"
+                      ? `${c.name} ${c.lastName || ""}`
+                      : c.name}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
+                <td>
+                  <span className="font-mono text-xs bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(255,255,255,0.05)] px-2 py-1 rounded">
+                    {c.document || "N/A"}
+                  </span>
+                </td>
+                <td>
+                  <div className="text-xs">
+                    {c.email && (
+                      <p className="flex items-center gap-1.5 text-[var(--text-main)]">
+                        <i className="fa-regular fa-envelope text-[var(--primary)]"></i>
+                        {c.email}
+                      </p>
+                    )}
+                    {c.phone && (
+                      <p className="flex items-center gap-1.5 text-[var(--text-sec)] mt-0.5">
+                        <i className="fa-solid fa-phone text-xs"></i>
+                        {c.phone}
+                      </p>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <span className="text-sm text-[var(--text-sec)]">
+                    {c.type === "Corporate" && c.representative
+                      ? c.representative
+                      : "—"}
+                  </span>
+                </td>
+                <td>
+                  {c.is_active ? (
+                    <Badge color="green">
+                      <i className="fa-solid fa-circle-check text-xs mr-1"></i>
+                      Activo
+                    </Badge>
+                  ) : (
+                    <Badge color="red">
+                      <i className="fa-solid fa-circle-xmark text-xs mr-1"></i>
+                      Inactivo
+                    </Badge>
+                  )}
+                </td>
+                <td className="text-right">
                   <button
                     onClick={() => openModal(c)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    className="btn-icon"
+                    title="Editar cliente"
+                    aria-label={`Editar cliente ${c.name}`}
                   >
-                    Editar
+                    <i className="fa-solid fa-pen-to-square"></i>
                   </button>
                 </td>
               </tr>
             ))}
-            {allClients.length === 0 && (
+
+            {allClients.length === 0 && !isLoading && (
               <tr>
-                <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
-                  No se encontraron resultados
+                <td colSpan="8" className="py-12 text-center text-[var(--text-sec)]">
+                  <i className="fa-solid fa-users-slash text-3xl mb-3 block text-[var(--text-sec)] opacity-40"></i>
+                  No se encontraron clientes registrados con ese criterio.
                 </td>
               </tr>
             )}
@@ -307,156 +413,196 @@ export default function CustomerManagementPage() {
         </table>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl text-[#081A2D] mb-4">
-              {isCreating ? 'Nuevo Cliente' : 'Editar Cliente'}
-            </h3>
-            {error && (
-              <div className="bg-red-100 text-red-800 p-2 rounded mb-4">
-                {error}
-              </div>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-gray-700">Tipo de Cliente</label>
-                <select
-                  name="type"
-                  value={formData.type}
+      {/* Modal Crear / Editar */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={isCreating ? "Registrar Nuevo Cliente" : "Editar Datos del Cliente"}
+        maxWidth="540px"
+      >
+        {error && (
+          <div className="p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs flex items-center gap-2">
+            <i className="fa-solid fa-circle-exclamation text-sm"></i>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Tipo de cliente */}
+          <div className="float-group">
+            <select
+              name="type"
+              id="field-type"
+              value={formData.type}
+              onChange={handleChange}
+              disabled={!isCreating}
+              className="has-val"
+            >
+              <option value="Individual">Persona Natural</option>
+              <option value="Corporate">Persona Jurídica (Empresa)</option>
+            </select>
+            <label htmlFor="field-type">Tipo de Cliente</label>
+          </div>
+
+          {/* Formulario Dinámico según Tipo */}
+          {formData.type === "Individual" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="float-group">
+                <input
+                  type="text"
+                  id="field-firstname"
+                  name="first_name"
+                  placeholder=" "
+                  value={formData.first_name}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  disabled={!isCreating}
-                >
-                  <option value="Individual">Natural</option>
-                  <option value="Corporate">Jurídico</option>
-                </select>
+                  required
+                />
+                <label htmlFor="field-firstname">Nombre</label>
               </div>
 
-              {formData.type === 'Individual' ? (
+              <div className="float-group">
+                <input
+                  type="text"
+                  id="field-lastname"
+                  name="last_name"
+                  placeholder=" "
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  required
+                />
+                <label htmlFor="field-lastname">Apellido</label>
+              </div>
+
+              <div className="float-group sm:col-span-2">
+                <input
+                  type="text"
+                  id="field-identity"
+                  name="identity_card"
+                  placeholder=" "
+                  value={formData.identity_card}
+                  onChange={handleChange}
+                  required
+                />
+                <label htmlFor="field-identity">Cédula de Identidad</label>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="float-group">
+                <input
+                  type="text"
+                  id="field-company"
+                  name="company_name"
+                  placeholder=" "
+                  value={formData.company_name}
+                  onChange={handleChange}
+                  required
+                />
+                <label htmlFor="field-company">Razón Social de la Empresa</label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="float-group">
+                  <input
+                    type="text"
+                    id="field-taxid"
+                    name="tax_id"
+                    placeholder=" "
+                    value={formData.tax_id}
+                    onChange={handleChange}
+                    required
+                  />
+                  <label htmlFor="field-taxid">RUC / Identificación Fiscal</label>
+                </div>
+
+                <div className="float-group">
+                  <input
+                    type="text"
+                    id="field-representative"
+                    name="representative"
+                    placeholder=" "
+                    value={formData.representative}
+                    onChange={handleChange}
+                    required={formData.type === "Corporate"}
+                  />
+                  <label htmlFor="field-representative">Representante Legal</label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Contacto */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="float-group">
+              <input
+                type="tel"
+                id="field-phone"
+                name="phone"
+                placeholder=" "
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="field-phone">Teléfono / Celular</label>
+            </div>
+
+            <div className="float-group">
+              <input
+                type="email"
+                id="field-email"
+                name="email"
+                placeholder=" "
+                value={formData.email}
+                onChange={handleChange}
+              />
+              <label htmlFor="field-email">Correo Electrónico</label>
+            </div>
+          </div>
+
+          {/* Activo / Inactivo */}
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-main)]">
+            <input
+              type="checkbox"
+              id="field-isactive"
+              name="is_active"
+              checked={formData.is_active}
+              onChange={handleChange}
+              className="w-4 h-4 text-[var(--primary)] rounded focus:ring-[var(--primary)] accent-[var(--primary)] cursor-pointer"
+            />
+            <label htmlFor="field-isactive" className="text-sm font-medium text-[var(--text-main)] cursor-pointer">
+              Cliente Activo en el Sistema
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end items-center gap-3 pt-3 border-t border-[var(--border)]">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="btn btn-outline"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? (
                 <>
-                  <div className="space-y-1">
-                    <label className="block text-gray-700">Nombre</label>
-                    <input
-                      name="first_name"
-                      value={formData.first_name}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-700">Apellido</label>
-                    <input
-                      name="last_name"
-                      value={formData.last_name}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-700">Cédula</label>
-                    <input
-                      name="identity_card"
-                      value={formData.identity_card}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <i className="fa-solid fa-spinner fa-spin"></i>
+                  <span>Guardando...</span>
                 </>
               ) : (
                 <>
-                  <div className="space-y-1">
-                    <label className="block text-gray-700">Razón Social</label>
-                    <input
-                      name="company_name"
-                      value={formData.company_name}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-700">RUC</label>
-                    <input
-                      name="tax_id"
-                      value={formData.tax_id}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-700">Representante</label>
-                    <input
-                      name="representative"
-                      value={formData.representative}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                      required={formData.type === 'Corporate'}
-                    />
-                  </div>
+                  <i className="fa-solid fa-check"></i>
+                  <span>Guardar Cliente</span>
                 </>
               )}
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Teléfono</label>
-                <input
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_active" className="block text-gray-700">
-                  Cliente Activo
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Guardando...' : 'Guardar'}
-                </button>
-              </div>
-            </form>
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -62,18 +62,31 @@ function PurchaseLedgerPage() {
     }, []);
 
     return (
-        <div>
-            <div className="w-full mx-auto container mt-10">
+        <div className="space-y-6 animate-[fadeUp_0.4s_var(--ease-bounce)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+                        <i className="fa-solid fa-clock-rotate-left text-[var(--primary)]"></i>
+                        Historial de Compras
+                    </h1>
+                    <p className="text-sm text-[var(--text-sec)] mt-1">
+                        Libro de órdenes de compra a proveedores, comprobantes y exportaciones PDF/Excel.
+                    </p>
+                </div>
+            </div>
+
+            <div className="glass-card !p-6">
                 {loading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    <div className="flex justify-center items-center h-64 gap-3 flex-col">
+                        <i className="fa-solid fa-spinner fa-spin text-3xl text-[var(--primary)]"></i>
+                        <span className="text-sm text-[var(--text-sec)] font-medium">Cargando libro de compras...</span>
                     </div>
                 ) : (
                     <PurchaseHistoryTable data={purchaseData} />
                 )}
             </div>
         </div>
-    )
+    );
 }
 
 export default PurchaseLedgerPage;

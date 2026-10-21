@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   getAllWarehouses,
   createWarehouse,
   updateWarehouse
 } from '../../../api/inventory_api';
 import { getAllUser } from '../../../api/auth_api';
+import { GlassCard, Modal, FloatingInput, FloatingSelect, Badge } from '../../../components/ui';
+import { toast } from 'react-toastify';
 
 export default function WarehouseManagementPage() {
   // Estados
@@ -21,6 +23,7 @@ export default function WarehouseManagementPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
 
   // Carga inicial
   useEffect(() => {
@@ -34,11 +37,12 @@ export default function WarehouseManagementPage() {
         getAllWarehouses(),
         getAllUser()
       ]);
-      setWarehouses(warehousesRes.data);
-      setEmployees(employeesRes.data);
+      setWarehouses(warehousesRes.data || []);
+      setEmployees(employeesRes.data || []);
+      setError(null);
     } catch (err) {
       console.error(err);
-      setError('Error cargando datos');
+      setError('Error cargando información de bodegas');
     } finally {
       setLoading(false);
     }
@@ -47,16 +51,14 @@ export default function WarehouseManagementPage() {
   // Abrir modal para crear o editar
   const openModal = (warehouse = null) => {
     if (warehouse) {
-      // Modo edición
       setEditingWarehouse(warehouse);
       setFormData({
-        name: warehouse.name,
-        capacity: warehouse.capacity,
-        is_active: warehouse.is_active,
-        manager: warehouse.manager
+        name: warehouse.name || '',
+        capacity: warehouse.capacity !== undefined ? warehouse.capacity : '',
+        is_active: warehouse.is_active !== undefined ? warehouse.is_active : true,
+        manager: warehouse.manager || ''
       });
     } else {
-      // Modo creación
       setFormData({
         name: '',
         capacity: '',
@@ -92,203 +94,352 @@ export default function WarehouseManagementPage() {
 
       if (editingWarehouse) {
         await updateWarehouse(editingWarehouse.id, payload);
+        toast.success("Bodega actualizada exitosamente");
       } else {
         await createWarehouse(payload);
+        toast.success("Bodega creada exitosamente");
       }
       await loadData();
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
-      setError(`Error: ${err.response?.data?.message || err.message || 'Error al guardar bodega'}`);
+      const errMsg = err.response?.data?.message || err.message || 'Error al guardar la bodega';
+      setError(`Error: ${errMsg}`);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filtrado por búsqueda
-  const filteredWarehouses = warehouses.filter(w =>
-    (w.name || '').toLowerCase().includes(search.toLowerCase())
-  );
+  // Filtrado
+  const filteredWarehouses = useMemo(() => {
+    return warehouses.filter(w => {
+      const matchesSearch = (w.name || '').toLowerCase().includes(search.toLowerCase());
+      if (!matchesSearch) return false;
+      if (statusFilter === 'active') return w.is_active;
+      if (statusFilter === 'inactive') return !w.is_active;
+      return true;
+    });
+  }, [warehouses, search, statusFilter]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-        </svg>
-      </div>
-    );
-  }
+  // Métricas rápidas
+  const totalCapacity = useMemo(() => {
+    return warehouses.reduce((acc, w) => acc + (parseInt(w.capacity, 10) || 0), 0);
+  }, [warehouses]);
+
+  const activeCount = useMemo(() => {
+    return warehouses.filter(w => w.is_active).length;
+  }, [warehouses]);
+
+  const inactiveCount = useMemo(() => {
+    return warehouses.filter(w => !w.is_active).length;
+  }, [warehouses]);
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-      {/* === TABLA === */}
-      <div className="bg-white shadow rounded-lg p-6 overflow-x-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Bodegas</h2>
-          <button
-            onClick={() => openModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5 inline-block mr-2 mb-1">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
-            </svg>
+    <div className="w-full p-4 lg:p-6 space-y-6">
+      {/* Cabecera Principal */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-main)] flex items-center gap-2.5">
+            <i className="fa-solid fa-warehouse text-[var(--primary)]"></i>
+            Gestión de Bodegas
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] mt-1">
+            Administración de almacenes, capacidades físicas y encargados de inventario
+          </p>
+        </div>
 
-            Nueva Bodega
-          </button>
-        </div>
-        
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Buscar bodega por nombre..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-blue-400 focus:outline-none"
-          />
-        </div>
-        
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {['ID', 'Nombre', 'Estado', 'Capacidad', 'Encargado', 'Acciones'].map(h => (
-                <th
-                  key={h}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredWarehouses.map(warehouse => {
-                const employee = employees.find(e => e.id === warehouse.manager);
-              return (
-                <tr key={warehouse.id} className={!warehouse.is_active ? 'bg-gray-100' : ''}>
-                  <td className="px-6 py-4 text-sm text-gray-700">{warehouse.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{warehouse.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    <span className={`px-2 py-1 rounded-full text-xs ${warehouse.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {warehouse.is_active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{warehouse.capacity}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {employee?.username || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium">
-                    <button
-                      onClick={() => openModal(warehouse)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      Editar
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {filteredWarehouses.length === 0 && (
-              <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                  No se encontraron resultados
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <button
+          onClick={() => openModal()}
+          className="btn btn-primary shadow-lg shadow-[var(--primary)]/20"
+        >
+          <i className="fa-solid fa-plus mr-1.5"></i>
+          Nueva Bodega
+        </button>
       </div>
 
-      {/* === MODAL DE CREACIÓN/EDICIÓN === */}
-      {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              {editingWarehouse ? 'Editar Bodega' : 'Nueva Bodega'}
-            </h3>
-            {error && (
-              <div className="bg-red-100 text-red-800 p-2 rounded mb-4">
-                {error}
-              </div>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-gray-700">Nombre</label>
-                <input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Capacidad</label>
-                <input
-                  name="capacity"
-                  type="number"
-                  min="1"
-                  value={formData.capacity}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-gray-700">Encargado</label>
-                <select
-                  name="manager"
-                  value={formData.manager}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-400 focus:outline-none"
-                  required
-                >
-                  <option value="">Seleccione un empleado</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.username}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_active" className="block text-gray-700">
-                  Bodega Activa
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  disabled={loading}
-                >
-                  {loading ? 'Guardando...' : 'Guardar'}
-                </button>
-              </div>
-            </form>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <GlassCard className="p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center text-xl shrink-0">
+            <i className="fa-solid fa-warehouse"></i>
           </div>
+          <div>
+            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Bodegas</span>
+            <h3 className="text-2xl font-bold text-[var(--text-main)] mt-0.5">{warehouses.length}</h3>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center text-xl shrink-0">
+            <i className="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Bodegas Activas</span>
+            <h3 className="text-2xl font-bold text-emerald-500 mt-0.5">{activeCount}</h3>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center text-xl shrink-0">
+            <i className="fa-solid fa-circle-xmark"></i>
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Bodegas Inactivas</span>
+            <h3 className="text-2xl font-bold text-rose-500 mt-0.5">{inactiveCount}</h3>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center text-xl shrink-0">
+            <i className="fa-solid fa-cubes"></i>
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Capacidad Total</span>
+            <h3 className="text-2xl font-bold text-[var(--text-main)] mt-0.5">
+              {totalCapacity.toLocaleString()} <span className="text-xs font-normal text-[var(--text-muted)]">un.</span>
+            </h3>
+          </div>
+        </GlassCard>
+      </div>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center gap-3">
+          <i className="fa-solid fa-circle-exclamation text-lg"></i>
+          <span className="text-sm font-medium">{error}</span>
         </div>
       )}
+
+      {/* Contenedor Principal de la Tabla */}
+      <GlassCard className="overflow-hidden p-4 sm:p-6 space-y-4">
+        {/* Barra de Filtros y Búsqueda */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="relative w-full sm:w-80">
+            <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm"></i>
+            <input
+              type="text"
+              placeholder="Buscar bodega por nombre..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-[var(--border-glass)] bg-[var(--bg-card)] text-[var(--text-main)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[var(--bg-card-subtle)] border border-[var(--border-glass)] w-full sm:w-auto">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                statusFilter === 'all'
+                  ? 'bg-[var(--primary)] text-white shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+              }`}
+            >
+              Todas ({warehouses.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                statusFilter === 'active'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-emerald-500'
+              }`}
+            >
+              Activas ({activeCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('inactive')}
+              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                statusFilter === 'inactive'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-rose-500'
+              }`}
+            >
+              Inactivas ({inactiveCount})
+            </button>
+          </div>
+        </div>
+
+        {/* Tabla Responsiva */}
+        <div className="table-responsive">
+          <table className="table-custom">
+            <thead>
+              <tr>
+                <th className="w-20">ID</th>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Capacidad Máxima</th>
+                <th>Encargado</th>
+                <th className="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && warehouses.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-12">
+                    <i className="fa-solid fa-spinner fa-spin text-2xl text-[var(--primary)]"></i>
+                    <p className="text-sm text-[var(--text-muted)] mt-2">Cargando bodegas...</p>
+                  </td>
+                </tr>
+              ) : filteredWarehouses.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-12 text-[var(--text-muted)]">
+                    <i className="fa-solid fa-box-open text-3xl mb-2 opacity-50 block"></i>
+                    No se encontraron bodegas que coincidan con el criterio
+                  </td>
+                </tr>
+              ) : (
+                filteredWarehouses.map(warehouse => {
+                  const employee = employees.find(e => e.id === warehouse.manager);
+                  return (
+                    <tr 
+                      key={warehouse.id}
+                      className={!warehouse.is_active ? 'opacity-70' : ''}
+                    >
+                      <td>
+                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--bg-card-subtle)] text-[var(--text-muted)] border border-[var(--border-glass)]">
+                          #{warehouse.id}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center text-sm shrink-0">
+                            <i className="fa-solid fa-warehouse"></i>
+                          </div>
+                          <span className="font-semibold text-[var(--text-main)]">
+                            {warehouse.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <Badge variant={warehouse.is_active ? 'success' : 'danger'}>
+                          <i className={`fa-solid ${warehouse.is_active ? 'fa-circle-check' : 'fa-circle-xmark'} mr-1 text-[10px]`}></i>
+                          {warehouse.is_active ? 'Activa' : 'Inactiva'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <i className="fa-solid fa-boxes-stacked text-xs text-[var(--text-muted)]"></i>
+                          <span className="font-medium text-[var(--text-main)]">
+                            {warehouse.capacity?.toLocaleString() || 0}
+                          </span>
+                          <span className="text-xs text-[var(--text-muted)]">unidades</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-card-subtle)] border border-[var(--border-glass)] text-xs text-[var(--text-main)]">
+                          <i className="fa-solid fa-user-tie text-[var(--primary)] opacity-80"></i>
+                          <span>{employee?.username || 'Sin asignar'}</span>
+                        </div>
+                      </td>
+                      <td className="text-right">
+                        <button
+                          onClick={() => openModal(warehouse)}
+                          className="btn btn-icon p-2 text-amber-500 hover:bg-amber-500/15 rounded-lg transition-colors"
+                          title="Editar bodega"
+                        >
+                          <i className="fa-solid fa-pen-to-square"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </GlassCard>
+
+      {/* Modal Reutilizable de Creación/Edición */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingWarehouse ? `Editar Bodega #${editingWarehouse.id}` : 'Nueva Bodega'}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FloatingInput
+            label="Nombre de la Bodega"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            icon={<i className="fa-solid fa-warehouse text-sm"></i>}
+          />
+
+          <FloatingInput
+            label="Capacidad Máxima (unidades)"
+            type="number"
+            min="1"
+            name="capacity"
+            value={formData.capacity}
+            onChange={handleChange}
+            required
+            icon={<i className="fa-solid fa-cubes text-sm"></i>}
+          />
+
+          <FloatingSelect
+            label="Encargado Responsable"
+            name="manager"
+            value={formData.manager}
+            onChange={handleChange}
+            icon={<i className="fa-solid fa-user-tie text-sm"></i>}
+          >
+            <option value="">Seleccione un empleado (opcional)</option>
+            {employees.map(emp => (
+              <option key={emp.id} value={emp.id}>
+                {emp.username} {emp.email ? `(${emp.email})` : ''}
+              </option>
+            ))}
+          </FloatingSelect>
+
+          {/* Toggle de Estado */}
+          <div className="p-3.5 rounded-xl border border-[var(--border-glass)] bg-[var(--bg-card-subtle)] flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label htmlFor="is_active" className="text-sm font-semibold text-[var(--text-main)] cursor-pointer">
+                Bodega Operativa / Activa
+              </label>
+              <p className="text-xs text-[var(--text-muted)]">
+                Permite la recepción y despacho de productos en esta ubicación
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              name="is_active"
+              id="is_active"
+              checked={formData.is_active}
+              onChange={handleChange}
+              className="w-5 h-5 rounded text-[var(--primary)] focus:ring-[var(--primary)] border-[var(--border-glass)] cursor-pointer"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-[var(--border-glass)]">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="btn btn-outline"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+            >
+              {loading ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin mr-1.5"></i>
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-floppy-disk mr-1.5"></i>
+                  {editingWarehouse ? 'Actualizar Bodega' : 'Crear Bodega'}
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
