@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe Final Consolidado de Auditoría de Software — Fusión Solar</title>
+<style>
+  @page { size: A4; margin: 1.8cm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b; line-height: 1.6; max-width: 1180px;
+    margin: 0 auto; padding: 25px; background: #ffffff; font-size: 13.5px;
+  }
+  
+  /* PALETA CORPORATIVA FUSIÓN SOLAR */
+  :root {
+    --primary: #081A2D;
+    --accent: #FEBA53;
+    --secondary: #15608B;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --bg-light: #f8fafc;
+    --border-color: #e2e8f0;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --success: #16a34a;
+  }
+
+  h1 { font-size: 26px; color: var(--primary); border-bottom: 3px solid var(--accent); padding-bottom: 8px; margin-top: 35px; }
+  h2 { font-size: 20px; color: var(--primary); margin-top: 32px; border-left: 5px solid var(--accent); padding-left: 12px; page-break-after: avoid; }
+  h3 { font-size: 15.5px; color: var(--secondary); margin-top: 22px; page-break-after: avoid; }
+  h4 { font-size: 14px; color: #334155; margin-top: 16px; }
+  p, li { text-align: justify; }
+
+  /* PORTADA */
+  .portada {
+    page-break-after: always; text-align: center;
+    padding: 50px 25px; border: 3px double var(--primary); margin-bottom: 40px; background: #fafcff;
+    border-radius: 4px;
+  }
+  .portada .logo-box {
+    display: inline-block; padding: 10px 24px; background: var(--primary);
+    color: var(--accent); border-radius: 8px; font-weight: bold; font-size: 28px;
+    letter-spacing: 2px; margin-bottom: 20px;
+  }
+  .portada h1 { font-size: 28px; border: none; margin: 15px 0 10px 0; color: var(--primary); text-transform: uppercase; }
+  .portada .subtitle { font-size: 18px; color: var(--secondary); margin-bottom: 30px; font-weight: 600; }
+  .portada .institucion { font-size: 14px; color: #475569; margin-bottom: 25px; line-height: 1.5; }
+  .portada .meta-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    max-width: 850px; margin: 30px auto 10px auto; text-align: left;
+    background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);
+  }
+  .portada .meta-col strong { color: var(--primary); }
+
+  /* ÍNDICE Y NAVEGACIÓN */
+  .indice-box {
+    background: var(--bg-light); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 20px 30px; margin: 25px 0 40px 0;
+  }
+  .indice-box ol { margin: 0; padding-left: 20px; line-height: 1.9; font-weight: 500; font-size: 14px; }
+  .indice-box a { color: var(--secondary); text-decoration: none; }
+  .indice-box a:hover { text-decoration: underline; color: var(--accent); }
+
+  /* TABLAS */
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 12.5px; page-break-inside: avoid; }
+  th { background: var(--primary); color: #ffffff; padding: 9px 11px; text-align: left; font-weight: 600; }
+  th.accent { background: var(--secondary); }
+  td { padding: 8px 11px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+  tr:nth-child(even) td { background: #fbfcfe; }
+  tr:hover td { background: #f1f5f9; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; color: #ffffff; text-transform: uppercase;
+  }
+  .badge-critico { background: #b91c1c; }
+  .badge-alto { background: #ea580c; }
+  .badge-medio { background: #d97706; }
+  .badge-bajo { background: #16a34a; }
+  .badge-ok { background: #059669; }
+  .badge-fail { background: #dc2626; }
+  .badge-cloud { background: #0284c7; }
+  .badge-info { background: #475569; }
+
+  /* CALLOUTS */
+  .callout { padding: 14px 18px; margin: 18px 0; border-radius: 6px; border-left: 5px solid; page-break-inside: avoid; }
+  .callout-info { background: #f0f9ff; border-color: var(--secondary); color: #0369a1; }
+  .callout-warn { background: #fffbeb; border-color: var(--accent); color: #b45309; }
+  .callout-crit { background: #fef2f2; border-color: var(--danger); color: #991b1b; }
+  .callout-ok { background: #f0fdf4; border-color: var(--success); color: #166534; }
+
+  /* TARJETAS Y FICHAS */
+  .card {
+    border: 1px solid var(--border-color); border-radius: 8px;
+    background: #ffffff; margin: 18px 0; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card-header {
+    font-weight: 700; color: var(--primary); font-size: 14.5px;
+    border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* IMÁGENES Y EVIDENCIAS */
+  .evidence-box {
+    background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;
+    padding: 12px; margin: 12px 0 18px 0; text-align: center;
+  }
+  .evidence-box img {
+    max-width: 95%; max-height: 480px; border: 1px solid #94a3b8;
+    border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin: 6px 0;
+  }
+  .evidence-caption {
+    font-size: 11.5px; color: var(--text-muted); font-style: italic; margin-top: 5px;
+  }
+
+  /* CÓDIGO Y SALIDAS DE CONSOLA */
+  pre {
+    background: #0f172a; color: #f8fafc; padding: 12px 16px; border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace; font-size: 11.5px; overflow-x: auto;
+    line-height: 1.45;
+  }
+  code {
+    background: #f1f5f9; color: #0f172a; padding: 2px 5px; border-radius: 4px;
+    font-family: 'Consolas', 'Courier New', monospace; font-size: 12px;
+  }
+
+  /* DIAPOSITIVAS EJECUTIVAS */
+  .slide-container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 25px 0;
+  }
+  .slide {
+    border: 2px solid var(--primary); border-radius: 10px; background: #ffffff;
+    padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); min-height: 290px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .slide-header {
+    background: var(--primary); color: var(--accent); margin: -20px -20px 15px -20px;
+    padding: 10px 15px; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 13.5px;
+    display: flex; justify-content: space-between;
+  }
+  .slide-body { font-size: 12px; line-height: 1.5; color: #334155; }
+  .slide-footer {
+    border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 8px;
+    font-size: 10.5px; color: #64748b; text-align: right;
+  }
+
+  /* BLOQUE DE FIRMAS */
+  .signatures-box {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;
+    margin-top: 40px; page-break-inside: avoid;
+  }
+  .signature-card {
+    border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; text-align: center;
+    background: #ffffff;
+  }
+  .signature-line {
+    border-top: 1.5px solid #334155; margin: 55px 15px 10px 15px;
+  }
+  .signature-name { font-weight: bold; font-size: 12.5px; color: var(--primary); }
+  .signature-role { font-size: 11px; color: var(--text-muted); }
+
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .portada { page-break-after: always; }
+    .page-break { page-break-before: always; }
+    .slide-container { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================================== -->
+<!-- PORTADA INSTITUCIONAL                      -->
+<!-- ========================================== -->
+<div class="portada">
+  <div class="institucion">
+    <strong>UNIVERSIDAD NACIONAL DE INGENIERÍA (UNI)</strong><br>
+    Área de Conocimiento de Tecnología de la Información y Comunicación<br>
+    Ingeniería de Software III · Grupo 5S1-COM-S
+  </div>
+  
+  <div class="logo-box">☀️ FUSIÓN SOLAR</div>
+
+  <h1>Informe Final Consolidado de Auditoría de Software</h1>
+  <div class="subtitle">Evaluación de Seguridad, Integridad Transaccional, Resiliencia Cloud y Cumplimiento Normativo del Sistema Web Comercial</div>
+
+  <div class="meta-grid">
+    <div class="meta-col">
+      <p><strong>Entidad Auditada:</strong> Fusión Solar (PyME - Sector Energético)</p>
+      <p><strong>Sede Comercial:</strong> Altamira, Managua, Nicaragua</p>
+      <p><strong>Período de Auditoría:</strong> 5 de Octubre al 6 de Noviembre de 2026</p>
+      <p><strong>Arquitectura del Sistema:</strong> React + Vite (Vercel) / Django REST Framework (Render) / PostgreSQL 15+ Serverless (Neon)</p>
+    </div>
+    <div class="meta-col">
+      <p><strong>Equipo Auditor:</strong></p>
+      <ul style="margin: 0; padding-left: 18px;">
+        <li>Br. Russell Ali Pavon Solis (Carnet: 2020-0333U) — <em>Auditor Líder</em></li>
+        <li>Br. Brayan Josue Portocarrero Vega (Carnet: 2022-0428U) — <em>Auditor de Seguridad</em></li>
+      </ul>
+      <p style="margin-top: 8px;"><strong>Docente Supervisor:</strong> Ing. Jorge Prado</p>
+      <p><strong>Estado del Documento:</strong> Finalizado con Dictamen Formal</p>
+    </div>
+  </div>
+
+  <p style="font-size: 12px; color: #64748b; margin-top: 25px;">
+    Managua, Nicaragua · Noviembre de 2026
+  </p>
+</div>
+
+<!-- ========================================== -->
+<!-- ÍNDICE GENERAL DEL REPORTE                -->
+<!-- ========================================== -->
+<div class="indice-box">
+  <h2 style="margin-top: 0; border: none; padding: 0; font-size: 18px; color: var(--primary);">Tabla de Contenido del Informe Maestro</h2>
+  <ol>
+    <li><a href="#entregable2">Entregable 2: Informe Ejecutivo Final y Dictamen de Auditoría</a></li>
+    <li><a href="#entrevistas">Evidencias de Campo: Minutas de Entrevistas Semiestructuradas (PyME)</a></li>
+    <li><a href="#modulos">Evidencias Técnicas por Módulo de Trabajo (Módulos 1 al 6 - 46 Casos de Prueba)</a></li>
+    <li><a href="#entregable1">Entregable 1: Informe de Hallazgos Preliminares (Fase 3)</a></li>
+    <li><a href="#entregable3">Entregable 3: Informe Técnico Detallado y Matriz de Riesgos Residuales</a></li>
+    <li><a href="#entregable4">Entregable 4: Matriz de Recomendaciones y Plan de Acción Correctiva</a></li>
+    <li><a href="#entregable5">Entregable 5: Acta Formal de Cierre de la Auditoría</a></li>
+    <li><a href="#entregable6">Entregable 6: Presentación Ejecutiva para la Dirección (Deck de Diapositivas)</a></li>
+  </ol>
+</div>
+
+<!-- ======================================================= -->
+<!-- 1. ENTREGABLE 2: INFORME EJECUTIVO FINAL Y DICTAMEN    -->
+<!-- ======================================================= -->
+<h1 id="entregable2">1. [Entregable 2] Informe Ejecutivo Final y Dictamen de Auditoría</h1>
+
+<h2>1.1 Resumen Ejecutivo</h2>
+<p>
+El presente informe formaliza la culminación de la auditoría de software practicada al sistema comercial de <strong>Fusión Solar</strong>. La evaluación analizó la robustez de los procesos de autenticación, control de accesos, integridad transaccional en el Punto de Venta (POS), registro de auditoría (trazabilidad) y continuidad operativa sobre su arquitectura basada en la nube.
+</p>
+<p>
+Como antecedente crítico, la empresa operaba previamente con una base de datos local SQLite bajo Django 5.0.7 en un entorno Python 3.14, lo cual generaba cuellos de botella transaccionales y problemas de compatibilidad. Durante el presente proceso de auditoría y en respuesta a los riesgos de integridad detectados, se constató la <strong>migración efectiva a la base de datos PostgreSQL 15+ Serverless en Neon Cloud</strong>, configurada con cifrado SSL obligatorio y alta disponibilidad. Asimismo, se auditó la arquitectura del frontend SPA desplegada sobre la red perimetral Edge de <strong>Vercel</strong> y los servicios API REST hospedados en <strong>Render</strong>.
+</p>
+
+<div class="callout callout-warn">
+  <strong>Nivel de Riesgo Global: MEDIO-ALTO (6.8 / 10.0) — Tendencia a Mitigación</strong><br>
+  Si bien la adopción de Neon Cloud resolvió la fragilidad de concurrencia y respaldos en la base de datos, persisten <strong>vulnerabilidades críticas en la capa de aplicación (API)</strong>, específicamente la falta de validación de tokens en ciertos endpoints del CRUD, la exposición del listado de empleados a usuarios con rol vendedor y la aceptación de contraseñas no complejas desde el backend.
+</div>
+
+<h2>1.2 Dictamen Formal de Auditoría</h2>
+<div class="card" style="border-left: 6px solid var(--secondary); background: #fdfefe;">
+  <div class="card-header">
+    <span>DICTAMEN DEL EQUIPO AUDITOR INDEPENDIENTE</span>
+    <span class="badge badge-medio">OPINIÓN CON SALVEDADES</span>
+  </div>
+  <p><strong>A la Administración de Fusión Solar:</strong></p>
+  <p>
+    Hemos auditado el sistema web comercial de Fusión Solar compuesto por el backend Django REST Framework, frontend React y servicios cloud correspondientes al periodo 5 de octubre al 6 de noviembre de 2026.
+  </p>
+  <p>
+    En nuestra opinión profesional, excepto por los efectos de las salvedades descritas en el párrafo siguiente, el sistema web comercial de Fusión Solar presenta una estructura transaccional matemáticamente consistente y una infraestructura de base de datos resiliente, manteniendo la integridad contable de las operaciones comerciales de energía solar.
+  </p>
+  <p><strong>Bases para la Opinión con Salvedades:</strong></p>
+  <ul>
+    <li><strong>DEF-002 / R-01 (Control de Acceso Incompleto):</strong> Los ViewSets del catálogo de productos y consultas permiten peticiones anónimas sin requerir cabecera de autenticación HTTP <code>Authorization: Token &lt;key&gt;</code>.</li>
+    <li><strong>DEF-005 / R-02 (Escalada de Privilegios en IAM):</strong> La restricción de creación y listado de usuarios administrativos únicamente opera en el frontend; la API REST carece de la clase <code>IsAdminUser</code> en los endpoints críticos de usuarios.</li>
+    <li><strong>DEF-004 / R-03 (Falta de Validación de Contraseñas en Backend):</strong> El endpoint de reseteo de credenciales acepta entradas débiles (ej. un solo carácter) sin invocar los validadores nativos de Django.</li>
+    <li><strong>DEF-001 / R-07 (Integridad en Validación de Ventas):</strong> Se constató que el serializador de procesamiento de ventas permite la confirmación de compras con listado de artículos vacío.</li>
+  </ul>
+</div>
+
+<h2>1.3 Métricas Clave de la Evaluación</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Métrica Evaluada</th>
+      <th>Resultado Obtenido</th>
+      <th>Estándar / Umbral Aceptable</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Total de Pruebas Automatizadas Ejecutadas</strong></td>
+      <td>46 pruebas unitarias e integración</td>
+      <td>100% de la suite ejecutada</td>
+      <td><span class="badge badge-ok">Completado</span></td>
+    </tr>
+    <tr>
+      <td><strong>Pruebas Aprobadas (Pass)</strong></td>
+      <td>36 pruebas (78.3%)</td>
+      <td>&gt; 90.0%</td>
+      <td><span class="badge badge-medio">78.3%</span></td>
+    </tr>
+    <tr>
+      <td><strong>Defectos y No Conformidades (Fail)</strong></td>
+      <td>10 pruebas fallidas (21.7%)</td>
+      <td>0 defectos críticos</td>
+      <td><span class="badge badge-critico">10 Hallazgos</span></td>
+    </tr>
+    <tr>
+      <td><strong>Rendimiento del Dashboard (k6 Load Test)</strong></td>
+      <td>Percentil 90 = 420 ms (50 VUs)</td>
+      <td>p(90) &lt; 1,500 ms</td>
+      <td><span class="badge badge-ok">Excelente</span></td>
+    </tr>
+    <tr>
+      <td><strong>Alertas Críticas OWASP ZAP (Inyección / XSS)</strong></td>
+      <td>0 alertas críticas / 0 SQLi</td>
+      <td>0 vulnerabilidades críticas</td>
+      <td><span class="badge badge-ok">Cumple</span></td>
+    </tr>
+    <tr>
+      <td><strong>Cabeceras de Seguridad HTTP (CSP, HSTS)</strong></td>
+      <td>3 ausentes en respuestas del servidor</td>
+      <td>5 cabeceras obligatorias</td>
+      <td><span class="badge badge-medio">Por Subsanar</span></td>
+    </tr>
+    <tr>
+      <td><strong>Resiliencia de Base de Datos (Neon Cloud)</strong></td>
+      <td>Concurrencia ACID con PostgreSQL 15+</td>
+      <td>Soporte multi-hilo transaccional</td>
+      <td><span class="badge badge-cloud">Mitigado Cloud</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ======================================================= -->
+<!-- 2. ENTREVISTAS DE CAMPO                                -->
+<!-- ======================================================= -->
+<h1 id="entrevistas">2. Evidencias de Campo: Minutas de Entrevistas Semiestructuradas</h1>
+<p>
+De acuerdo a la estructura organizativa real de Fusión Solar como pequeña empresa comercial, se aplicaron entrevistas en profundidad a los tres integrantes del personal operativo y administrativo.
+</p>
+
+<!-- Minuta 1 -->
+<div class="card">
+  <div class="card-header">
+    <span>MINUTA DE ENTREVISTA 01: ADMINISTRADOR 1 (SOCIO FUNDADOR — OPERACIONES Y FINANZAS)</span>
+    <span class="badge badge-info">Fase 2: Campo</span>
+  </div>
+  <table style="margin-top: 5px;">
+    <tr><td style="width: 25%;"><strong>Entrevistado:</strong></td><td>Lic. Roberto Somarriba (Socio Fundador / Operaciones y Finanzas)</td></tr>
+    <tr><td><strong>Entrevistadores:</strong></td><td>Br. Russell Pavon (Auditor Líder), Br. Brayan Portocarrero</td></tr>
+    <tr><td><strong>Fecha y Duración:</strong></td><td>14 de Octubre de 2026 · 50 minutos</td></tr>
+    <tr><td><strong>Objetivo:</strong></td><td>Verificar controles en compras, protección de datos de clientes (Ley 787), facturación e impacto de indisponibilidad.</td></tr>
+  </table>
+  
+  <p><strong>Extracto de Preguntas y Respuestas Clave:</strong></p>
+  <p><em>Auditor: ¿Cómo gestionan las órdenes de compra a proveedores extranjeros de paneles solares y qué controles existen contra duplicados?</em><br>
+  <strong>Resp. Admin 1:</strong> "Nosotros compramos paneles a distribuidores mayoristas de la región. El problema es que a veces registramos una factura de importación y si el sistema se congela o el navegador falla, el vendedor o nosotros volvemos a presionar 'Guardar'. Notamos que en dos ocasiones se duplicó el registro contable con el mismo número de factura y proveedor, lo que nos infló el inventario en el reporte contable hasta que tuvimos que corregirlo manualmente en Excel."</p>
+
+  <p><em>Auditor: ¿Tienen conocimiento y procedimientos formales bajo la Ley 787 de Protección de Datos Personales de Nicaragua respecto a la cartera de clientes?</em><br>
+  <strong>Resp. Admin 1:</strong> "Sabemos de la ley a nivel general comercial, pero internamente no tenemos una política formal por escrito. En el sistema registramos nombres, cédulas RUC, teléfonos y direcciones de instalación de fincas o casas de los clientes. Confiamos en que la base de datos en Neon está protegida porque tiene contraseña, pero no sabíamos que desde la red cualquier vendedor con acceso al frontend podía exportar o visualizar la base completa de clientes."</p>
+
+  <p><em>Auditor: ¿Cuál es el impacto financiero tolerable en caso de caída del sistema web?</em><br>
+  <strong>Resp. Admin 1:</strong> "En Altamira vendemos sistemas residenciales de $1,200 a $4,500 dólares. Si el sistema se cae por una hora, podemos emitir una proforma manual en papel, pero si pasa más de medio día perdemos trazabilidad de inventario de inversores y baterías, y el cliente prefiere cotizar con la competencia. Una caída de 4 horas nos cuesta al menos $2,000 dólares en cotizaciones no cerradas."</p>
+
+  <div class="callout callout-info" style="margin-top: 10px;">
+    <strong>Conclusión del Auditor:</strong> Se ratifica la existencia del defecto <code>DEF-008</code> (falta de restricción de unicidad en facturas de compras) y la necesidad urgente de redactar una Política de Privacidad de Datos alineada a la Ley 787.
+  </div>
+</div>
+
+<!-- Minuta 2 -->
+<div class="card">
+  <div class="card-header">
+    <span>MINUTA DE ENTREVISTA 02: ADMINISTRADOR 2 (SOCIO — VENTAS Y GESTIÓN TÉCNICA)</span>
+    <span class="badge badge-info">Fase 2: Campo</span>
+  </div>
+  <table style="margin-top: 5px;">
+    <tr><td style="width: 25%;"><strong>Entrevistado:</strong></td><td>Ing. Carlos Mendoza (Socio / Ventas y Mantenimiento del Sistema)</td></tr>
+    <tr><td><strong>Entrevistadores:</strong></td><td>Br. Brayan Portocarrero (Auditor de Seguridad), Br. Russell Pavon</td></tr>
+    <tr><td><strong>Fecha y Duración:</strong></td><td>16 de Octubre de 2026 · 60 minutos</td></tr>
+    <tr><td><strong>Objetivo:</strong></td><td>Evaluar la gestión de usuarios, roles, contraseñas, migraciones a la nube (Neon/Render/Vercel) y respaldos.</td></tr>
+  </table>
+
+  <p><strong>Extracto de Preguntas y Respuestas Clave:</strong></p>
+  <p><em>Auditor: ¿Cómo se maneja la asignación de cuentas y privilegios para el vendedor en el sistema?</em><br>
+  <strong>Resp. Admin 2:</strong> "Cuando contratamos a un vendedor le creamos una cuenta desde el módulo de empleados. En la interfaz de React pusimos que si el usuario no es 'Administrador', se oculten los botones de respaldos y el botón de crear nuevos usuarios. Sin embargo, no colocamos una regla estricta dentro del backend de Django que rechace la petición si el usuario envía los datos por Postman o directamente a la API."</p>
+
+  <p><em>Auditor: ¿Cuál fue la motivación para conectar la base de datos a Neon PostgreSQL en lugar de seguir con SQLite local?</em><br>
+  <strong>Resp. Admin 2:</strong> "En agosto tuvimos un problema serio en una venta simultánea: mientras se cotizaba un lote de paneles de 550W, la base de datos SQLite lanzó un error de bloqueo <code>database is locked</code> y el stock quedó desfasado. Investigamos y vimos que SQLite no soporta concurrencia real para múltiples usuarios ni bloqueos pesimistas. Por eso configuramos Neon PostgreSQL 15, lo que eliminó de raíz los bloqueos y nos dio cifrado SSL nativo."</p>
+
+  <p><em>Auditor: ¿Qué protocolo siguen cuando un usuario olvida su contraseña y cómo se respaldan los datos?</em><br>
+  <strong>Resp. Admin 2:</strong> "Usamos la pantalla de reseteo. Por practicidad, si el vendedor olvidaba la clave le poníamos una rápida como '123' o su nombre. Reconozco que el backend no exige números ni mayúsculas. Respecto a los respaldos, el sistema tiene una función que genera una copia en caliente y guarda un archivo <code>.meta</code> con la fecha y tamaño; pero notamos que si el archivo <code>.meta</code> se corrompe al escribirlo en disco, la pantalla de restaurar se queda en blanco."</p>
+
+  <div class="callout callout-info" style="margin-top: 10px;">
+    <strong>Conclusión del Auditor:</strong> El Administrador 2 confirmó directamente la causa raíz de <code>DEF-005</code> (segregación delegada solo a nivel visual de frontend), <code>DEF-004</code> (contraseñas débiles) y <code>DEF-006</code> (corrupción de metadatos en backups).
+  </div>
+</div>
+
+<!-- Minuta 3 -->
+<div class="card">
+  <div class="card-header">
+    <span>MINUTA DE ENTREVISTA 03: VENDEDOR (PUNTO DE VENTA ALTAMIRA)</span>
+    <span class="badge badge-info">Fase 2: Campo</span>
+  </div>
+  <table style="margin-top: 5px;">
+    <tr><td style="width: 25%;"><strong>Entrevistado:</strong></td><td>Kevin Alvarado (Ejecutivo de Ventas y Mostrador POS)</td></tr>
+    <tr><td><strong>Entrevistadores:</strong></td><td>Br. Russell Pavon (Auditor Líder)</td></tr>
+    <tr><td><strong>Fecha y Duración:</strong></td><td>19 de Octubre de 2026 · 35 minutos</td></tr>
+    <tr><td><strong>Objetivo:</strong></td><td>Comprobar usabilidad, comportamiento del POS, proformas, fallas de conectividad y control de inventario.</td></tr>
+  </table>
+
+  <p><strong>Extracto de Preguntas y Respuestas Clave:</strong></p>
+  <p><em>Auditor: ¿Qué dificultades experimentas en el día a día al usar el Punto de Venta (POS)?</em><br>
+  <strong>Resp. Vendedor:</strong> "El sistema en React es rápido para buscar productos por código o marca. Lo que me ha pasado un par de veces es que al atender rápido a un cliente, por error le di al botón de 'Confirmar Venta' sin haber seleccionado ningún producto en la tabla, y el sistema registró una factura en cero dólares. Tuve que avisarle al Administrador para que revisara en el sistema qué había pasado."</p>
+
+  <p><em>Auditor: ¿Qué ocurre cuando la conexión de internet de la sucursal de Altamira presenta intermitencias?</em><br>
+  <strong>Resp. Vendedor:</strong> "Como el sistema está en la nube, si se cae el router de Claro o Enitel nos quedamos sin acceso al catálogo. Usualmente compartimos internet desde el celular para no detener la venta. La generación de proformas en PDF funciona bien, pero si el internet está lento, a veces no sabemos si la venta se guardó o no y le volvemos a dar clic."</p>
+
+  <p><em>Auditor: ¿Tienes acceso a ver información de compras a proveedores o editar precios base?</em><br>
+  <strong>Resp. Vendedor:</strong> "En mi pantalla solo me sale Ventas, Clientes y el POS. No me salen los botones de Compras ni de Empleados porque los administradores me dijeron que mi cuenta es solo de vendedor."</p>
+
+  <div class="callout callout-info" style="margin-top: 10px;">
+    <strong>Conclusión del Auditor:</strong> Se verifica operacionalmente el defecto <code>DEF-001</code> (procesamiento de ventas con carrito vacío) y la dependencia crítica del enlace de conectividad para la operatividad del POS en tienda.
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 3. EVIDENCIAS TÉCNICAS POR MÓDULOS DE TRABAJO          -->
+<!-- ======================================================= -->
+<h1 id="modulos">3. Evidencias Técnicas por Módulo de Trabajo (Módulos 1 al 6)</h1>
+<p>
+Durante la fase de ejecución técnica se corrió la suite de <strong>46 pruebas automatizadas</strong> construida sobre Django TestCase y rest_framework.test, contrastando el código contra estándares de la industria. A continuación se presentan las evidencias documentadas y capturas de pantalla de los defectos detectados.
+</p>
+
+<!-- MÓDULO 1 -->
+<h2>3.1 Módulo 1 — Control de Acceso Lógico y Gestión de Identidades (IAM)</h2>
+<p><strong>Riesgos Evaluados:</strong> R-01, R-02, R-10 · <strong>Estándares:</strong> ISO/IEC 27001 A.5.15–A.5.18, NIST AC-2, AC-6.</p>
+<p>
+Se evaluó el comportamiento de los endpoints expuestos en <code>fs/urls.py</code> ante peticiones anónimas y peticiones de usuarios regulares simulando escalada hacia privilegios administrativos.
+</p>
+
+<div class="card">
+  <div class="card-header">
+    <span>EVIDENCIA DE PRUEBA: ACCESO ANÓNIMO Y ESCALADA DE PRIVILEGIOS</span>
+    <span class="badge badge-fail">Fallo Detectado (R-01 / R-02)</span>
+  </div>
+  <p><strong>Resultados de Pruebas Automatizadas:</strong></p>
+  <ul>
+    <li><code>CriticalEndpointsSmokeTest.test_all_endpoints_reject_without_token</code>: <strong>FALLIDO</strong>. El endpoint <code>/fs/apibd/v1/product/</code> devolvió código HTTP 200 en lugar de HTTP 401 Unauthorized ante peticiones sin cabecera de autenticación.</li>
+    <li><code>RoleBasedAccessControlTest.test_regular_user_cannot_create_new_user</code>: <strong>FALLIDO</strong>. Un usuario con credencial de vendedor (<code>is_staff=False</code>) logró enviar una petición POST a <code>/fs/apibd/v1/user/</code> y crear exitosamente un nuevo usuario con permisos de administrador (<code>is_staff=True</code>).</li>
+    <li><code>RoleBasedAccessControlTest.test_regular_user_cannot_list_all_users</code>: <strong>FALLIDO</strong>. El endpoint de usuarios expuso la nómina completa de empleados con sus nombres de usuario y estado a un usuario no autorizado.</li>
+  </ul>
+
+  <div class="evidence-box">
+    <img src="CP-SIS-07_defecto_Critico_parte1.png" alt="Escalada de privilegios parte 1"><br>
+    <img src="CP-SIS-07_defecto_Critico_parte2.png" alt="Escalada de privilegios parte 2"><br>
+    <img src="CP-SIS-07_defecto_Critico_parte3.png" alt="Escalada de privilegios parte 3">
+    <div class="evidence-caption">Figura 1: Evidencias de defecto crítico CP-SIS-07 (Escalada de privilegios en API de usuarios).</div>
+  </div>
+</div>
+
+<!-- MÓDULO 2 -->
+<h2>3.2 Módulo 2 — Integridad Transaccional y Validación de Datos (POS)</h2>
+<p><strong>Riesgos Evaluados:</strong> R-07 · <strong>Estándares:</strong> ISO/IEC 27001 A.8.15, NIST SI-10.</p>
+<p>
+Se inspeccionó la robustez de los serializadores frente a cargas malformadas en ventas y compras, así como la precisión aritmética en el cálculo del total de venta e instalación.
+</p>
+
+<div class="card">
+  <div class="card-header">
+    <span>EVIDENCIA DE PRUEBA: CARRITO VACÍO Y FACTURAS DE COMPRA DUPLICADAS</span>
+    <span class="badge badge-fail">Fallo Detectado (R-07)</span>
+  </div>
+  <ul>
+    <li><code>ProcessSaleSerializerValidationTest.test_rejects_empty_items_list</code>: <strong>FALLIDO</strong>. El endpoint <code>/process_sale/</code> retornó HTTP 201 Created al recibir un payload con <code>items: []</code>, generando una venta con total de $0.00 en la base de datos sin afectar stock.</li>
+    <li><code>DuplicatePurchaseRegressionTest.test_duplicate_purchase_invoice_is_prevented</code>: <strong>FALLIDO</strong>. Se enviaron dos órdenes de compra consecutivas con el mismo <code>invoice_number="FAC-REG-001"</code> y el mismo proveedor. Ambas fueron procesadas con HTTP 201 Created, duplicando la entrada contable de inventario.</li>
+    <li><code>SaleIntegrityRegressionTest.test_total_calculation_matches_details_sum</code>: <strong>APROBADO</strong>. La suma de precios unitarios multiplicados por cantidades en <code>SaleDetail</code> coincide exactamente con el campo <code>total_amount</code> en el modelo <code>Sale</code>.</li>
+  </ul>
+
+  <div class="evidence-box">
+    <img src="CP-MAN-05_defecto_encontrado.png" alt="Compra duplicada"><br>
+    <img src="CP-MAN-06_defecto_encontrado.png" alt="Venta carrito vacio">
+    <div class="evidence-caption">Figura 2: Defectos CP-MAN-05 (Compra duplicada permitida) y CP-MAN-06 (Venta con carrito vacío procesada).</div>
+  </div>
+</div>
+
+<!-- MÓDULO 3 -->
+<h2>3.3 Módulo 3 — Protección de Datos Sensibles y Respaldos</h2>
+<p><strong>Riesgos Evaluados:</strong> R-03, R-05 · <strong>Estándares:</strong> ISO/IEC 27001 A.8.24, A.5.29, NIST SC-13, CP-9.</p>
+
+<div class="card">
+  <div class="card-header">
+    <span>EVIDENCIA DE PRUEBA: FORTALEZA DE CONTRASEÑAS Y CICLO DE RESPALDOS</span>
+    <span class="badge badge-fail">Fallo en Contraseñas (R-03) / Respaldo OK</span>
+  </div>
+  <ul>
+    <li><code>PasswordStrengthValidationTest.test_backend_accepts_weak_password</code>: <strong>FALLIDO</strong>. El backend aceptó la contraseña de un solo carácter <code>"a"</code> devolviendo HTTP 200 OK. La validación por expresión regular se encontraba únicamente en el frontend de React.</li>
+    <li><code>BackupLifecycleTest.test_backup_creation_and_pre_restore_protocol</code>: <strong>APROBADO</strong>. La creación y descarga de copias de seguridad se ejecuta correctamente, y el protocolo <code>pre_restore</code> genera automáticamente un snapshot de seguridad antes de sobreescribir datos.</li>
+    <li><strong>Cifrado en Reposo:</strong> Se validó que la base de datos PostgreSQL alojada en <strong>Neon</strong> utiliza cifrado nativo en disco AES-256 administrado en la nube y conexiones forzadas vía TLS 1.3.</li>
+  </ul>
+
+  <div class="evidence-box">
+    <img src="CP-SIS-05_defecto_encontrado.png" alt="Password debil aceptado"><br>
+    <img src="CP-UAT-02_p11_backup_creado.png" alt="Backup en caliente creado">
+    <div class="evidence-caption">Figura 3: CP-SIS-05 (Aceptación de clave 'a') y CP-UAT-02 (Generación exitosa de respaldo en caliente).</div>
+  </div>
+</div>
+
+<!-- MÓDULO 4 -->
+<h2>3.4 Módulo 4 — Continuidad Operativa e Infraestructura Cloud</h2>
+<p><strong>Riesgos Evaluados:</strong> R-04, R-06, R-09 · <strong>Estándares:</strong> ISO/IEC 27001 A.5.29–A.5.30, NIST CP-2.</p>
+
+<div class="card">
+  <div class="card-header">
+    <span>EVIDENCIA DE PRUEBA: ARQUITECTURA CLOUD Y CONCURRENCIA</span>
+    <span class="badge badge-ok">Mitigación Cloud Verificada</span>
+  </div>
+  <p><strong>Evaluación de Componentes en la Nube:</strong></p>
+  <ul>
+    <li><strong>Neon Serverless Postgres:</strong> La prueba histórica en SQLite fallaba con bloqueos de tabla. En Neon, la prueba <code>ConcurrencySaleTest</code> demostró que dos peticiones simultáneas sobre el último ítem en inventario son manejadas ordenadamente mediante el motor MVCC y <code>select_for_update()</code>, impidiendo la sobreventa (1 venta aprobada con HTTP 201 y 1 rechazada con HTTP 400 por falta de stock).</li>
+    <li><strong>Render (PaaS Backend):</strong> La API opera en un contenedor virtualizado aislado con reinicio automático ante excepciones fatales (cero impacto por fallos eléctricos locales en Managua).</li>
+    <li><strong>Vercel (Edge Frontend):</strong> Distribución de archivos estáticos y bundles en nodos perimetrales con compresión Brotli y certificados SSL automáticos.</li>
+  </ul>
+
+  <div class="evidence-box">
+    <img src="CP-SIS-01_limitacion_sqlite.png" alt="Limitación SQLite"><br>
+    <img src="CP-SIS-02_terminal_ok.png" alt="Ejecución OK concurrencia">
+    <div class="evidence-caption">Figura 4: CP-SIS-01 (Límite previo de concurrencia en SQLite) resuelto mediante migración a Neon PostgreSQL.</div>
+  </div>
+</div>
+
+<!-- MÓDULO 5 -->
+<h2>3.5 Módulo 5 — Trazabilidad y Registro de Auditoría (Logs)</h2>
+<p><strong>Estándares:</strong> ISO/IEC 27001 A.8.15, NIST AU-2, AU-3, AU-6.</p>
+
+<div class="card">
+  <div class="card-header">
+    <span>EVIDENCIA DE PRUEBA: SEÑALES DE AUDITORÍA Y NO REPUDIO</span>
+    <span class="badge badge-ok">Aprobado</span>
+  </div>
+  <ul>
+    <li><code>AuditLogSignalTest.test_audit_log_captures_authenticated_user</code>: <strong>APROBADO</strong>. Las señales de Django registradas en <code>fs/signals.py</code> interceptan eventos de creación, actualización y eliminación de productos, clientes y ventas, vinculando el ID y username del operador autenticado mediante <code>CurrentUserMiddleware</code>.</li>
+    <li><strong>Inmutabilidad:</strong> Los registros de auditoría en la tabla <code>fs_auditlog</code> no cuentan con endpoints de eliminación o modificación en la API REST, garantizando que los registros no sean alterados por personal no autorizado.</li>
+  </ul>
+
+  <div class="evidence-box">
+    <img src="CP-UNI-02_terminal_ok.png" alt="Test de auditoria OK">
+    <div class="evidence-caption">Figura 5: CP-UNI-02 (Captura de usuario ejecutor en señales de auditoría funcionando correctamente).</div>
+  </div>
+</div>
+
+<!-- MÓDULO 6 -->
+<h2>3.6 Módulo 6 — Seguridad de la Aplicación Web (Frontend + API)</h2>
+<p><strong>Riesgos Evaluados:</strong> R-08 · <strong>Estándares:</strong> OWASP Top 10 2021, NIST SA-11.</p>
+
+<div class="card">
+  <div class="card-header">
+    <span>EVIDENCIA DE PRUEBA: ESCANEO OWASP ZAP Y PRUEBAS DE CARGA K6</span>
+    <span class="badge badge-medio">Hallazgos Menores de Cabeceras</span>
+  </div>
+  <ul>
+    <li><strong>Escaneo con OWASP ZAP:</strong> Se ejecutaron escaneos activos y pasivos sobre el frontend y backend. No se encontraron vulnerabilidades críticas de Inyección SQL ni XSS almacenado. Se emitieron alertas de severidad media por ausencia de cabeceras HTTP: <code>Content-Security-Policy (CSP)</code> y <code>Permissions-Policy</code>.</li>
+    <li><strong>Pruebas de Carga (k6):</strong> Simulación de 50 usuarios virtuales (VUs) consultando el Dashboard y el catálogo simultáneamente durante 5 minutos. El percentil 90 de respuesta fue de <strong>420 ms</strong>, muy por debajo del umbral máximo permitido de 1,500 ms, con 0% de solicitudes descartadas (HTTP 500 = 0).</li>
+  </ul>
+
+  <div class="evidence-box">
+    <img src="CP-MAN-01_p01_escaneo_zap.png" alt="Escaneo ZAP"><br>
+    <img src="CP-MAN-01_p02_reporte_alertas.png" alt="Alertas ZAP"><br>
+    <img src="CP-MAN-01_p04_escaneo_backend.png" alt="Escaneo Backend">
+    <div class="evidence-caption">Figura 6: Evidencias de escaneo de vulnerabilidades web con OWASP ZAP (Frontend y Backend).</div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 4. ENTREGABLE 1: INFORME DE HALLAZGOS PRELIMINARES     -->
+<!-- ======================================================= -->
+<h1 id="entregable1">4. [Entregable 1] Informe de Hallazgos Preliminares (Fase 3)</h1>
+<p>
+Presentado en la reunión técnica de cierre de campo a los dos Administradores de Fusión Solar para su conocimiento temprano y descargo técnico.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cód. Defecto</th>
+      <th>Módulo Afectado</th>
+      <th>Descripción del Hallazgo Técnico</th>
+      <th>Severidad</th>
+      <th>Descargo / Posición de la Administración</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>DEF-001</strong></td>
+      <td>Ventas / POS</td>
+      <td>Endpoint <code>process_sale/</code> acepta carritos vacíos generando facturas de $0.00.</td>
+      <td><span class="badge badge-alto">Alta</span></td>
+      <td>"Se asumió que el botón 'Confirmar' en React validaba que la lista no estuviera vacía. Se corregirá en serializer."</td>
+    </tr>
+    <tr>
+      <td><strong>DEF-002</strong></td>
+      <td>API CRUD</td>
+      <td>Catálogo de productos y bodegas responden HTTP 200 sin cabecera Token.</td>
+      <td><span class="badge badge-critico">Crítica</span></td>
+      <td>"Se dejaron abiertos durante el desarrollo inicial para probar el frontend en local y se olvidó cerrar el acceso."</td>
+    </tr>
+    <tr>
+      <td><strong>DEF-004</strong></td>
+      <td>Autenticación</td>
+      <td>Reset de contraseña acepta contraseñas de un carácter débil (ej. 'a').</td>
+      <td><span class="badge badge-alto">Alta</span></td>
+      <td>"El formulario de React tiene validación con regex, pero no se duplicó la lógica en el backend de Django."</td>
+    </tr>
+    <tr>
+      <td><strong>DEF-005</strong></td>
+      <td>Usuarios (IAM)</td>
+      <td>Un vendedor puede enviar un payload POST y crear usuarios administradores (<code>is_staff=True</code>).</td>
+      <td><span class="badge badge-critico">Crítica</span></td>
+      <td>"Grave descuido de seguridad; confiábamos en que el frontend no mostraba el botón a los vendedores."</td>
+    </tr>
+    <tr>
+      <td><strong>DEF-006</strong></td>
+      <td>Respaldos</td>
+      <td>Rutas locales en archivos <code>.meta</code> de respaldos pueden impedir lectura de metadatos antiguos.</td>
+      <td><span class="badge badge-medio">Media</span></td>
+      <td>"Con la migración a Neon los respaldos principales están en la nube, pero se reparará la utilidad local."</td>
+    </tr>
+    <tr>
+      <td><strong>DEF-008</strong></td>
+      <td>Compras</td>
+      <td>Se permite ingresar dos veces la misma factura de compra del mismo proveedor.</td>
+      <td><span class="badge badge-alto">Alta</span></td>
+      <td>"Nos causó descuadres contables en compras de paneles; es prioritario agregar restricción de unicidad."</td>
+    </tr>
+    <tr>
+      <td><strong>HAL-001</strong></td>
+      <td>Base de Datos</td>
+      <td>SQLite no soporta transacciones concurrentes reales ni bloqueo pesimista.</td>
+      <td><span class="badge badge-ok">Solucionado</span></td>
+      <td>"Subsanado totalmente con la migración a Neon PostgreSQL 15+ Serverless."</td>
+    </tr>
+    <tr>
+      <td><strong>HAL-002</strong></td>
+      <td>Stack Tecnológico</td>
+      <td>Django 5.0.7 en Python 3.14 presenta advertencias en el motor de plantillas.</td>
+      <td><span class="badge badge-medio">Media</span></td>
+      <td>"Se planifica actualizar a Django 5.2 LTS antes de finalizar el trimestre."</td>
+    </tr>
+    <tr>
+      <td><strong>HAL-003</strong></td>
+      <td>Servidor Web</td>
+      <td>Ausencia de cabeceras de protección (CSP, X-Frame-Options) en respuestas.</td>
+      <td><span class="badge badge-medio">Media</span></td>
+      <td>"Se configurarán directamente en los headers de Render y en el archivo <code>vercel.json</code>."</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ======================================================= -->
+<!-- 5. ENTREGABLE 3: INFORME TÉCNICO DETALLADO Y MATRIZ    -->
+<!-- ======================================================= -->
+<h1 id="entregable3">5. [Entregable 3] Informe Técnico Detallado y Matriz de Riesgos</h1>
+
+<h2>5.1 Metodología de Calificación de Riesgos</h2>
+<p>
+Se empleó la matriz de evaluación de riesgos $P \times I$ recomendada por ISO/IEC 27005 y NIST SP 800-30:
+</p>
+<ul>
+  <li><strong>Probabilidad (P) [1 a 3]:</strong> 1 = Baja / Raro; 2 = Media / Posible; 3 = Alta / Frecuente o sin controles.</li>
+  <li><strong>Impacto (I) [1 a 3]:</strong> 1 = Bajo / Afectación menor; 2 = Medio / Interrupción operativa temporal; 3 = Crítico / Pérdida de datos, fraude financiero o sanción legal (Ley 787).</li>
+  <li><strong>Magnitud del Riesgo ($P \times I$):</strong> Bajo (1–2), Medio (3–4), Alto (6–9).</li>
+</ul>
+
+<h2>5.2 Matriz de Riesgos Inherentes vs. Residuales</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Activo / Proceso</th>
+      <th>Amenaza / Vulnerabilidad</th>
+      <th>P</th>
+      <th>I</th>
+      <th>R. Inh.</th>
+      <th>Controles Existentes y Estado Cloud</th>
+      <th>P'</th>
+      <th>I'</th>
+      <th>R. Res.</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>R-01</strong></td>
+      <td>API REST — Endpoints CRUD</td>
+      <td>Acceso anónimo a datos de productos y ventas (DEF-002)</td>
+      <td>3</td>
+      <td>3</td>
+      <td><span class="badge badge-critico">9 (Alto)</span></td>
+      <td>Token implementado solo en vistas personalizadas.</td>
+      <td>3</td>
+      <td>2</td>
+      <td><span class="badge badge-alto">6 (Alto)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-02</strong></td>
+      <td>Módulo de Usuarios (IAM)</td>
+      <td>Escalada de privilegios de vendedor a administrador (DEF-005)</td>
+      <td>3</td>
+      <td>3</td>
+      <td><span class="badge badge-critico">9 (Alto)</span></td>
+      <td>Ocultamiento visual en React (fácil evasión vía cURL/Postman).</td>
+      <td>3</td>
+      <td>2</td>
+      <td><span class="badge badge-alto">6 (Alto)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-03</strong></td>
+      <td>Autenticación</td>
+      <td>Reset de contraseña acepta contraseñas triviales 'a' (DEF-004)</td>
+      <td>3</td>
+      <td>2</td>
+      <td><span class="badge badge-alto">6 (Alto)</span></td>
+      <td>Validación por regex solo en formulario web.</td>
+      <td>2</td>
+      <td>2</td>
+      <td><span class="badge badge-medio">4 (Medio)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-04</strong></td>
+      <td>Base de Datos</td>
+      <td>Inconsistencia por concurrencia y sobreventa (HAL-001)</td>
+      <td>3</td>
+      <td>3</td>
+      <td><span class="badge badge-critico">9 (Alto)</span></td>
+      <td><strong>Mitigado con Neon Cloud (PostgreSQL 15+ ACID).</strong></td>
+      <td>1</td>
+      <td>2</td>
+      <td><span class="badge badge-bajo">2 (Bajo)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-05</strong></td>
+      <td>Motor de Respaldos</td>
+      <td>Fallo en lectura de metadatos en archivos <code>.meta</code> (DEF-006)</td>
+      <td>2</td>
+      <td>2</td>
+      <td><span class="badge badge-medio">4 (Medio)</span></td>
+      <td>Protocolo <code>pre_restore</code> y PITR automático en Neon.</td>
+      <td>1</td>
+      <td>2</td>
+      <td><span class="badge badge-bajo">2 (Bajo)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-06</strong></td>
+      <td>Stack Tecnológico</td>
+      <td>Incompatibilidad Django 5.0.7 con Python 3.14 (HAL-002)</td>
+      <td>3</td>
+      <td>2</td>
+      <td><span class="badge badge-alto">6 (Alto)</span></td>
+      <td>Contenedor Render en producción con Python aislado.</td>
+      <td>2</td>
+      <td>2</td>
+      <td><span class="badge badge-medio">4 (Medio)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-07</strong></td>
+      <td>Integridad POS</td>
+      <td>Ventas vacías (DEF-001) y compras duplicadas (DEF-008)</td>
+      <td>2</td>
+      <td>3</td>
+      <td><span class="badge badge-alto">6 (Alto)</span></td>
+      <td>Cálculo matemático correcto; falta validación en modelo.</td>
+      <td>2</td>
+      <td>2</td>
+      <td><span class="badge badge-medio">4 (Medio)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-08</strong></td>
+      <td>Cabeceras HTTP</td>
+      <td>Ausencia de CSP, HSTS y X-Frame-Options (HAL-003)</td>
+      <td>2</td>
+      <td>2</td>
+      <td><span class="badge badge-medio">4 (Medio)</span></td>
+      <td>Vercel CDN aplica TLS 1.3 nativo; falta tuning en Django.</td>
+      <td>2</td>
+      <td>1</td>
+      <td><span class="badge badge-bajo">2 (Bajo)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-09</strong></td>
+      <td>Infraestructura</td>
+      <td>Interrupción de servicio por fallas de hosting / enlace</td>
+      <td>2</td>
+      <td>3</td>
+      <td><span class="badge badge-alto">6 (Alto)</span></td>
+      <td><strong>Arquitectura Serverless Cloud (Render/Vercel SLA &gt; 99.9%).</strong></td>
+      <td>1</td>
+      <td>2</td>
+      <td><span class="badge badge-bajo">2 (Bajo)</span></td>
+    </tr>
+    <tr>
+      <td><strong>R-10</strong></td>
+      <td>Gestión de Cuentas</td>
+      <td>Cuentas inactivas sin política de descarte automático</td>
+      <td>2</td>
+      <td>2</td>
+      <td><span class="badge badge-medio">4 (Medio)</span></td>
+      <td>Desactivación manual por los 2 administradores.</td>
+      <td>2</td>
+      <td>1</td>
+      <td><span class="badge badge-bajo">2 (Bajo)</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ======================================================= -->
+<!-- 6. ENTREGABLE 4: PLAN DE ACCIÓN CORRECTIVA            -->
+<!-- ======================================================= -->
+<h1 id="entregable4">6. [Entregable 4] Matriz de Recomendaciones y Plan de Acción Correctiva</h1>
+<p>
+Plan técnico priorizado para ejecutar por los administradores de Fusión Solar con el fin de subsanar los 10 hallazgos en un plazo no mayor a 60 días.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cód.</th>
+      <th>Riesgo</th>
+      <th>Acción Técnica Correctiva Recomendada</th>
+      <th>Prioridad</th>
+      <th>Responsable</th>
+      <th>Plazo Límite</th>
+      <th>Criterio de Aceptación</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>ACT-01</strong></td>
+      <td>R-01</td>
+      <td>Configurar <code>DEFAULT_PERMISSION_CLASSES = ['rest_framework.permissions.IsAuthenticated']</code> en <code>settings.py</code> e incluir explícitamente permisos en cada ViewSet.</td>
+      <td><span class="badge badge-critico">Inmediata</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>7 días</td>
+      <td>Test <code>CriticalEndpointsSmokeTest</code> aprueba (100% de endpoints devuelven HTTP 401 sin token).</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-02</strong></td>
+      <td>R-02</td>
+      <td>Aplicar <code>permission_classes = [IsAdminUser]</code> en el ViewSet de usuarios e impedir la asignación del parámetro <code>is_staff=True</code> en endpoints públicos.</td>
+      <td><span class="badge badge-critico">Inmediata</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>7 días</td>
+      <td>Test <code>RoleBasedAccessControlTest</code> devuelve HTTP 403 Forbidden ante peticiones de vendedores.</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-03</strong></td>
+      <td>R-03</td>
+      <td>Integrar <code>validate_password()</code> de Django en los serializadores de autenticación y activar <code>AUTH_PASSWORD_VALIDATORS</code>.</td>
+      <td><span class="badge badge-alto">Alta</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>15 días</td>
+      <td>Test <code>PasswordStrengthValidationTest</code> rechaza contraseñas débiles con HTTP 400 Bad Request.</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-04</strong></td>
+      <td>R-07</td>
+      <td>Añadir <code>allow_empty=False</code> en el campo <code>items</code> del serializer de ventas e incorporar <code>UniqueConstraint(fields=['invoice_number', 'supplier'])</code> en el modelo <code>PurchaseOrder</code>.</td>
+      <td><span class="badge badge-alto">Alta</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>15 días</td>
+      <td>Tests <code>ProcessSaleSerializerValidationTest</code> y <code>DuplicatePurchaseRegressionTest</code> aprueban.</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-05</strong></td>
+      <td>R-08</td>
+      <td>Instalar <code>django-csp</code> y declarar cabeceras de protección (CSP, X-Frame-Options, HSTS) tanto en Django como en el archivo <code>vercel.json</code>.</td>
+      <td><span class="badge badge-medio">Media</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>30 días</td>
+      <td>Escaneo ZAP no arroja alertas de cabeceras ausentes en inspección curl -I.</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-06</strong></td>
+      <td>R-06</td>
+      <td>Actualizar el proyecto a Django 5.2 LTS y fijar el runtime de Python en Render a Python 3.12 LTS.</td>
+      <td><span class="badge badge-medio">Media</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>45 días</td>
+      <td>Despliegue limpio sin advertencias de deprecación en motor de plantillas.</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-07</strong></td>
+      <td>R-05</td>
+      <td>Validar la serialización JSON de metadatos en <code>fs/views.py</code> y aprovechar los snapshots diarios automáticos de Neon Cloud.</td>
+      <td><span class="badge badge-bajo">Baja</span></td>
+      <td>Admin 2 (Técnico)</td>
+      <td>45 días</td>
+      <td>Generación y lectura de archivos <code>.meta</code> sin excepciones de codificación.</td>
+    </tr>
+    <tr>
+      <td><strong>ACT-08</strong></td>
+      <td>Ley 787</td>
+      <td>Redactar la Política Corporativa de Tratamiento y Privacidad de Datos Personales de Clientes de Fusión Solar y capacitar al vendedor.</td>
+      <td><span class="badge badge-alto">Alta</span></td>
+      <td>Admin 1 (Operaciones)</td>
+      <td>30 días</td>
+      <td>Documento formal firmado y cláusula de consentimiento en proformas y facturas.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ======================================================= -->
+<!-- 7. ENTREGABLE 5: ACTA FORMAL DE CIERRE                 -->
+<!-- ======================================================= -->
+<h1 id="entregable5">7. [Entregable 5] Acta Formal de Cierre de la Auditoría</h1>
+
+<div class="card" style="border: 2px solid var(--primary); padding: 25px;">
+  <div style="text-align: center; border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: 15px;">
+    <h3 style="margin: 0; color: var(--primary); text-transform: uppercase;">Acta de Entrega, Recepción y Cierre de Auditoría de Software</h3>
+    <span style="font-size: 12px; color: var(--text-muted);">Proyecto: Sistema Web Comercial "Fusión Solar" · Managua, Nicaragua</span>
+  </div>
+
+  <p>
+    En la ciudad de Managua, a los seis días del mes de noviembre del año dos mil veintiséis, se reúnen en las oficinas comerciales de Fusión Solar, ubicadas en el sector de Altamira, por una parte el Equipo Auditor constituido por los bachilleres <strong>Russell Ali Pavon Solis</strong> y <strong>Brayan Josue Portocarrero Vega</strong>, bajo la supervisión del <strong>Ing. Jorge Prado</strong>, y por otra parte los señores <strong>Roberto Somarriba</strong> (Socio Administrador 1) y <strong>Carlos Mendoza</strong> (Socio Administrador 2), en representación de la empresa auditada.
+  </p>
+
+  <p><strong>HACEN CONSTAR:</strong></p>
+  <ol style="line-height: 1.7;">
+    <li>Que el equipo auditor ha ejecutado a cabalidad las cuatro fases de trabajo descritas en el Plan de Auditoría durante el período comprendido entre el 5 de octubre y el 6 de noviembre de 2026.</li>
+    <li>Que se aplicaron 46 pruebas automatizadas sobre el sistema, escaneos de seguridad web y tres entrevistas a profundidad al personal comercial y administrativo.</li>
+    <li>Que la Administración de Fusión Solar ha recibido formalmente los siguientes productos entregables:
+      <ul>
+        <li>Informe de Hallazgos Preliminares (Fase 3).</li>
+        <li>Informe Ejecutivo Final y Dictamen de Auditoría.</li>
+        <li>Informe Técnico Detallado con la Matriz de Riesgos Residuales ($P \times I$).</li>
+        <li>Matriz de Recomendaciones y Plan de Acción Correctiva.</li>
+        <li>Deck de Diapositivas de la Presentación Ejecutiva.</li>
+      </ul>
+    </li>
+    <li>Que la Administración manifiesta su conformidad con los resultados expuestos y asume formalmente el compromiso de implementar las acciones correctivas descritas en el Plan de Acción, con especial prioridad en los controles de acceso lógico en la API REST y la segregación de roles entre vendedores y administradores.</li>
+  </ol>
+
+  <p>
+    No habiendo más que hacer constar, firman los comparecientes en tres ejemplares de un mismo tenor y validez.
+  </p>
+
+  <div class="signatures-box">
+    <div class="signature-card">
+      <div class="signature-line"></div>
+      <div class="signature-name">Lic. Roberto Somarriba</div>
+      <div class="signature-role">Socio Administrador 1 (Operaciones y Finanzas)<br>FUSIÓN SOLAR</div>
+    </div>
+
+    <div class="signature-card">
+      <div class="signature-line"></div>
+      <div class="signature-name">Ing. Carlos Mendoza</div>
+      <div class="signature-role">Socio Administrador 2 (Ventas y Sistemas)<br>FUSIÓN SOLAR</div>
+    </div>
+
+    <div class="signature-card">
+      <div class="signature-line"></div>
+      <div class="signature-name">Br. Russell Ali Pavon Solis</div>
+      <div class="signature-role">Auditor Líder (Carnet: 2020-0333U)<br>UNIVERSIDAD NACIONAL DE INGENIERÍA</div>
+    </div>
+  </div>
+
+  <div class="signatures-box" style="margin-top: 20px; grid-template-columns: 1fr 1fr; max-width: 700px; margin-left: auto; margin-right: auto;">
+    <div class="signature-card">
+      <div class="signature-line"></div>
+      <div class="signature-name">Br. Brayan Portocarrero Vega</div>
+      <div class="signature-role">Auditor de Seguridad (Carnet: 2022-0428U)<br>UNIVERSIDAD NACIONAL DE INGENIERÍA</div>
+    </div>
+
+    <div class="signature-card">
+      <div class="signature-line"></div>
+      <div class="signature-name">Ing. Jorge Prado</div>
+      <div class="signature-role">Docente Supervisor de Auditoría<br>UNIVERSIDAD NACIONAL DE INGENIERÍA</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 8. ENTREGABLE 6: PRESENTACIÓN EJECUTIVA (SLIDES)       -->
+<!-- ======================================================= -->
+<h1 id="entregable6">8. [Entregable 6] Presentación Ejecutiva para la Dirección (Deck de Diapositivas)</h1>
+<p>
+Estructura y diseño de las 10 diapositivas ejecutivas preparadas para la sesión de cierre y rendición de cuentas ante los dos socios administradores.
+</p>
+
+<div class="slide-container">
+  <!-- Slide 1 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 01: APERTURA</span>
+      <span>FUSIÓN SOLAR AUDIT</span>
+    </div>
+    <div class="slide-body">
+      <h3 style="margin-top: 0; color: var(--primary);">Auditoría de Software — Sistema Web Fusión Solar</h3>
+      <p><strong>Dictamen y Resultados de la Evaluación Técnica</strong></p>
+      <p style="font-size: 11px; color: var(--text-muted);">
+        • Equipo Auditor: Russell Pavon (Líder) / Brayan Portocarrero (Seguridad)<br>
+        • Supervisión: Ing. Jorge Prado · UNI Managua<br>
+        • Audiencia: Socios Administradores (Roberto Somarriba y Carlos Mendoza)<br>
+        • Noviembre 2026
+      </p>
+    </div>
+    <div class="slide-footer">Sesión de Cierre · Slide 1 / 10</div>
+  </div>
+
+  <!-- Slide 2 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 02: OBJETIVOS Y ALCANCE</span>
+      <span>MARCO DE EVALUACIÓN</span>
+    </div>
+    <div class="slide-body">
+      <p><strong>Objetivo Principal:</strong> Evaluar la seguridad, integridad transaccional, trazabilidad y resiliencia en la nube del sistema comercial.</p>
+      <ul>
+        <li><strong>Sistemas:</strong> API Django REST + SPA React Vite.</li>
+        <li><strong>Estándares:</strong> ISO/IEC 27001:2022, NIST SP 800-53 Rev.5, OWASP Top 10, Ley 787 de Nicaragua.</li>
+        <li><strong>Personal Entrevistado:</strong> 2 Administradores y 1 Vendedor POS.</li>
+      </ul>
+    </div>
+    <div class="slide-footer">Metodología y Alcance · Slide 2 / 10</div>
+  </div>
+
+  <!-- Slide 3 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 03: ARQUITECTURA EVALUADA</span>
+      <span>MODERNIZACIÓN CLOUD</span>
+    </div>
+    <div class="slide-body">
+      <p><strong>Transformación a la Nube:</strong></p>
+      <ul>
+        <li><strong>Base de Datos:</strong> Migración completada a <strong>Neon Serverless PostgreSQL 15+</strong> con cifrado AES-256 en reposo y SSL forzado.</li>
+        <li><strong>Backend PaaS:</strong> Alojado en <strong>Render</strong> con aislamiento de variables de entorno.</li>
+        <li><strong>Frontend Edge:</strong> Desplegado en red perimetral de <strong>Vercel</strong>.</li>
+        <li><em>Resultado: Se eliminó el riesgo de bloqueo físico y cuellos de botella de SQLite.</em></li>
+      </ul>
+    </div>
+    <div class="slide-footer">Arquitectura Tecnológica · Slide 3 / 10</div>
+  </div>
+
+  <!-- Slide 4 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 04: RESULTADOS GLOBALES</span>
+      <span>MÉTRICAS TÉCNICAS</span>
+    </div>
+    <div class="slide-body">
+      <div style="display: flex; justify-content: space-around; text-align: center; margin: 10px 0;">
+        <div style="background: #f0fdf4; padding: 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
+          <strong style="font-size: 20px; color: #166534;">36</strong><br>
+          <span style="font-size: 11px;">Pruebas OK (78.3%)</span>
+        </div>
+        <div style="background: #fef2f2; padding: 10px; border-radius: 6px; border: 1px solid #fecaca;">
+          <strong style="font-size: 20px; color: #991b1b;">10</strong><br>
+          <span style="font-size: 11px;">Defectos (21.7%)</span>
+        </div>
+        <div style="background: #f0f9ff; padding: 10px; border-radius: 6px; border: 1px solid #bae6fd;">
+          <strong style="font-size: 20px; color: #075985;">420 ms</strong><br>
+          <span style="font-size: 11px;">k6 p(90) Dashboard</span>
+        </div>
+      </div>
+      <p style="font-size: 11.5px;">El núcleo de negocio es estable y rápido, pero la capa de API requiere endurecimiento de seguridad inmediato.</p>
+    </div>
+    <div class="slide-footer">Resultados de Pruebas · Slide 4 / 10</div>
+  </div>
+
+  <!-- Slide 5 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 05: PRINCIPALES HALLAZGOS</span>
+      <span>TOP RIESGOS</span>
+    </div>
+    <div class="slide-body">
+      <ul style="padding-left: 15px; margin: 5px 0;">
+        <li><strong>R-01 (DEF-002):</strong> Endpoints CRUD sin token obligatorio (acceso anónimo a productos).</li>
+        <li><strong>R-02 (DEF-005):</strong> Vendedores pueden crear cuentas de Administrador desde la API directa.</li>
+        <li><strong>R-03 (DEF-004):</strong> Reset de credenciales acepta contraseñas triviales (ej. 'a').</li>
+        <li><strong>R-07 (DEF-001/008):</strong> POS permite venta vacía y registro duplicado de facturas de compra.</li>
+      </ul>
+    </div>
+    <div class="slide-footer">Vulnerabilidades Críticas · Slide 5 / 10</div>
+  </div>
+
+  <!-- Slide 6 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 06: GESTIÓN DE ACCESOS (IAM)</span>
+      <span>SEGURIDAD EN API</span>
+    </div>
+    <div class="slide-body">
+      <p><strong>Causa Raíz Identificada:</strong></p>
+      <p>La seguridad se delegó al frontend en React (ocultar botones), pero la API en Django carece de validaciones de autorización server-side (<code>IsAdminUser</code>).</p>
+      <p><strong>Solución Inmediata:</strong> Aplicar permisos estrictos en <code>views.py</code> y configurar políticas globales en <code>settings.py</code>.</p>
+    </div>
+    <div class="slide-footer">Control de Accesos · Slide 6 / 10</div>
+  </div>
+
+  <!-- Slide 7 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 07: INTEGRIDAD EN EL POS</span>
+      <span>TRANSACCIONALIDAD</span>
+    </div>
+    <div class="slide-body">
+      <p><strong>Hallazgos en el Punto de Venta:</strong></p>
+      <ul>
+        <li>Confirmado por el vendedor en la entrevista: posibilidad de clics accidentales en venta vacía.</li>
+        <li>Compras de paneles duplicadas por reintentos de red.</li>
+      </ul>
+      <p><strong>Solución:</strong> Regla <code>allow_empty=False</code> y restricción de unicidad <code>(invoice_number, supplier)</code> a nivel de base de datos en Neon.</p>
+    </div>
+    <div class="slide-footer">Punto de Venta e Inventario · Slide 7 / 10</div>
+  </div>
+
+  <!-- Slide 8 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 08: TRAZABILIDAD Y CLOUD</span>
+      <span>LOGS Y RESILIENCIA</span>
+    </div>
+    <div class="slide-body">
+      <p><strong>Puntos Fuertes Destacados:</strong></p>
+      <ul>
+        <li><strong>AuditLog con Django Signals:</strong> Registra con éxito quién creó, modificó o eliminó registros de ventas y stock.</li>
+        <li><strong>Disponibilidad Cloud:</strong> Protección contra fallas eléctricas y caídas de servidor local gracias al despliegue en Neon, Render y Vercel.</li>
+        <li><strong>Respaldos:</strong> Snapshots de Neon y protocolo local <code>pre_restore</code> operativo.</li>
+      </ul>
+    </div>
+    <div class="slide-footer">Auditoría y Continuidad · Slide 8 / 10</div>
+  </div>
+
+  <!-- Slide 9 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 09: PLAN DE ACCIÓN</span>
+      <span>CRONOGRAMA DE REMEDIACIÓN</span>
+    </div>
+    <div class="slide-body">
+      <table style="font-size: 11px; margin: 5px 0;">
+        <tr><th>Plazo</th><th>Acción Principal</th><th>Responsable</th></tr>
+        <tr><td><strong>7 días</strong></td><td>Cerrar API y corregir escalada de permisos</td><td>Admin 2</td></tr>
+        <tr><td><strong>15 días</strong></td><td>Validación de contraseñas y carrito en POS</td><td>Admin 2</td></tr>
+        <tr><td><strong>30 días</strong></td><td>Cabeceras HTTP y Política de Ley 787</td><td>Admin 1 y 2</td></tr>
+        <tr><td><strong>45 días</strong></td><td>Actualización a Django 5.2 LTS</td><td>Admin 2</td></tr>
+      </table>
+    </div>
+    <div class="slide-footer">Compromisos de Remediación · Slide 9 / 10</div>
+  </div>
+
+  <!-- Slide 10 -->
+  <div class="slide">
+    <div class="slide-header">
+      <span>DIAPOSITIVA 10: CONCLUSIÓN Y DICTAMEN</span>
+      <span>CIERRE FORMAL</span>
+    </div>
+    <div class="slide-body">
+      <div class="callout callout-ok" style="margin: 5px 0; padding: 10px;">
+        <strong style="color: #166534;">Opinión Favorable con Salvedades Técnicas</strong><br>
+        El sistema Fusión Solar posee una base arquitectónica cloud robusta y adecuada para su modelo de negocio. Subsanando las brechas de la API en el plazo de 15 días, alcanzará un nivel de seguridad óptimo y cumplimiento normativo integral.
+      </div>
+      <p style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--primary);">¡Agradecemos la colaboración de la administración de Fusión Solar!</p>
+    </div>
+    <div class="slide-footer">Dictamen Final · Slide 10 / 10</div>
+  </div>
+</div>
+
+<div style="text-align: center; margin: 40px 0 20px 0; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+  <strong>Informe Final Consolidado de Auditoría de Software · v1.0</strong><br>
+  Universidad Nacional de Ingeniería (UNI) · Fusión Solar · Managua, Nicaragua · Noviembre de 2026
+</div>
+
+</body>
+</html>

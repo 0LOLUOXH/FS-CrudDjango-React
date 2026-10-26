@@ -1,147 +1,113 @@
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-from django.http import JsonResponse, HttpResponse
-from django.conf import settings
-from datetime import datetime
 import os
-import shutil
-import json
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.authentication import TokenAuthentication
+from django.http import HttpResponse
+from django.conf import settings
+from fs.backup_service import (
+    create_backup,
+    restore_backup,
+    list_backups,
+    get_backups_dir
+)
 
 class CreateBackupView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         try:
-            db_path = settings.DATABASES['default']['NAME']
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_filename = f"backup_{timestamp}.db"
-            backup_path = os.path.join(settings.BACKUPS_DIR, backup_filename)
-
-            shutil.copy2(db_path, backup_path)
-
-            metadata = {
-                'filename': backup_filename,
-                'created_at': datetime.now().isoformat(),
-                'size': os.path.getsize(backup_path),
-                'db_path': str(db_path)
-            }
-
-            with open(os.path.join(settings.BACKUPS_DIR, f"{backup_filename}.meta"), 'w') as f:
-                json.dump(metadata, f)
-
-            return JsonResponse({
+            backup_type = request.data.get('type', 'full') if isinstance(request.data, dict) else 'full'
+            metadata = create_backup(backup_type=backup_type)
+            return Response({
                 'status': 'success',
-                'message': 'Backup creado correctamente',
+                'message': f'Copia de seguridad ({metadata.get("backup_type", "full")}) creada correctamente',
                 'backup': metadata
-            })
+            }, status=status.HTTP_200_OK)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class RestoreBackupView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         try:
-            data = request.data
-            backup_filename = data.get('filename')
+            filename = request.data.get('filename') if isinstance(request.data, dict) else None
+            if not filename:
+                return Response({'status': 'error', 'message': 'Nombre de backup no proporcionado'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if not backup_filename:
-                return JsonResponse({'status': 'error', 'message': 'Nombre de backup no proporcionado'}, status=400)
-
-            backup_path = os.path.join(settings.BACKUPS_DIR, backup_filename)
-            db_path = settings.DATABASES['default']['NAME']
-
-            if not os.path.exists(backup_path):
-                return JsonResponse({'status': 'error', 'message': 'Backup no encontrado'}, status=404)
-
-            current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            pre_restore_backup = f"pre_restore_{current_timestamp}.db"
-            shutil.copy2(db_path, os.path.join(settings.BACKUPS_DIR, pre_restore_backup))
-
-            shutil.copy2(backup_path, db_path)
-
-            return JsonResponse({
+            result = restore_backup(filename)
+            return Response({
                 'status': 'success',
-                'message': f'Base de datos restaurada desde {backup_filename}',
-                'pre_restore_backup': pre_restore_backup
-            })
+                'message': result.get('message', f'Base de datos restaurada desde {filename}'),
+                'pre_restore_backup': result.get('pre_restore_backup')
+            }, status=status.HTTP_200_OK)
+        except FileNotFoundError as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ListBackupsView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         try:
-            backups = []
-            files = os.listdir(settings.BACKUPS_DIR)
-
-            for file in files:
-                if file.startswith('backup_') and file.endswith('.db'):
-                    meta_file = os.path.join(settings.BACKUPS_DIR, f"{file}.meta")
-                    if os.path.exists(meta_file):
-                        try:
-                            with open(meta_file, 'r') as f:
-                                metadata = json.load(f)
-                                backups.append(metadata)
-                        except Exception as e:
-                            print(f"Error leyendo {meta_file}: {str(e)}")
-
-            backups.sort(key=lambda x: x['created_at'], reverse=True)
-
-            return JsonResponse({
+            backups = list_backups()
+            return Response({
                 'status': 'success',
                 'backups': backups
-            })
+            }, status=status.HTTP_200_OK)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e), 'backups': []}, status=500)
+            return Response({'status': 'error', 'message': str(e), 'backups': []}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class DownloadBackupView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         try:
-            backup_filename = request.GET.get('filename')
-            if not backup_filename:
-                return JsonResponse({'status': 'error', 'message': 'Nombre de backup no proporcionado'}, status=400)
+            filename = request.GET.get('filename')
+            if not filename:
+                return Response({'status': 'error', 'message': 'Nombre de backup no proporcionado'}, status=status.HTTP_400_BAD_REQUEST)
 
-            backup_path = os.path.join(settings.BACKUPS_DIR, backup_filename)
+            backup_dir = get_backups_dir()
+            backup_path = os.path.join(backup_dir, filename)
 
-            if not os.path.exists(backup_path):
-                return JsonResponse({'status': 'error', 'message': 'Backup no encontrado'}, status=404)
+            if not os.path.exists(backup_path) or not os.path.isfile(backup_path):
+                return Response({'status': 'error', 'message': 'Backup no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
             with open(backup_path, 'rb') as fh:
                 response = HttpResponse(fh.read(), content_type='application/octet-stream')
                 response['Content-Disposition'] = f'attachment; filename={os.path.basename(backup_path)}'
                 return response
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class DeleteBackupView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         try:
-            backup_filename = request.GET.get('filename')
-            if not backup_filename:
-                return JsonResponse({'status': 'error', 'message': 'Nombre de backup no proporcionado'}, status=400)
+            filename = request.GET.get('filename') or (request.data.get('filename') if isinstance(request.data, dict) else None)
+            if not filename:
+                return Response({'status': 'error', 'message': 'Nombre de backup no proporcionado'}, status=status.HTTP_400_BAD_REQUEST)
 
-            backup_path = os.path.join(settings.BACKUPS_DIR, backup_filename)
-            meta_path = os.path.join(settings.BACKUPS_DIR, f"{backup_filename}.meta")
+            backup_dir = get_backups_dir()
+            backup_path = os.path.join(backup_dir, filename)
+            meta_path = os.path.join(backup_dir, f"{filename}.meta")
 
             if not os.path.exists(backup_path):
-                return JsonResponse({'status': 'error', 'message': 'Backup no encontrado'}, status=404)
+                return Response({'status': 'error', 'message': 'Backup no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
             os.remove(backup_path)
             if os.path.exists(meta_path):
                 os.remove(meta_path)
 
-            return JsonResponse({'status': 'success', 'message': 'Backup eliminado correctamente'})
+            return Response({'status': 'success', 'message': 'Backup eliminado correctamente'}, status=status.HTTP_200_OK)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

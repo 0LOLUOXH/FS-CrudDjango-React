@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 export default function BackupsPage() {
     const [backups, setBackups] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [backupType, setBackupType] = useState('full');
     const [confirmDialog, setConfirmDialog] = useState({
         open: false,
         title: '',
@@ -55,7 +56,7 @@ export default function BackupsPage() {
             setLoading(true);
             const response = await axios.post(
                 'http://localhost:8000/fs/backups/create/', 
-                {}, 
+                { type: backupType }, 
                 { headers: getAuthHeaders() }
             );
             toast.success(response.data.message || 'Copia de seguridad creada correctamente');
@@ -207,14 +208,28 @@ export default function BackupsPage() {
                         </button>
                     )}
 
-                    <button
-                        onClick={handleCreateBackup}
-                        disabled={loading}
-                        className="btn btn-primary shadow-lg shadow-[var(--primary)]/20"
-                    >
-                        <i className="fa-solid fa-cloud-arrow-up mr-1.5"></i>
-                        Crear Nuevo Backup
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={backupType}
+                            onChange={(e) => setBackupType(e.target.value)}
+                            disabled={loading}
+                            className="bg-[var(--bg-card)] border border-[var(--border-glass)] text-[var(--text-main)] text-sm rounded-lg px-3 py-2 outline-none font-medium cursor-pointer"
+                            title="Seleccionar tipo de copia de seguridad"
+                        >
+                            <option value="full">Completo (Full)</option>
+                            <option value="incremental">Incremental</option>
+                            <option value="differential">Diferencial</option>
+                        </select>
+
+                        <button
+                            onClick={handleCreateBackup}
+                            disabled={loading}
+                            className="btn btn-primary shadow-lg shadow-[var(--primary)]/20 whitespace-nowrap"
+                        >
+                            <i className="fa-solid fa-cloud-arrow-up mr-1.5"></i>
+                            Crear Backup
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -311,14 +326,27 @@ export default function BackupsPage() {
                                                     <i className="fa-solid fa-file-zipper"></i>
                                                 </div>
                                                 <div>
-                                                    <span className="font-mono text-sm font-semibold text-[var(--text-main)]">
-                                                        {backup.filename}
-                                                    </span>
-                                                    {index === 0 && (
-                                                        <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/15 text-emerald-500 uppercase tracking-wider">
-                                                            Más reciente
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-mono text-sm font-semibold text-[var(--text-main)]">
+                                                            {backup.filename}
                                                         </span>
-                                                    )}
+                                                        {backup.backup_type && (
+                                                            <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
+                                                                backup.backup_type === 'full' ? 'bg-blue-500/15 text-blue-500' :
+                                                                backup.backup_type === 'incremental' ? 'bg-purple-500/15 text-purple-500' :
+                                                                backup.backup_type === 'differential' ? 'bg-amber-500/15 text-amber-500' :
+                                                                backup.backup_type === 'pre_restore' ? 'bg-rose-500/15 text-rose-500' :
+                                                                'bg-slate-500/15 text-slate-400'
+                                                            }`}>
+                                                                {backup.backup_type}
+                                                            </span>
+                                                        )}
+                                                        {index === 0 && (
+                                                            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/15 text-emerald-500 uppercase tracking-wider">
+                                                                Más reciente
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>

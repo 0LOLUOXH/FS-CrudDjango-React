@@ -12,21 +12,28 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import sys
+from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Cargar variables de entorno desde .env
+load_dotenv(BASE_DIR / '.env')
+if not os.environ.get('DATABASE_URL'):
+    load_dotenv(BASE_DIR / 'django_crud' / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%w5f7t_vmp&#)smgr4jq1#g&oalp628gx36u4pv91)d%#zm^^v'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%w5f7t_vmp&#)smgr4jq1#g&oalp628gx36u4pv91)d%#zm^^v')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -82,13 +89,34 @@ WSGI_APPLICATION = 'django_crud.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# Configuración optimizada para PostgreSQL en Neon (Serverless)
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.environ.get('DATABASE_URL')
+DIRECT_DATABASE_URL = os.environ.get('DIRECT_DATABASE_URL')
+
+# Si DIRECT_DATABASE_URL no se definió explícitamente pero DATABASE_URL contiene '-pooler',
+# derivamos automáticamente la conexión directa sin el pooler de PgBouncer
+if not DIRECT_DATABASE_URL and DATABASE_URL and '-pooler' in DATABASE_URL:
+    DIRECT_DATABASE_URL = DATABASE_URL.replace('-pooler', '')
+
+# Las operaciones DDL (migrate, makemigrations, etc.) requieren conexión directa
+is_ddl_command = any(cmd in sys.argv for cmd in ['migrate', 'makemigrations', 'inspectdb', 'test', 'showmigrations'])
+effective_db_url = DIRECT_DATABASE_URL if (is_ddl_command and DIRECT_DATABASE_URL) else DATABASE_URL
+
+if effective_db_url:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            effective_db_url,
+            conn_max_age=int(os.environ.get('CONN_MAX_AGE', 0)),
+            conn_health_checks=True,
+            ssl_require=True,
+        )
     }
-}
+    DATABASES['default']['OPTIONS'] = DATABASES['default'].get('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
+    DATABASES['default']['OPTIONS']['connect_timeout'] = 10
+else:
+    raise ValueError("DATABASE_URL no está configurada en las variables de entorno o archivo .env")
 
 
 # Password validation
@@ -180,10 +208,20 @@ REST_FRAMEWORK = {
     ],
 }
 
-# settings.py
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BACKUPS_DIR = os.path.join(BASE_DIR, 'backups')
+# Configuración del Directorio y Retención de Backups
+BACKUPS_DIR = os.environ.get('BACKUPS_DIR')
+if not BACKUPS_DIR:
+    BACKUPS_DIR = str(BASE_DIR / 'backups')
+elif not os.path.isabs(BACKUPS_DIR):
+    BACKUPS_DIR = str(BASE_DIR / BACKUPS_DIR)
+
 os.makedirs(BACKUPS_DIR, exist_ok=True)
+
+BACKUP_RETENTION = {
+    'full': int(os.environ.get('BACKUP_RETENTION_FULL', 4)),
+    'incremental': int(os.environ.get('BACKUP_RETENTION_INCREMENTAL', 7)),
+    'differential': int(os.environ.get('BACKUP_RETENTION_DIFFERENTIAL', 4)),
+}
 
 # Configuración de email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
