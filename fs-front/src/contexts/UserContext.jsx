@@ -1,41 +1,62 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { defaultApi } from '../api/axiosInstance';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    // Parse user safely
-    let parsedUser = null;
-    try {
-        parsedUser = (storedUser && storedUser !== "undefined") ? JSON.parse(storedUser) : null;
-    } catch {
-        parsedUser = null;
-    }
+    const [user, setUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    const [isAuthenticated, setIsAuthenticated] = useState(
-        token !== null && parsedUser !== null
-    );
+    // Verificar sesión activa en el backend mediante Cookie HttpOnly al cargar la app
+    const checkAuthStatus = useCallback(async () => {
+        try {
+            const response = await defaultApi.get('me/');
+            if (response.data && response.data.isAuthenticated) {
+                setUser(response.data.user);
+                setIsAuthenticated(true);
+            } else {
+                setUser(null);
+                setIsAuthenticated(false);
+            }
+        } catch {
+            setUser(null);
+            setIsAuthenticated(false);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    const [user, setUser] = useState(parsedUser);
-    
-    const login = (token, userData) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setIsAuthenticated(true);
+    useEffect(() => {
+        checkAuthStatus();
+    }, [checkAuthStatus]);
+
+    /**
+     * Inicio de sesión: No almacena tokens sensibles en localStorage/sessionStorage.
+     * La autenticación reside en la cookie HttpOnly 'auth_token' emitida por el backend Django.
+     */
+    const login = (userData) => {
         setUser(userData);
+        setIsAuthenticated(true);
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setIsAuthenticated(false);
-        setUser(null);
+    /**
+     * Cierre de sesión seguro:
+     * Invalida la sesión y solicita al backend eliminar la cookie HttpOnly 'auth_token'.
+     */
+    const logout = async () => {
+        try {
+            await defaultApi.post('logout/');
+        } catch (error) {
+            console.error('[Seguridad] Error al notificar logout al backend:', error);
+        } finally {
+            setIsAuthenticated(false);
+            setUser(null);
+        }
     };
 
     return (
-        <UserContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <UserContext.Provider value={{ isAuthenticated, user, loading, login, logout, checkAuthStatus }}>
             {children}
         </UserContext.Provider>
     );

@@ -7,7 +7,9 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from django.conf import settings
-from django.db import connection
+from django.apps import apps
+from django.core import serializers
+from django.db import transaction
 
 def get_pg_bin(bin_name):
     """
@@ -53,7 +55,7 @@ def get_database_connection_url(direct=True):
         return db_url
 
     # Fallback a settings.DATABASES
-    db_conf = settings.DATABASES['default']
+    db_conf = settings.DATABASES.get('default', {})
     user = db_conf.get('USER', '')
     password = db_conf.get('PASSWORD', '')
     host = db_conf.get('HOST', 'localhost')
@@ -75,7 +77,7 @@ def read_metadata(meta_path):
     try:
         with open(meta_path, 'r', encoding='utf-8') as f:
             return json.load(f)
-    except Exception as e:
+    except Exception:
         return None
 
 def write_metadata(meta_path, data):
@@ -107,7 +109,6 @@ def list_backups():
         metadata = read_metadata(meta_path)
 
         if not metadata:
-            # Reconstruir metadatos mínimos si el .meta falta o está corrupto
             stat = os.stat(file_path)
             created_at = datetime.fromtimestamp(stat.st_mtime).isoformat()
             backup_type = 'full'
@@ -190,7 +191,6 @@ def create_full_backup(is_pre_restore=False):
     if os.path.exists(home_local_lib):
         env['LD_LIBRARY_PATH'] = f"{home_local_lib}:{env.get('LD_LIBRARY_PATH', '')}"
 
-    # Ejecutar pg_dump -Fc
     cmd = [
         pg_dump_bin,
         "-Fc",
@@ -227,120 +227,68 @@ def create_full_backup(is_pre_restore=False):
 
     return metadata
 
-def _get_changed_rows_sql(reference_timestamp):
+def _get_changed_rows_data(reference_timestamp):
     """
-    Genera sentencias SQL con las filas modificadas o creadas después de reference_timestamp.
-    Inspecciona las tablas de la aplicación y usa columnas de tracking temporal.
+    Exporta filas modificadas o creadas después de reference_timestamp
+    usando exclusivamente el ORM de Django y el serializador nativo (Prevención SQL Injection CWE-89).
     """
-    sql_statements = []
-    
-    with connection.cursor() as cursor:
-        # Obtener todas las tablas del esquema público
-        cursor.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-              AND table_type = 'BASE TABLE'
-              AND table_name NOT LIKE 'django_migrations'
-            ORDER BY table_name;
-        """)
-        tables = [row[0] for row in cursor.fetchall()]
+    changed_objects = []
+    models_to_backup = [m for m in apps.get_models() if m._meta.app_label in ('fs', 'auth')]
 
-        for table in tables:
-            # Inspeccionar columnas de la tabla
-            cursor.execute("""
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
-                WHERE table_schema = 'public' AND table_name = %s;
-            """, [table])
-            columns_info = {col[0]: col[1] for col in cursor.fetchall()}
-            
-            # Buscar columna temporal candidata
-            time_col = None
-            for candidate in ['updated_at', 'timestamp', 'date', 'return_date', 'date_joined', 'scheduled_date']:
-                if candidate in columns_info:
-                    time_col = candidate
+    for model in models_to_backup:
+        time_field = None
+        for candidate in ['updated_at', 'timestamp', 'date', 'return_date', 'date_joined', 'scheduled_date']:
+            try:
+                field = model._meta.get_field(candidate)
+                if field:
+                    time_field = candidate
                     break
+            except Exception:
+                continue
 
-            col_names = list(columns_info.keys())
-            cols_joined = ", ".join([f'"{c}"' for c in col_names])
-
-            if time_col:
-                query = f'SELECT {cols_joined} FROM "{table}" WHERE "{time_col}" >= %s;'
-                cursor.execute(query, [reference_timestamp])
-                rows = cursor.fetchall()
+        try:
+            if time_field:
+                qs = model.objects.filter(**{f"{time_field}__gte": reference_timestamp})
             else:
-                # Tabla pequeña sin columna temporal: exportar estado completo de la tabla
-                query = f'SELECT {cols_joined} FROM "{table}";'
-                cursor.execute(query)
-                rows = cursor.fetchall()
+                qs = model.objects.all()
 
-            if rows:
-                sql_statements.append(f"-- Table: {table} ({len(rows)} records)")
-                for row in rows:
-                    vals = []
-                    for val in row:
-                        if val is None:
-                            vals.append("NULL")
-                        elif isinstance(val, (int, float)):
-                            vals.append(str(val))
-                        elif isinstance(val, bool):
-                            vals.append("TRUE" if val else "FALSE")
-                        elif isinstance(val, datetime):
-                            vals.append(f"'{val.isoformat()}'")
-                        else:
-                            escaped = str(val).replace("'", "''")
-                            vals.append(f"'{escaped}'")
-                    
-                    values_joined = ", ".join(vals)
-                    # Usar INSERT ... ON CONFLICT (id) DO UPDATE si existe 'id', o DO NOTHING
-                    if 'id' in columns_info:
-                        update_pairs = [f'"{c}" = EXCLUDED."{c}"' for c in col_names if c != 'id']
-                        if update_pairs:
-                            conflict_clause = f'ON CONFLICT ("id") DO UPDATE SET {", ".join(update_pairs)}'
-                        else:
-                            conflict_clause = 'ON CONFLICT ("id") DO NOTHING'
-                    else:
-                        conflict_clause = 'ON CONFLICT DO NOTHING'
+            for obj in qs:
+                changed_objects.append(obj)
+        except Exception as e:
+            print(f"[Backup ORM] Error al consultar modelo {model.__name__}: {e}")
 
-                    stmt = f'INSERT INTO "{table}" ({cols_joined}) VALUES ({values_joined}) {conflict_clause};'
-                    sql_statements.append(stmt)
-
-    return "\n".join(sql_statements)
+    return serializers.serialize('json', changed_objects)
 
 def create_incremental_or_differential_backup(backup_type='incremental'):
     """
-    Crea un backup incremental o diferencial lógico a nivel de tablas (Opción A).
-    - incremental: exporta filas modificadas desde el último backup registrado.
-    - differential: exporta filas modificadas desde el último backup completo (full).
+    Crea un backup incremental o diferencial lógico usando el ORM de Django.
+    - incremental: exporta registros modificados desde el último backup registrado.
+    - differential: exporta registros modificados desde el último backup completo (full).
     """
     backups = list_backups()
     reference_timestamp = None
     parent_filename = None
 
     if backup_type == 'incremental':
-        # Buscar el backup más reciente (full, incremental o differential)
         for b in backups:
             if b.get('backup_type') in ('full', 'incremental', 'differential') and b.get('created_at'):
                 reference_timestamp = b['created_at']
                 parent_filename = b['filename']
                 break
     elif backup_type == 'differential':
-        # Buscar el backup FULL más reciente
         for b in backups:
             if b.get('backup_type') == 'full' and b.get('created_at'):
                 reference_timestamp = b['created_at']
                 parent_filename = b['filename']
                 break
 
-    # Si no existe backup previo de referencia, realizar backup completo
     if not reference_timestamp or not parent_filename:
         print(f"No se encontró backup previo de referencia para {backup_type}. Generando backup full inicial.")
         return create_full_backup()
 
     backup_dir = get_backups_dir()
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{backup_type}_{timestamp_str}.sql.gz"
+    filename = f"{backup_type}_{timestamp_str}.json.gz"
     filepath = os.path.join(backup_dir, filename)
 
     try:
@@ -348,15 +296,11 @@ def create_incremental_or_differential_backup(backup_type='incremental'):
     except Exception:
         ref_dt = datetime.now()
 
-    sql_content = _get_changed_rows_sql(ref_dt)
-    header = f"-- FusionSolar {backup_type.upper()} Backup\n" \
-             f"-- Generated at: {datetime.now().isoformat()}\n" \
-             f"-- Reference timestamp: {reference_timestamp}\n" \
-             f"-- Parent backup: {parent_filename}\n\n"
-    
-    full_payload = (header + sql_content).encode('utf-8')
+    serialized_data = _get_changed_rows_data(ref_dt)
+    payload = serialized_data.encode('utf-8')
+
     with gzip.open(filepath, 'wb') as f_out:
-        f_out.write(full_payload)
+        f_out.write(payload)
 
     size = os.path.getsize(filepath)
     created_at = datetime.now().isoformat()
@@ -368,7 +312,7 @@ def create_incremental_or_differential_backup(backup_type='incremental'):
         'size': size,
         'parent_backup': parent_filename,
         'reference_timestamp': reference_timestamp,
-        'strategy': 'logical_table_delta',
+        'strategy': 'django_orm_serialized_delta',
         'database_target': 'neon_postgresql'
     }
 
@@ -392,17 +336,18 @@ def create_backup(backup_type='full'):
 
 def restore_backup(filename):
     """
-    Restaura una base de datos desde un archivo de backup.
+    Restaura una base de datos desde un archivo de backup de forma segura.
     1. Genera un backup preventivo automático 'pre_restore_YYYYMMDD_HHMMSS.dump'.
-    2. Si el backup es full/pre_restore, ejecuta pg_restore.
-    3. Si es incremental/diferencial, restaura el full base y aplica los deltas secuencialmente.
+    2. Si el backup es dump (full/pre_restore), ejecuta pg_restore.
+    3. Si es incremental/diferencial en formato json.gz, aplica deserialización ORM atómica.
     """
     backup_dir = get_backups_dir()
-    filepath = os.path.join(backup_dir, filename)
-    meta_path = os.path.join(backup_dir, f"{filename}.meta")
+    clean_filename = os.path.basename(filename)
+    filepath = os.path.join(backup_dir, clean_filename)
+    meta_path = os.path.join(backup_dir, f"{clean_filename}.meta")
 
     if not os.path.exists(filepath):
-        raise FileNotFoundError(f"El archivo de backup '{filename}' no existe en {backup_dir}.")
+        raise FileNotFoundError(f"El archivo de backup '{clean_filename}' no existe en {backup_dir}.")
 
     metadata = read_metadata(meta_path) or {}
     backup_type = metadata.get('backup_type', 'full')
@@ -418,7 +363,7 @@ def restore_backup(filename):
         env['LD_LIBRARY_PATH'] = f"{home_local_lib}:{env.get('LD_LIBRARY_PATH', '')}"
 
     # Paso 2: Ejecutar restauración
-    if filename.endswith('.dump') or backup_type in ('full', 'pre_restore'):
+    if clean_filename.endswith('.dump') or backup_type in ('full', 'pre_restore'):
         pg_restore_bin = get_pg_bin('pg_restore')
         cmd = [
             pg_restore_bin,
@@ -430,12 +375,10 @@ def restore_backup(filename):
             filepath
         ]
         result = subprocess.run(cmd, env=env, capture_output=True, text=True)
-        # pg_restore retorna 0 en éxito, 1 si hubo advertencias no críticas
         if result.returncode not in (0, 1):
             raise RuntimeError(f"Fallo en pg_restore: {result.stderr or result.stdout}")
 
-    elif filename.endswith('.sql.gz') or backup_type in ('incremental', 'differential'):
-        # Restaurar ancestro base primero si existe
+    elif clean_filename.endswith('.json.gz') or clean_filename.endswith('.sql.gz') or backup_type in ('incremental', 'differential'):
         parent = metadata.get('parent_backup')
         if parent and parent.endswith('.dump'):
             parent_path = os.path.join(backup_dir, parent)
@@ -452,18 +395,25 @@ def restore_backup(filename):
                 ]
                 subprocess.run(cmd, env=env, capture_output=True, text=True)
 
-        # Aplicar el delta SQL
         with gzip.open(filepath, 'rt', encoding='utf-8') as f_in:
-            sql_script = f_in.read()
+            content = f_in.read()
 
-        with connection.cursor() as cursor:
-            for statement in sql_script.split(';'):
-                stmt = statement.strip()
-                if stmt and not stmt.startswith('--'):
-                    cursor.execute(stmt)
+        # Restaurar mediante ORM de Django (seguridad nativa contra inyecciones SQL)
+        if content.strip().startswith('[') or content.strip().startswith('{'):
+            with transaction.atomic():
+                for obj in serializers.deserialize('json', content):
+                    obj.save()
+        else:
+            # Compatibilidad controlada para scripts legacy
+            from django.db import connection
+            with connection.cursor() as cursor:
+                for statement in content.split(';'):
+                    stmt = statement.strip()
+                    if stmt and not stmt.startswith('--'):
+                        cursor.execute(stmt)
 
     return {
         'status': 'success',
-        'message': f"Base de datos restaurada exitosamente desde '{filename}'.",
+        'message': f"Base de datos restaurada exitosamente desde '{clean_filename}'.",
         'pre_restore_backup': pre_restore_filename
     }

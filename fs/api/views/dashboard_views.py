@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, F, Case, When, Value, CharField
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
 from django.utils import timezone
@@ -7,6 +8,8 @@ from datetime import timedelta
 from fs.models import SaleDetail, PurchaseDetail, Sale, Product, PurchaseOrder
 
 class DashboardBaseView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def handle_exception(self, exc):
         error_data = {
             'error': str(exc),

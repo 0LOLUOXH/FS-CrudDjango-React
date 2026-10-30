@@ -4,6 +4,7 @@ import { useUser } from '../../../contexts/UserContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { GlassCard, FloatingInput } from '../../../components/ui';
 import { toast } from 'react-toastify';
+import { defaultApi } from '../../../api/axiosInstance';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -49,44 +50,36 @@ export default function Login() {
         setSubmitting(true);
 
         try {
-            const response = await fetch("http://localhost:8000/fs/login/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ username, password }),
-            });
+            const response = await defaultApi.post("login/", { username, password });
+            const data = response.data;
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                const backendMessage =
-                    (data.non_field_errors && data.non_field_errors[0]) ||
-                    data.detail ||
-                    data.message ||
-                    data.error ||
-                    "Error al iniciar sesión. Verifique sus credenciales.";
-
-                if (backendMessage.toLowerCase().includes("bloqueado")) {
-                    setIsBlocked(true);
-                    setTimer(60);
-                }
-
-                throw new Error(backendMessage);
-            }
-
-            // Guardar el token y datos del usuario en UserContext
-            login(data.token, {
+            // Guardar datos seguros del usuario en UserContext (cookie HttpOnly gestionada por el navegador)
+            login({
                 'is_staff': data.is_staff,
                 'user_id': data.user_id,
                 'username': data.username,
+                'email': data.email,
             });
             toast.success(`¡Bienvenido, ${data.username}!`);
             navigate("/home", { replace: true });
 
         } catch (err) {
-            setError(err.message || "Error al iniciar sesión");
-            toast.error(err.message || "Error al iniciar sesión");
+            const data = err.response?.data || {};
+            const backendMessage =
+                (data.non_field_errors && data.non_field_errors[0]) ||
+                data.detail ||
+                data.message ||
+                data.error ||
+                err.message ||
+                "Error al iniciar sesión. Verifique sus credenciales.";
+
+            if (typeof backendMessage === 'string' && backendMessage.toLowerCase().includes("bloqueado")) {
+                setIsBlocked(true);
+                setTimer(60);
+            }
+
+            setError(typeof backendMessage === 'string' ? backendMessage : JSON.stringify(backendMessage));
+            toast.error(typeof backendMessage === 'string' ? backendMessage : "Error al iniciar sesión");
         } finally {
             setSubmitting(false);
         }
@@ -272,7 +265,7 @@ export default function Login() {
                     </GlassCard>
 
                     <p className="text-center text-xs text-[var(--text-muted)]">
-                        Fusion Solar ERP • Acceso seguro protegido con tokens de autenticación
+                        Fusion Solar ERP • Acceso seguro protegido con cookies HttpOnly y SameSite
                     </p>
                 </div>
             </div>

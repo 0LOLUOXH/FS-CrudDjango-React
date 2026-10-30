@@ -12,78 +12,97 @@ from .auth_views import userViewSet
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated]
 
 class IndividualCustomerViewSet(viewsets.ModelViewSet):
     queryset = IndividualCustomer.objects.all()
     serializer_class = IndividualCustomerSerializer
+    permission_classes = [IsAuthenticated]
 
 class CorporateCustomerViewSet(viewsets.ModelViewSet):
     queryset = CorporateCustomer.objects.all()
     serializer_class = CorporateCustomerSerializer
+    permission_classes = [IsAuthenticated]
 
 class SupplierViewSet(viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
+    permission_classes = [IsAuthenticated]
 
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
+    permission_classes = [IsAuthenticated]
 
 class ProductModelViewSet(viewsets.ModelViewSet):
     queryset = ProductModel.objects.all()
     serializer_class = ProductModelSerializer
+    permission_classes = [IsAuthenticated]
 
 class WarehouseViewSet(viewsets.ModelViewSet):
     queryset = Warehouse.objects.all()
     serializer_class = WarehouseSerializer
+    permission_classes = [IsAuthenticated]
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
 
 class KitComponentViewSet(viewsets.ModelViewSet):
     queryset = KitComponent.objects.all()
     serializer_class = KitComponentSerializer
+    permission_classes = [IsAuthenticated]
 
 class SerialNumberViewSet(viewsets.ModelViewSet):
     queryset = SerialNumber.objects.all()
     serializer_class = SerialNumberSerializer
+    permission_classes = [IsAuthenticated]
 
 class InventoryAdjustmentViewSet(viewsets.ModelViewSet):
     queryset = InventoryAdjustment.objects.all()
     serializer_class = InventoryAdjustmentSerializer
+    permission_classes = [IsAuthenticated]
 
 class QuoteViewSet(viewsets.ModelViewSet):
     queryset = Quote.objects.all()
     serializer_class = QuoteSerializer
+    permission_classes = [IsAuthenticated]
 
 class QuoteDetailViewSet(viewsets.ModelViewSet):
     queryset = QuoteDetail.objects.all()
     serializer_class = QuoteDetailSerializer
+    permission_classes = [IsAuthenticated]
 
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
+    permission_classes = [IsAuthenticated]
 
 class SaleDetailViewSet(viewsets.ModelViewSet):
     queryset = SaleDetail.objects.all()
     serializer_class = SaleDetailSerializer
+    permission_classes = [IsAuthenticated]
 
 class SaleReturnViewSet(viewsets.ModelViewSet):
     queryset = SaleReturn.objects.all()
     serializer_class = SaleReturnSerializer
+    permission_classes = [IsAuthenticated]
 
 class InstallationServiceViewSet(viewsets.ModelViewSet):
     queryset = InstallationService.objects.all()
     serializer_class = InstallationServiceSerializer
+    permission_classes = [IsAuthenticated]
 
 class PurchaseOrderViewSet(viewsets.ModelViewSet):
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
+    permission_classes = [IsAuthenticated]
 
 class PurchaseDetailViewSet(viewsets.ModelViewSet):
     queryset = PurchaseDetail.objects.all()
     serializer_class = PurchaseDetailSerializer
+    permission_classes = [IsAuthenticated]
 
 class ProcessSaleView(APIView):
     permission_classes = [IsAuthenticated]
@@ -157,7 +176,7 @@ class ProcessSaleView(APIView):
                         sale=sale,
                         scheduled_date=data['scheduled_date'],
                         address=data['installation_address'],
-                        cost=data.get('installation_price') or 0,  # Evita IntegrityError por null
+                        cost=data.get('installation_price') or 0,
                         is_completed=False
                     )
 
@@ -169,4 +188,4 @@ class ProcessSaleView(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Un producto enviado no existe en la base de datos"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "Error interno al procesar la venta."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

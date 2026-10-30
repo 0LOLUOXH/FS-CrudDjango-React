@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { defaultApi } from '../../../api/axiosInstance';
 import { GlassCard, Modal, Badge } from '../../../components/ui';
 import { toast } from 'react-toastify';
 
@@ -15,20 +15,10 @@ export default function BackupsPage() {
         isDestructive: false
     });
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
-
     const fetchBackups = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:8000/fs/backups/list/', {
-                headers: getAuthHeaders()
-            });
+            const response = await defaultApi.get('backups/list/');
             
             if (response.data && Array.isArray(response.data.backups)) {
                 setBackups(response.data.backups);
@@ -54,10 +44,9 @@ export default function BackupsPage() {
     const handleCreateBackup = async () => {
         try {
             setLoading(true);
-            const response = await axios.post(
-                'http://localhost:8000/fs/backups/create/', 
-                { type: backupType }, 
-                { headers: getAuthHeaders() }
+            const response = await defaultApi.post(
+                'backups/create/', 
+                { type: backupType }
             );
             toast.success(response.data.message || 'Copia de seguridad creada correctamente');
             await fetchBackups();
@@ -75,11 +64,10 @@ export default function BackupsPage() {
             setLoading(true);
             switch(action) {
                 case 'download': {
-                    const response = await axios.get(
-                        `http://localhost:8000/fs/backups/download/?filename=${encodeURIComponent(filename)}`,
+                    const response = await defaultApi.get(
+                        `backups/download/?filename=${encodeURIComponent(filename)}`,
                         {
-                            responseType: 'blob',
-                            headers: getAuthHeaders()
+                            responseType: 'blob'
                         }
                     );
                     
@@ -94,17 +82,15 @@ export default function BackupsPage() {
                 }
                     
                 case 'restore':
-                    await axios.post(
-                        'http://localhost:8000/fs/backups/restore/', 
-                        { filename },
-                        { headers: getAuthHeaders() }
+                    await defaultApi.post(
+                        'backups/restore/', 
+                        { filename }
                     );
                     break;
                     
                 case 'delete':
-                    await axios.delete(
-                        `http://localhost:8000/fs/backups/delete/?filename=${encodeURIComponent(filename)}`,
-                        { headers: getAuthHeaders() }
+                    await defaultApi.delete(
+                        `backups/delete/?filename=${encodeURIComponent(filename)}`
                     );
                     break;
                     

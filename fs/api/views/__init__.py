@@ -1,4 +1,16 @@
-from .auth_views import LoginView, PasswordResetView, PasswordResetConfirmView, userViewSet
+from .auth_views import (
+    LoginView,
+    Verify2FALoginView,
+    Setup2FAView,
+    Confirm2FAView,
+    Disable2FAView,
+    LogoutView,
+    SessionMeView,
+    CsrfTokenView,
+    PasswordResetView,
+    PasswordResetConfirmView,
+    userViewSet
+)
 from .crud_views import (
     CustomerViewSet, IndividualCustomerViewSet, CorporateCustomerViewSet,
     SupplierViewSet, BrandViewSet, ProductModelViewSet, WarehouseViewSet,
