@@ -41,6 +41,13 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
+     * Actualiza el estado 2FA del usuario en memoria tras activación/desactivación
+     */
+    const update2FAStatus = (isEnabled) => {
+        setUser((prev) => (prev ? { ...prev, is_2fa_enabled: isEnabled } : prev));
+    };
+
+    /**
      * Cierre de sesión seguro:
      * Invalida la sesión y solicita al backend eliminar la cookie HttpOnly 'auth_token'.
      */
@@ -56,7 +63,7 @@ export const UserProvider = ({ children }) => {
     };
 
     return (
-        <UserContext.Provider value={{ isAuthenticated, user, loading, login, logout, checkAuthStatus }}>
+        <UserContext.Provider value={{ isAuthenticated, user, loading, login, logout, checkAuthStatus, update2FAStatus }}>
             {children}
         </UserContext.Provider>
     );

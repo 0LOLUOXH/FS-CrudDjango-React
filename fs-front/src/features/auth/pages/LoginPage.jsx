@@ -5,6 +5,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { GlassCard, FloatingInput } from '../../../components/ui';
 import { toast } from 'react-toastify';
 import { defaultApi } from '../../../api/axiosInstance';
+import { verify2FALogin } from '../../../api/auth_api';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -14,6 +15,12 @@ export default function Login() {
     const [isBlocked, setIsBlocked] = useState(false);
     const [timer, setTimer] = useState(60);
     const [submitting, setSubmitting] = useState(false);
+
+    // Estados para el Segundo Factor de Autenticación (2FA)
+    const [requires2FA, setRequires2FA] = useState(false);
+    const [tempToken, setTempToken] = useState('');
+    const [otpCode, setOtpCode] = useState('');
+    const [otpSubmitting, setOtpSubmitting] = useState(false);
 
     const { isAuthenticated, login } = useUser();
     const { isDark, toggleTheme } = useTheme();
@@ -53,12 +60,22 @@ export default function Login() {
             const response = await defaultApi.post("login/", { username, password });
             const data = response.data;
 
+            // Si el usuario requiere verificación de segundo factor (2FA / TOTP)
+            if (data.requires_2fa) {
+                setRequires2FA(true);
+                setTempToken(data.temp_token);
+                setOtpCode('');
+                toast.info(data.message || 'Autenticación de dos factores requerida.');
+                return;
+            }
+
             // Guardar datos seguros del usuario en UserContext (cookie HttpOnly gestionada por el navegador)
             login({
                 'is_staff': data.is_staff,
                 'user_id': data.user_id,
                 'username': data.username,
                 'email': data.email,
+                'is_2fa_enabled': data.is_2fa_enabled,
             });
             toast.success(`¡Bienvenido, ${data.username}!`);
             navigate("/home", { replace: true });
@@ -83,6 +100,58 @@ export default function Login() {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleVerify2FA = async (e) => {
+        e.preventDefault();
+        setError('');
+        setOtpSubmitting(true);
+
+        try {
+            const response = await verify2FALogin(tempToken, otpCode.trim());
+            const data = response.data;
+
+            login({
+                'is_staff': data.is_staff,
+                'user_id': data.user_id,
+                'username': data.username,
+                'email': data.email,
+                'is_2fa_enabled': data.is_2fa_enabled,
+            });
+            toast.success(`¡Bienvenido, ${data.username}!`);
+            navigate("/home", { replace: true });
+
+        } catch (err) {
+            const data = err.response?.data || {};
+            const backendMessage =
+                (data.non_field_errors && data.non_field_errors[0]) ||
+                data.detail ||
+                data.message ||
+                data.error ||
+                err.message ||
+                "Código de verificación inválido.";
+
+            setError(typeof backendMessage === 'string' ? backendMessage : JSON.stringify(backendMessage));
+            toast.error(typeof backendMessage === 'string' ? backendMessage : "Error en verificación 2FA");
+
+            // Si el desafío expiró, volver al paso inicial
+            if (typeof backendMessage === 'string' && backendMessage.toLowerCase().includes("expirado")) {
+                setTimeout(() => {
+                    setRequires2FA(false);
+                    setTempToken('');
+                    setOtpCode('');
+                }, 2000);
+            }
+        } finally {
+            setOtpSubmitting(false);
+        }
+    };
+
+    const handleCancel2FA = () => {
+        setRequires2FA(false);
+        setTempToken('');
+        setOtpCode('');
+        setError('');
     };
 
     return (
@@ -170,11 +239,20 @@ export default function Login() {
                     </div>
 
                     <div className="space-y-2 text-center lg:text-left">
-                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-main)]">
-                            Iniciar Sesión
+                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-main)] flex items-center justify-center lg:justify-start gap-2.5">
+                            {requires2FA ? (
+                                <>
+                                    <i className="fa-solid fa-shield-halved text-[#F28C28]"></i>
+                                    Segundo Factor (2FA)
+                                </>
+                            ) : (
+                                'Iniciar Sesión'
+                            )}
                         </h2>
                         <p className="text-sm text-[var(--text-muted)]">
-                            Ingresa tus credenciales autorizadas para acceder al portal
+                            {requires2FA
+                                ? `Hola ${username}, ingresa el código de 6 dígitos generado por tu aplicación autenticadora.`
+                                : 'Ingresa tus credenciales autorizadas para acceder al portal'}
                         </p>
                     </div>
 
@@ -202,66 +280,121 @@ export default function Login() {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <FloatingInput
-                                label="Nombre de Usuario"
-                                name="username"
-                                type="text"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                                required
-                                disabled={isBlocked || submitting}
-                                icon={<i className="fa-solid fa-user text-sm"></i>}
-                            />
+                        {requires2FA ? (
+                            <form onSubmit={handleVerify2FA} className="space-y-5">
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider text-center">
+                                        Código de Verificación TOTP
+                                    </label>
+                                    <input
+                                        type="text"
+                                        maxLength={6}
+                                        pattern="[0-9]*"
+                                        inputMode="numeric"
+                                        autoComplete="one-time-code"
+                                        autoFocus
+                                        value={otpCode}
+                                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        placeholder="000000"
+                                        disabled={otpSubmitting}
+                                        className="w-full text-center tracking-[0.5em] text-3xl font-mono font-bold py-3.5 px-4 rounded-xl border border-[var(--border-glass)] bg-[var(--bg-card)] text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all"
+                                        required
+                                    />
+                                    <p className="text-xs text-center text-[var(--text-muted)]">
+                                        Google Authenticator, Microsoft Authenticator o Authy
+                                    </p>
+                                </div>
 
-                            <div className="relative">
-                                <FloatingInput
-                                    label="Contraseña"
-                                    name="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    required
-                                    disabled={isBlocked || submitting}
-                                    icon={<i className="fa-solid fa-lock text-sm"></i>}
-                                />
+                                <button
+                                    type="submit"
+                                    disabled={otpSubmitting || otpCode.length !== 6}
+                                    className="btn btn-primary w-full py-3 text-base shadow-lg shadow-[var(--primary)]/20 flex items-center justify-center gap-2"
+                                >
+                                    {otpSubmitting ? (
+                                        <>
+                                            <i className="fa-solid fa-spinner fa-spin"></i>
+                                            Verificando código...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa-solid fa-check-double"></i>
+                                            Verificar y Acceder
+                                        </>
+                                    )}
+                                </button>
+
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors p-1"
-                                    tabIndex={-1}
+                                    onClick={handleCancel2FA}
+                                    disabled={otpSubmitting}
+                                    className="btn btn-outline w-full py-2.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]"
                                 >
-                                    <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                                    <i className="fa-solid fa-arrow-left mr-1.5"></i>
+                                    Cancelar y volver al inicio
                                 </button>
-                            </div>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                <FloatingInput
+                                    label="Nombre de Usuario"
+                                    name="username"
+                                    type="text"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    required
+                                    disabled={isBlocked || submitting}
+                                    icon={<i className="fa-solid fa-user text-sm"></i>}
+                                />
 
-                            <div className="flex justify-end">
-                                <Link
-                                    to="/reset-password"
-                                    className="text-xs font-medium text-[var(--primary)] hover:underline"
+                                <div className="relative">
+                                    <FloatingInput
+                                        label="Contraseña"
+                                        name="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        required
+                                        disabled={isBlocked || submitting}
+                                        icon={<i className="fa-solid fa-lock text-sm"></i>}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors p-1"
+                                        tabIndex={-1}
+                                    >
+                                        <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                                    </button>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Link
+                                        to="/reset-password"
+                                        className="text-xs font-medium text-[var(--primary)] hover:underline"
+                                    >
+                                        ¿Olvidaste tu contraseña?
+                                    </Link>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isBlocked || submitting}
+                                    className="btn btn-primary w-full py-3 text-base shadow-lg shadow-[var(--primary)]/20"
                                 >
-                                    ¿Olvidaste tu contraseña?
-                                </Link>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isBlocked || submitting}
-                                className="btn btn-primary w-full py-3 text-base shadow-lg shadow-[var(--primary)]/20"
-                            >
-                                {submitting ? (
-                                    <>
-                                        <i className="fa-solid fa-spinner fa-spin mr-2"></i>
-                                        Ingresando...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fa-solid fa-arrow-right-to-bracket mr-2"></i>
-                                        Entrar al Sistema
-                                    </>
-                                )}
-                            </button>
-                        </form>
+                                    {submitting ? (
+                                        <>
+                                            <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                                            Ingresando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+                                            Entrar al Sistema
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        )}
                     </GlassCard>
 
                     <p className="text-center text-xs text-[var(--text-muted)]">

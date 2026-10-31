@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { TwoFactorModal } from "./TwoFactorModal";
 
 export function MainNavigation() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
   const [activeMobileSubmenu, setActiveMobileSubmenu] = useState(null);
 
   const location = useLocation();
@@ -54,7 +56,8 @@ export function MainNavigation() {
   )}&background=F28C28&color=fff&rounded=true&bold=true`;
 
   return (
-    <header className="navbar">
+    <>
+      <header className="navbar">
       {/* Brand */}
       <Link to="/home" className="nav-brand">
         <i className="fa-solid fa-sun text-[var(--primary)] text-2xl"></i>
@@ -317,6 +320,24 @@ export function MainNavigation() {
               )}
               <button
                 type="button"
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  setIs2FAModalOpen(true);
+                }}
+                className="w-full text-left px-3 py-2 text-sm text-[var(--text-main)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors flex items-center justify-between font-medium cursor-pointer mb-1"
+              >
+                <span className="flex items-center gap-2">
+                  <i className="fa-solid fa-shield-halved text-[var(--primary)] text-xs"></i>
+                  <span>Seguridad y 2FA</span>
+                </span>
+                {user?.is_2fa_enabled ? (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" title="2FA Activo"></span>
+                ) : (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold">Configurar</span>
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={handleLogout}
                 className="w-full text-left px-3 py-2 text-sm text-[var(--danger)] hover:bg-[rgba(239,68,68,0.1)] rounded-lg transition-colors flex items-center gap-2 font-medium cursor-pointer"
               >
@@ -342,5 +363,11 @@ export function MainNavigation() {
         </button>
       </div>
     </header>
+
+    <TwoFactorModal
+      isOpen={is2FAModalOpen}
+      onClose={() => setIs2FAModalOpen(false)}
+    />
+  </>
   );
 }

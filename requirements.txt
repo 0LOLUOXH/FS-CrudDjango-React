@@ -30,3 +30,6 @@ djangorestframework-simplejwt>=5.5.1
 psycopg[binary]>=3.1.18
 dj-database-url>=2.1.0
 python-dotenv>=1.0.0
+qrcode>=8.0
+pillow>=10.0.0
+

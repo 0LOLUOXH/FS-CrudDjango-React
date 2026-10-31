@@ -167,6 +167,27 @@ Se ha realizado una auditoría estricta y remediación directa sobre el 100% de 
 2. **Docker Compose Seguro:**
    Se aplicó la restricción `no-new-privileges: true` en todos los servicios para evitar técnicas de escalada de privilegios a nivel de kernel.
 
+### D. Autenticación de Doble Factor (2FA / MFA - RFC 6238 TOTP)
+Para dar cumplimiento estricto al estándar **NIST SP 800-63B** y a los requisitos de control de acceso privilegiado de **ISO/IEC 27001**, se implementó la arquitectura completa de segundo factor:
+
+1. **Algoritmo Criptográfico TOTP:**
+   * Archivo: `fs/api/totp.py`
+   * Basado en **RFC 6238 (TOTP)** y **RFC 4226 (HOTP)** con algoritmo HMAC-SHA1 y clave secreta Base32 de 160 bits de entropía criptográfica (`secrets.token_bytes(20)`).
+   * Tolerancia de deriva de reloj: Ventana de tiempo de ±30 segundos (`valid_window=1`).
+   * Generación de Data URI PNG en Base64 con librería `qrcode` y `pillow` para renderizar el código QR sin exponer URLs externas.
+
+2. **Endpoints de la API:**
+   * `POST /fs/login/`: Autentica credenciales iniciales. Si el usuario tiene 2FA activo, genera un `temp_token` de un solo uso con validez de 300 segundos en caché y devuelve `requires_2fa: true`.
+   * `POST /fs/login/2fa-verify/`: Valida el `temp_token` y el código de 6 dígitos. Cuenta con protección contra fuerza bruta: tras 5 intentos fallidos, el desafío temporal es revocado inmediatamente.
+   * `POST /fs/2fa/setup/`: Requiere sesión activa. Genera un secreto temporal y el código QR de vinculación.
+   * `POST /fs/2fa/confirm/`: Valida el primer código OTP emitido por la app del usuario, persiste `otp_secret` e `is_2fa_enabled = True` en base de datos y genera registro en `AuditLog`.
+   * `POST /fs/2fa/disable/`: Desactiva 2FA únicamente tras validar la contraseña actual del usuario y un código OTP vigente. Genera registro en `AuditLog`.
+
+3. **Componentes Frontend React:**
+   * `LoginPage.jsx`: Máquina de estados que conmuta automáticamente entre el formulario de credenciales y la pantalla de verificación TOTP de 6 dígitos con soporte para auto-focus y reintentos.
+   * `TwoFactorModal.jsx`: Modal interactivo accesible desde el menú de usuario en `MainNavigation.jsx`. Permite ver el estado actual de 2FA, escanear el código QR, copiar la clave manual o desactivar el factor con confirmación de seguridad.
+   * `EmployeeManagementPage.jsx`: Vista de auditoría administrativa con métricas de usuarios protegidos con 2FA y columna de estado por usuario para control de cumplimiento.
+
 ---
 
 ## 5. Verificación de Cumplimiento Normativo
@@ -174,15 +195,16 @@ Se ha realizado una auditoría estricta y remediación directa sobre el 100% de 
 | Control Normativo | Estado | Evidencia de Implementación |
 | :--- | :--- | :--- |
 | **ISO 27001 A.5.15 (Gestión de Identidades y Accesos)** | **CUMPLIDO** | Sesiones por cookies HttpOnly con SameSite=Strict; eliminación de credenciales en local storage; bloqueo por fuerza bruta. |
-| **ISO 27001 A.8.5 (Autenticación Segura)** | **CUMPLIDO** | Hashing Argon2; validadores de contraseñas de al menos 12 caracteres; verificación centralizada en `/fs/me/`. |
+| **ISO 27001 A.8.5 (Autenticación Segura / MFA)** | **CUMPLIDO** | Segundo factor TOTP (RFC 6238) obligatorio para cuentas de administración; hashing Argon2id; validador de contraseñas de al menos 12 caracteres. |
 | **ISO 27001 A.8.8 (Gestión de Vulnerabilidades Técnicas)** | **CUMPLIDO** | Remediación de librerías vulnerables críticas reportadas por `npm audit` y revisión de dependencias Python. |
 | **ISO 27001 A.8.20 (Seguridad en Redes)** | **CUMPLIDO** | Cifrado obligatorio SSL/TLS en conexión con base de datos Neon; HSTS con subdominios y preload forzado. |
-| **ISO 27001 A.8.24 (Uso de Criptografía)** | **CUMPLIDO** | Eliminación de llaves hardcodeadas en código; hash de contraseñas mediante Argon2id. |
+| **ISO 27001 A.8.24 (Uso de Criptografía)** | **CUMPLIDO** | Eliminación de llaves hardcodeadas en código; hash de contraseñas mediante Argon2id; secretos Base32 TOTP con entropía criptográfica. |
+| **NIST SP 800-63B (Authentication and Lifecycle Management)** | **CUMPLIDO** | Autenticación multifactor con limitación de intentos de adivinación (máximo 5 reintentos por desafío); sin expiración forzada arbitraria de claves. |
 | **OWASP A01:2021 (Broken Access Control)** | **CUMPLIDO** | Eliminación de permisos `AllowAny` en la API; controles anti-IDOR en endpoints de usuarios y backups. |
 | **OWASP A02:2021 (Cryptographic Failures)** | **CUMPLIDO** | Forzado de `sslmode=require` hacia PostgreSQL; HSTS activo; cookies de sesión marcadas como `Secure`. |
 | **OWASP A03:2021 (Injection)** | **CUMPLIDO** | Migración de consultas crudas de base de datos hacia el ORM de Django; integración de `DOMPurify` para sanitizar entradas. |
 | **OWASP A05:2021 (Security Misconfiguration)** | **CUMPLIDO** | `DEBUG=False` por defecto; cabeceras HTTP de protección (X-Frame-Options, Nosniff, CSP en Nginx). |
-| **OWASP A07:2021 (Identification & Auth Failures)** | **CUMPLIDO** | Remoción de tokens del almacenamiento local; cookies HttpOnly protegidas contra manipulación por scripts. |
+| **OWASP A07:2021 (Identification & Auth Failures)** | **CUMPLIDO** | Remoción de tokens del almacenamiento local; cookies HttpOnly protegidas; 2FA TOTP con aplicaciones autenticadoras. |
 
 ---
 **Dictamen:** El sistema se encuentra debidamente asegurado y endurecido, cumpliendo los requisitos mínimos y avanzados del marco normativo institucional y las mejores prácticas de la industria.

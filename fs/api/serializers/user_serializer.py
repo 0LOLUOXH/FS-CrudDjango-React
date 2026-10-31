@@ -7,11 +7,12 @@ User = get_user_model()
 class userSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'password', 'is_staff', 'is_active', 'email', 'date_joined')
+        fields = ('id', 'username', 'password', 'is_staff', 'is_active', 'email', 'date_joined', 'is_2fa_enabled')
         extra_kwargs = {
             'password': {'write_only': True, 'required': False},
             'is_active': {'read_only': True},  # Opcional: para que no se pueda modificar desde la API
-            'date_joined': {'read_only': True}
+            'date_joined': {'read_only': True},
+            'is_2fa_enabled': {'read_only': True}
         }
 
     def create(self, validated_data):

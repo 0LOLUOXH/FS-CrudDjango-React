@@ -125,6 +125,15 @@ class Verify2FALoginView(APIView):
         if not user_id:
             raise AuthenticationFailed('El desafío de verificación ha expirado o no es válido. Inicie sesión nuevamente.')
 
+        attempts_key = f"2fa_attempts_{temp_token}"
+        attempts = cache.get(attempts_key, 0) + 1
+        cache.set(attempts_key, attempts, timeout=300)
+
+        if attempts > 5:
+            cache.delete(f"2fa_pending_{temp_token}")
+            cache.delete(attempts_key)
+            raise AuthenticationFailed('Demasiados intentos fallidos. Desafío 2FA cancelado por seguridad.')
+
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
@@ -134,10 +143,16 @@ class Verify2FALoginView(APIView):
             raise AuthenticationFailed('No hay configuración de 2FA activa para este usuario.')
 
         if not verify_totp_code(user.otp_secret, otp_code):
-            raise AuthenticationFailed('Código de autenticación incorrecto. Verifique su aplicación autenticadora.')
+            remaining = 5 - attempts
+            if remaining <= 0:
+                cache.delete(f"2fa_pending_{temp_token}")
+                cache.delete(attempts_key)
+                raise AuthenticationFailed('Demasiados intentos fallidos. Desafío 2FA cancelado por seguridad.')
+            raise AuthenticationFailed(f'Código de autenticación incorrecto. Intentos restantes: {remaining}')
 
         # Código válido: consumir el desafío temporal y emitir la cookie HttpOnly
         cache.delete(f"2fa_pending_{temp_token}")
+        cache.delete(attempts_key)
         return LoginView._issue_authenticated_response(request, user)
 
 
@@ -197,6 +212,18 @@ class Confirm2FAView(APIView):
         user.save(update_fields=['otp_secret', 'is_2fa_enabled'])
         cache.delete(f"2fa_setup_{user.pk}")
 
+        try:
+            from fs.models.user import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action="SECURITY_2FA_ENABLED",
+                table_name="custom_user",
+                record_id=user.pk,
+                description=f"El usuario '{user.username}' activó la Autenticación de Doble Factor (2FA / TOTP)."
+            )
+        except Exception as e:
+            print(f"[Seguridad] Error registrando AuditLog para activación 2FA: {e}")
+
         return Response({
             'success': True,
             'is_2fa_enabled': True,
@@ -228,6 +255,18 @@ class Disable2FAView(APIView):
         user.is_2fa_enabled = False
         user.otp_secret = None
         user.save(update_fields=['is_2fa_enabled', 'otp_secret'])
+
+        try:
+            from fs.models.user import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action="SECURITY_2FA_DISABLED",
+                table_name="custom_user",
+                record_id=user.pk,
+                description=f"El usuario '{user.username}' desactivó la Autenticación de Doble Factor (2FA / TOTP)."
+            )
+        except Exception as e:
+            print(f"[Seguridad] Error registrando AuditLog para desactivación 2FA: {e}")
 
         return Response({
             'success': True,

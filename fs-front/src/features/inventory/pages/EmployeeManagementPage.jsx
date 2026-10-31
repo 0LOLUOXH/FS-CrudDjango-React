@@ -115,6 +115,7 @@ export default function EmployeeManagementPage() {
     }, [users, searchTerm]);
 
     const adminCount = useMemo(() => users.filter(u => u.is_staff).length, [users]);
+    const mfaCount = useMemo(() => users.filter(u => u.is_2fa_enabled).length, [users]);
 
     return (
         <div className="w-full p-4 lg:p-6 space-y-6">
@@ -128,7 +129,7 @@ export default function EmployeeManagementPage() {
                         Gestión de Usuarios y Empleados
                     </h1>
                     <p className="text-sm text-[var(--text-muted)] mt-1">
-                        Control de credenciales, roles administrativos y cuentas de acceso
+                        Control de credenciales, roles administrativos y autenticación multifactor (2FA)
                     </p>
                 </div>
 
@@ -141,8 +142,30 @@ export default function EmployeeManagementPage() {
                 </button>
             </div>
 
+            {/* Banner de Cumplimiento de Políticas de Ciberseguridad */}
+            <div className="p-4 rounded-xl border border-blue-500/25 bg-blue-500/10 flex items-start sm:items-center justify-between gap-4 text-xs">
+                <div className="flex items-start sm:items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center text-lg shrink-0 mt-0.5 sm:mt-0">
+                        <i className="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <strong className="text-blue-600 dark:text-blue-400 block font-semibold text-sm">
+                            Política Institucional de Seguridad — Autenticación Multifactor (MFA / 2FA)
+                        </strong>
+                        <p className="text-[var(--text-muted)] mt-0.5">
+                            Conforme a las <em>Prácticas de Seguridad de la Información (ISO 27001 & NIST SP 800-63B)</em>, todas las cuentas con rol de Administrador deben contar con segundo factor TOTP activado.
+                        </p>
+                    </div>
+                </div>
+                <div className="shrink-0 hidden md:block">
+                    <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-500">
+                        {mfaCount}/{users.length} con 2FA
+                    </span>
+                </div>
+            </div>
+
             {/* Tarjetas KPI */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <GlassCard className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center text-xl shrink-0">
                         <i className="fa-solid fa-users"></i>
@@ -165,11 +188,21 @@ export default function EmployeeManagementPage() {
 
                 <GlassCard className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center text-xl shrink-0">
+                        <i className="fa-solid fa-shield-check"></i>
+                    </div>
+                    <div>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Protegidos con 2FA</span>
+                        <h3 className="text-2xl font-bold text-emerald-500 mt-0.5">{mfaCount}</h3>
+                    </div>
+                </GlassCard>
+
+                <GlassCard className="p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center text-xl shrink-0">
                         <i className="fa-solid fa-user-check"></i>
                     </div>
                     <div>
-                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Operadores Estándar</span>
-                        <h3 className="text-2xl font-bold text-emerald-500 mt-0.5">{users.length - adminCount}</h3>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Operadores</span>
+                        <h3 className="text-2xl font-bold text-amber-500 mt-0.5">{users.length - adminCount}</h3>
                     </div>
                 </GlassCard>
             </div>
@@ -197,20 +230,21 @@ export default function EmployeeManagementPage() {
                                 <th>Usuario</th>
                                 <th>Email</th>
                                 <th>Rol / Nivel</th>
+                                <th>Segundo Factor (2FA)</th>
                                 <th className="text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="5" className="text-center py-12">
+                                    <td colSpan="6" className="text-center py-12">
                                         <i className="fa-solid fa-spinner fa-spin text-2xl text-[var(--primary)]"></i>
                                         <p className="text-sm text-[var(--text-muted)] mt-2">Cargando usuarios...</p>
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="text-center py-12 text-[var(--text-muted)]">
+                                    <td colSpan="6" className="text-center py-12 text-[var(--text-muted)]">
                                         <i className="fa-solid fa-user-xmark text-3xl mb-2 opacity-50 block"></i>
                                         No se encontraron usuarios que coincidan con la búsqueda
                                     </td>
@@ -239,6 +273,19 @@ export default function EmployeeManagementPage() {
                                                 <i className={`fa-solid ${user.is_staff ? 'fa-shield' : 'fa-user'} mr-1 text-[10px]`}></i>
                                                 {user.is_staff ? 'Administrador' : 'Empleado'}
                                             </Badge>
+                                        </td>
+                                        <td>
+                                            {user.is_2fa_enabled ? (
+                                                <Badge variant="success">
+                                                    <i className="fa-solid fa-shield-check mr-1 text-[10px]"></i>
+                                                    2FA Activo
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant={user.is_staff ? "warning" : "neutral"}>
+                                                    <i className={`fa-solid ${user.is_staff ? 'fa-triangle-exclamation' : 'fa-lock-open'} mr-1 text-[10px]`}></i>
+                                                    {user.is_staff ? '2FA Pendiente' : 'Inactivo'}
+                                                </Badge>
+                                            )}
                                         </td>
                                         <td className="text-right">
                                             <button
